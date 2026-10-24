@@ -1,3 +1,4 @@
+<img src="assets/icons/mozol-favicon.png" alt="MOZOL" width="96" height="96" align="left">
 <a href="https://www.meetjamie.ai/">
     <img src="assets/hackathon/jamie-logo.svg" alt="Jamie" width="96" height="96" align="left">
 </a>

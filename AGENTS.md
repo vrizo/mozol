@@ -73,6 +73,6 @@ TestFlight uploads: docs/deployment/testflight.md.
 - Never pass CODE_SIGNING_ALLOWED=NO for the app target: simulator builds are ad-hoc signed, and an unsigned app fails every Keychain call.
 - Simulator: iPhone 17, UDID 898564DD-FAE8-4AB0-9BF5-CBF17DB72852 (shared with nobardak; set MOZOL_SIM_UDID to use another one).
 - workerd: never call a stored global fetch through a property — "Illegal invocation". Wrap it: (input, init) => fetch(input, init).
-- No rsvg or imagemagick on this Mac — render SVG with `qlmanage -t -s <px> -o <dir> <file.svg>`.
+- No rsvg or imagemagick on this Mac — render SVG with scripts/render-svg.swift (keeps transparency). Brand marks are drawn by hand, one per size (docs/web/design-system.md).
 
 Open decisions waiting on Vitalii: docs/product/pending.md.
