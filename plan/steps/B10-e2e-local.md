@@ -4,7 +4,7 @@ Track: backend. Depends on: B09. Next: B11.
 
 Goal
 
-One script proves the whole backend chain on the local stack, the way the iOS app and Jamie will use it: sign-up, app sign-in, device, Jamie webhook, analysis (fixture mode), recommendations, deliveries, outcomes, a second transcript with the same markers, and "send to phone".
+One script proves the whole backend chain on the local stack, the way the iOS app and Jamie will use it: sign-up, app sign-in, device, Jamie webhook, analysis (fixture mode), recommendations, deliveries, outcomes, a second transcript with the same markers, and a delivery that fails three times.
 
 Read first
 
@@ -22,9 +22,9 @@ Do
    4. create a Jamie connection → webhook URL;
    5. post shared/fixtures/jamie/meeting-completed.json to it with data.user.email replaced by the new email and a new metadata.id → 202; the same body again → 200 duplicate;
    6. poll GET /api/transcripts/:id every second, at most 30 seconds, until analyzed (the recommend step sets it, so deliveries exist by then); language is "en"; recommendations are listed;
-   7. claim → one delivery per recommendation of the transcript (14 with the fixture result), each with a schedule, and embedInMyReminders true; post outcomes for all of them (some created, some embedded) → all accepted;
-   8. post the fixture again with another metadata.id → analyzed; claim → new deliveries whose markers equal the markers of the first claim for the same item keys; post outcomes;
-   9. send an applied recommendation of the first transcript to the phone again (POST /api/recommendations/:id/deliver) → 202; claim → exactly that delivery; post a failed result three times across three claims (wait for nothing: post failed right after each claim) → the delivery ends failed;
+   7. claim → one delivery per recommendation of the transcript (6 with the fixture result) and embedInMyReminders true; post outcomes for all of them (some created, some embedded) → all accepted;
+   8. post the fixture again with another metadata.id → analyzed; claim → new deliveries whose markers equal the markers of the first claim for the same item keys; post outcomes for all of them except one;
+   9. post a failed result for the one left; claim → exactly that delivery; post failed again, two more times across two claims (wait for nothing: post failed right after each claim) → the delivery ends failed;
    10. claim with an installation id that was never registered → 404; claim again with the registered installation while nothing is pending → no deliveries;
    11. the local D1 has push_log rows for the device (`wrangler d1 execute --local`).
 3. The script exits with status 1 on the first FAIL and prints the run folder.

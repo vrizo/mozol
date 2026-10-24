@@ -121,7 +121,7 @@ final class DeliverySync {
             return .failed(item.deliveryId, code: code)
         }
         do {
-            let plan = try DeliveryPlanner.plan(item, embedInMyReminders: embed, reminders: current, timeZone: .current)
+            let plan = try DeliveryPlanner.plan(item, embedInMyReminders: embed, reminders: current)
             let changed = try reminders.apply(plan)
             for reminder in changed {
                 if let index = current.firstIndex(where: { $0.id == reminder.id }) {

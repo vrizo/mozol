@@ -28,12 +28,7 @@ import { log } from "../log";
 import { addSeconds, nowIso } from "../time";
 
 const APP_CODE_SECONDS = 120;
-const DEFAULT_REMINDER_SETTINGS: ReminderSettings = {
-  embedInMyReminders: true,
-  intensity: "normal",
-  activeFrom: "09:00",
-  activeTo: "21:00",
-};
+const DEFAULT_REMINDER_SETTINGS: ReminderSettings = { embedInMyReminders: true };
 
 export const authRoutes = new Hono<AppEnv>();
 

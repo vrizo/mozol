@@ -24,11 +24,9 @@
 //   POST   /stub/deliveries   { email?, items? } → 201 { deliveryIds }. Queues deliveries for an
 //                            existing user (email default learner@example.com). Without items: the two
 //                            recommendations of shared/fixtures/deliveries/claim-response.json.
-//                            items: [{ recommendation, schedule? }]. recommendation needs language, kind,
+//                            items: [{ recommendation }]. recommendation needs language, kind,
 //                            itemKey, title, notes, embedLine; id, url, marker, priority (5) and
-//                            matchTerms ([]) are filled in when missing. schedule default, made at
-//                            each claim: earliestAt 2 hours after the claim, the user's active hours,
-//                            daily, 5 times.
+//                            matchTerms ([]) are filled in when missing.
 //   POST   /stub/settings     { email?, embedInMyReminders } → { user }
 //   GET    /stub/state        users, devices and deliveries with their status
 //
@@ -47,8 +45,6 @@ const CODE_TTL_MS = 2 * 60 * 1000;
 const MAX_FAILURES = 3;
 const INSTALLATION_ID = /^[A-Za-z0-9_-]{8,64}$/;
 const APNS_TOKEN = /^[0-9a-f]{64,200}$/;
-const CLOCK_TIME = /^([01][0-9]|2[0-3]):[0-5][0-9]$/;
-const SCHEDULE_DELAY_MS = 2 * 60 * 60 * 1000;
 const REMINDERS_ACCESS = ["full", "write_only", "denied", "restricted", "not_determined"];
 const APPLIED_OUTCOMES = ["embed_updated", "reminder_updated", "embedded", "created"];
 const KINDS = ["mistake", "word"];
@@ -148,7 +144,7 @@ function userFor(email) {
     displayName,
     nativeLanguage: "ru",
     speakerNames: [displayName],
-    reminderSettings: { embedInMyReminders: true, intensity: "normal", activeFrom: "09:00", activeTo: "21:00" },
+    reminderSettings: { embedInMyReminders: true },
     createdAt: nowIso(),
   };
   usersByEmail.set(email, user);
@@ -238,25 +234,6 @@ function checkRecommendation(issues, rec, path) {
   if (rec.matchTerms !== undefined && !Array.isArray(rec.matchTerms)) issues.push({ path: `${path}.matchTerms`, code: "invalid_type" });
 }
 
-function checkSchedule(issues, schedule, path) {
-  if (!schedule || typeof schedule !== "object") {
-    issues.push({ path, code: "invalid_type" });
-    return;
-  }
-  if (typeof schedule.earliestAt !== "string" || Number.isNaN(Date.parse(schedule.earliestAt))) {
-    issues.push({ path: `${path}.earliestAt`, code: "invalid_format" });
-  }
-  for (const key of ["activeFrom", "activeTo"]) {
-    if (typeof schedule[key] !== "string" || !CLOCK_TIME.test(schedule[key])) {
-      issues.push({ path: `${path}.${key}`, code: "invalid_format" });
-    }
-  }
-  const r = schedule.repeat;
-  if (r !== null && (!r || r.frequency !== "daily" || !Number.isInteger(r.interval) || !Number.isInteger(r.count))) {
-    issues.push({ path: `${path}.repeat`, code: "invalid_type" });
-  }
-}
-
 function fixtureRecommendations() {
   let text;
   try {
@@ -269,18 +246,8 @@ function fixtureRecommendations() {
   return items.map((item) => ({ recommendation: item.recommendation }));
 }
 
-// earliestAt: UTC, 2 hours after the claim; the phone applies its own time zone and the active hours.
-function claimSchedule(user, claimedAt) {
-  return {
-    earliestAt: new Date(claimedAt + SCHEDULE_DELAY_MS).toISOString(),
-    activeFrom: user.reminderSettings.activeFrom,
-    activeTo: user.reminderSettings.activeTo,
-    repeat: { frequency: "daily", interval: 1, count: 5 },
-  };
-}
-
 function publicDelivery(d) {
-  return { deliveryId: d.id, recommendation: d.recommendation, schedule: d.schedule };
+  return { deliveryId: d.id, recommendation: d.recommendation };
 }
 
 // Handlers. Each returns [status, body, contentType?] or throws a Reply.
@@ -417,8 +384,7 @@ const handlers = {
     }
     const leaseUntil = now + LEASE_SECONDS * 1000;
     for (const d of picked) {
-      const schedule = d.customSchedule ?? claimSchedule(user, now);
-      Object.assign(d, { status: "claimed", claimedBy: device.installationId, leaseUntil, schedule, updatedAt: nowIso() });
+      Object.assign(d, { status: "claimed", claimedBy: device.installationId, leaseUntil, updatedAt: nowIso() });
     }
     device.lastSeenAt = nowIso();
     return [200, {
@@ -477,7 +443,6 @@ const handlers = {
         return issues.push({ path: `items.${i}.recommendation`, code: "invalid_type" });
       }
       checkRecommendation(issues, item.recommendation, `items.${i}.recommendation`);
-      if (item.schedule !== undefined) checkSchedule(issues, item.schedule, `items.${i}.schedule`);
     });
     if (issues.length) throw invalid(issues);
 
@@ -500,8 +465,6 @@ const handlers = {
           url: rec.url ?? `${ctx.origin}/r/${id}`,
           priority: rec.priority ?? 5,
         },
-        customSchedule: item.schedule ?? null,
-        schedule: null,
         status: "pending",
         outcome: null,
         errorCode: null,

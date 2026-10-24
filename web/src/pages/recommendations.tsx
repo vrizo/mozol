@@ -2,16 +2,9 @@
 
 import { useState } from "react";
 import type { Device, Recommendation } from "shared";
-import {
-  ApiError,
-  deliverRecommendation,
-  getDevices,
-  getRecommendation,
-  getRecommendations,
-  testPush,
-} from "../api";
+import { ApiError, getDevices, getRecommendation, getRecommendations, testPush } from "../api";
 import { copy } from "../copy/en";
-import { canSend, deliveryText } from "../lib/deliveries";
+import { deliveryText } from "../lib/deliveries";
 import { formatDate, formatDateTime } from "../lib/format";
 import { matchModeLabel, pickStatus } from "../lib/knowledge";
 import { languageName } from "../lib/languageName";
@@ -25,46 +18,6 @@ import "./knowledge.css";
 
 const t = copy.recommendations;
 const deliveredValues = ["true", "false"] as const;
-
-// "Send to phone" for one recommendation; reports the updated recommendation to the parent.
-function SendToPhone({
-  recommendation,
-  onSent,
-}: {
-  recommendation: Recommendation;
-  onSent: (r: Recommendation) => void;
-}) {
-  const [busy, setBusy] = useState(false);
-  const [error, setError] = useState<unknown>(null);
-  const [sent, setSent] = useState(false);
-  if (!canSend(recommendation.delivery) && !sent) return null;
-
-  const send = async () => {
-    setBusy(true);
-    setError(null);
-    try {
-      onSent(await deliverRecommendation(recommendation.id));
-      setSent(true);
-    } catch (e) {
-      setError(e);
-    } finally {
-      setBusy(false);
-    }
-  };
-
-  return (
-    <div className="send-to-phone">
-      {sent ? (
-        <Notice tone="success">{t.sent}</Notice>
-      ) : (
-        <Button busy={busy} onClick={send}>
-          {t.sendToPhone}
-        </Button>
-      )}
-      {error !== null && <ErrorState what={t.send} error={error} />}
-    </div>
-  );
-}
 
 export function DeliveryLine({ recommendation }: { recommendation: Recommendation }) {
   const { delivery } = recommendation;
@@ -95,9 +48,6 @@ export function RecommendationsPage() {
     }
   };
 
-  const replace = (updated: Recommendation) =>
-    set((data) => ({ ...data, items: data.items.map((r) => (r.id === updated.id ? updated : r)) }));
-
   return (
     <main id="main-content" className="page" tabIndex={-1}>
       <PageHeader title={copy.pages.recommendations} />
@@ -121,7 +71,7 @@ export function RecommendationsPage() {
             <ul className="list">
               {state.data.items.map((r) => (
                 <li key={r.id}>
-                  <RecommendationCard recommendation={r} onSent={replace} />
+                  <RecommendationCard recommendation={r} />
                 </li>
               ))}
             </ul>
@@ -143,13 +93,7 @@ export function RecommendationsPage() {
   );
 }
 
-function RecommendationCard({
-  recommendation: r,
-  onSent,
-}: {
-  recommendation: Recommendation;
-  onSent: (r: Recommendation) => void;
-}) {
+function RecommendationCard({ recommendation: r }: { recommendation: Recommendation }) {
   return (
     <article className="card knowledge-card">
       <div className="knowledge-tags">
@@ -170,7 +114,6 @@ function RecommendationCard({
           </>
         ) : null}
       </p>
-      <SendToPhone recommendation={r} onSent={onSent} />
     </article>
   );
 }
@@ -254,7 +197,7 @@ function DeviceCard({ device }: { device: Device }) {
 export function RecommendationPage() {
   const route = useRoute();
   const id = route.params.id ?? "";
-  const { state, retry, set } = useLoad(() => getRecommendation(id), id);
+  const { state, retry } = useLoad(() => getRecommendation(id), id);
 
   if (state.status === "error" && state.error instanceof ApiError && state.error.status === 404) {
     return (
@@ -268,20 +211,12 @@ export function RecommendationPage() {
     <main id="main-content" className="page" tabIndex={-1}>
       {state.status === "loading" && <Loading />}
       {state.status === "error" && <ErrorState what={t.loadOne} error={state.error} onRetry={retry} />}
-      {state.status === "ready" && (
-        <RecommendationDetail recommendation={state.data} onSent={(r) => set(() => r)} />
-      )}
+      {state.status === "ready" && <RecommendationDetail recommendation={state.data} />}
     </main>
   );
 }
 
-function RecommendationDetail({
-  recommendation: r,
-  onSent,
-}: {
-  recommendation: Recommendation;
-  onSent: (r: Recommendation) => void;
-}) {
+function RecommendationDetail({ recommendation: r }: { recommendation: Recommendation }) {
   return (
     <>
       <PageHeader
@@ -290,7 +225,6 @@ function RecommendationDetail({
       />
       <div className="stack">
         <DeliveryLine recommendation={r} />
-        <SendToPhone recommendation={r} onSent={onSent} />
       </div>
 
       <section className="section">

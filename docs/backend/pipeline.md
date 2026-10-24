@@ -49,12 +49,11 @@ The recommend step follows ../product/reminders.md.
 - rank is the item's place in the delivery order. Every recommendation gets a pending delivery, except those of dismissed patterns and of words marked known or dismissed.
 - A new pending delivery supersedes a pending (not claimed) delivery with the same marker.
 - Analyzing again deletes the transcript's recommendations that never got a delivery, keeps the ones that did, and makes recommendations for items whose item key has none in this transcript. New deliveries go only to new recommendations.
-- POST /api/recommendations/:id/deliver adds a pending delivery with the same supersede rule and pushes the devices.
 - Rendering: the embed line is one line of at most 200 characters. A longer line drops its optional parts in a fixed order, documented in render.ts and covered by tests.
 
 Deliveries
 
-- Claim: one UPDATE ... RETURNING statement marks the deliveries it hands out, so two devices never get the same delivery. It takes the user's pending deliveries and the claimed ones whose lease ended, oldest first, at most one per marker, none for a marker with a live claimed delivery, at most the limit. Each gets claimed_by, claimed_until = now + 120 seconds, and a schedule, stored on the delivery and sent with it: earliestAt (claim time + 2 hours, UTC), the user's active hours and the repeat rule (../product/reminders.md). The worker knows no time zone; the app computes the due time in the phone's time zone.
+- Claim: one UPDATE ... RETURNING statement marks the deliveries it hands out, so two devices never get the same delivery. It takes the user's pending deliveries and the claimed ones whose lease ended, oldest first, at most one per marker, none for a marker with a live claimed delivery, at most the limit. Each gets claimed_by and claimed_until = now + 120 seconds. A delivery carries no schedule (../product/reminders.md).
 - Results count only from the installation in claimed_by, while the delivery is claimed (also after its lease ended, when nobody else claimed it since).
   - An outcome (embed_updated, reminder_updated, embedded, created): status applied, outcome stored.
   - failed: failures + 1; back to pending below 3 failures, failed at 3.

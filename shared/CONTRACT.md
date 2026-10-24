@@ -75,9 +75,6 @@ type User = {
 
 type ReminderSettings = {
   embedInMyReminders: boolean;         // default true: the app may add recommendations to the user's own reminders
-  intensity: "light" | "normal" | "intense";   // repeat rule of new MOZOL reminders
-  activeFrom: string;                  // "HH:MM", in the phone's current time zone
-  activeTo: string;                    // "HH:MM", later than activeFrom
 };
 
 type Source = {
@@ -274,8 +271,6 @@ type Delivery = {
 };
 
 type DeliveryOutcome = "embed_updated" | "reminder_updated" | "embedded" | "created";
-
-type Repeat = { frequency: "daily"; interval: number; count: number };   // every <interval> days, <count> times
 ```
 
 - itemKey: the pattern key for a mistake; "word:" + the normalized term for a word.
@@ -380,7 +375,6 @@ Endpoints: recommendations and deliveries
 
 - GET /api/recommendations?delivered=true|false → 200 paged `Recommendation`, newest first. Without the filter: all.
 - GET /api/recommendations/:id → 200 `{ recommendation: Recommendation }`.
-- POST /api/recommendations/:id/deliver → 202 `{ recommendation: Recommendation }`. Sends it to the phone: a new pending delivery.
 - POST /api/deliveries/claim `{ installationId, limit? }` → 200 `{ deliveries: DeliveryItem[], leaseSeconds: 120, embedInMyReminders: boolean }`. limit 1..50, default 20. Hands out waiting deliveries, oldest first, at most one per marker, never one that another installation holds. A delivery not reported within the lease can be handed out again. installationId must be a device of the current user (404 not_found otherwise).
 - POST /api/deliveries/results `{ installationId, results: DeliveryResult[] }` → 200 `{ accepted: number }`. 1..50 results. Results for deliveries this installation did not claim last are ignored and not counted.
 
@@ -389,8 +383,6 @@ type DeliveryItem = {
   deliveryId: Id;
   recommendation: Pick<Recommendation,
     "id" | "language" | "kind" | "itemKey" | "marker" | "title" | "notes" | "embedLine" | "matchTerms" | "url" | "priority">;
-  schedule: { earliestAt: Time; activeFrom: string; activeTo: string; repeat: Repeat | null };
-  // earliestAt: 2 hours after the claim; activeFrom, activeTo: from the user's reminderSettings
 };
 
 type DeliveryResult = {
@@ -405,11 +397,11 @@ How the app applies a delivery
 The app needs full access to Reminders. It reads the reminders of all lists and applies each delivery in claim order. There is no list of MOZOL's own: the app works with all of the user's reminders. It tells the reminders it created and the lines it added from everything else by hidden tags that carry the marker (docs/ios/reminders.md). The first step that fits decides the outcome.
 
 1. embed_updated (only when embedInMyReminders is true): incomplete reminders the app did not create that hold a line the app added with this marker. In each, replace that line with embedLine.
-2. reminder_updated: a reminder the app created with this marker, in any list, completed or not; when there are several, the most recently modified one. Set its title, notes, URL and priority, apply the schedule, and mark it not completed.
+2. reminder_updated: a reminder the app created with this marker, in any list, completed or not; when there are several, the most recently modified one. Set its title, notes, URL and priority, and mark it not completed.
 3. embedded (only when embedInMyReminders is true): the best incomplete reminder the app did not create. Its score is the number of matchTerms that match its title and notes, without the lines the app added. The best one has the highest score of at least 1; ties go to the most recently modified reminder, then to the smaller calendarItemIdentifier. Append embedLine as the last line of its notes: remove trailing line breaks, then add "\n" and embedLine (empty notes become embedLine alone). Nothing else changes.
-4. created: create a reminder in the user's default list for new reminders (the one set in the Reminders app) with title, notes, URL (the recommendation url) and priority, and apply the schedule.
+4. created: create a reminder in the user's default list for new reminders (the one set in the Reminders app) with title, notes, URL (the recommendation url) and priority. It has no due date, no alarm and no repeat rule.
 
-- Applying a schedule: the due time is earliestAt in the phone's current time zone; a time outside activeFrom..activeTo moves to the next activeFrom (the same day or the next one). Due date components in that time zone, one alarm at the due time, the repeat rule (or none), not completed. The worker knows no time zone.
+- MOZOL sets no due date, alarm or repeat rule on any reminder; a reminder that already has them keeps them.
 - The app reports each outcome with POST /api/deliveries/results. failed covers anything that stopped the delivery; the worker hands it out again, up to 3 failed results in total.
 - The worker never receives the user's reminders, their titles, notes or identifiers.
 - The app applies deliveries in its own process: in the foreground, or when a silent push or the background task wakes it. There is no notification service extension.
@@ -418,7 +410,7 @@ Push notifications
 
 Every push is a silent background push: the user sees nothing. A push only says "deliveries are waiting". It can be late, merged or dropped (iOS wakes an app in the background a few times per hour at most, and not at all after the user swipes it away), so the app also claims deliveries on every launch and every return to the foreground. The worker sends pushes through APNs to every device of the user that has an APNs token, to the host that matches the device's apnsEnvironment. Custom keys sit next to `aps` under `mozol`: `v` (payload version, 1) and `type`.
 
-When an analysis or a "send to phone" creates deliveries, the worker sends one push to each device:
+When an analysis creates deliveries, the worker sends one push to each device:
 
 ```json
 { "aps": { "content-available": 1 }, "mozol": { "v": 1, "type": "deliveries", "pending": 2 } }

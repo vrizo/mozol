@@ -38,8 +38,8 @@ describe("fieldErrors", () => {
       fieldErrors([
         { path: "email", code: "invalid_format" },
         { path: "email", code: "too_big" },
-        { path: "reminderSettings.activeTo", code: "custom" },
+        { path: "reminderSettings.embedInMyReminders", code: "invalid_type" },
       ]),
-    ).toEqual({ email: "invalid_format", reminderSettings: "custom" });
+    ).toEqual({ email: "invalid_format", reminderSettings: "invalid_type" });
   });
 });

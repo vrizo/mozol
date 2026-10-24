@@ -24,7 +24,7 @@ Do
    - requireUser answers 401 unauthorized without a valid session.
 4. Origin check: a cookie-authenticated request with a method other than GET must have Origin equal to APP_ORIGIN, otherwise 403 forbidden. Bearer requests and /api/hooks/* skip the check.
 5. Routes (shared schemas validate every body and every response in tests):
-   - POST /api/auth/sign-up: lowercase the email; 409 email_taken; create the user with speakerNames [displayName] and reminderSettings { embedInMyReminders: true, intensity: "normal", activeFrom: "09:00", activeTo: "21:00" }; create a web session; set the cookie (HttpOnly, Secure, SameSite=Lax, Path=/, Max-Age 30 days); 201 { user }.
+   - POST /api/auth/sign-up: lowercase the email; 409 email_taken; create the user with speakerNames [displayName] and reminderSettings { embedInMyReminders: true }; create a web session; set the cookie (HttpOnly, Secure, SameSite=Lax, Path=/, Max-Age 30 days); 201 { user }.
    - POST /api/auth/sign-in: 401 invalid_credentials for a wrong email or password. When the email is unknown, still run one PBKDF2 hash so both cases take the same time.
    - POST /api/auth/sign-out: delete the current session; clear the cookie (Max-Age=0); 204.
    - POST /api/auth/app-code: web session only (a bearer session gets 403 forbidden); store the code hash with a 2-minute expiry; 201 { code, expiresAt }.

@@ -18,7 +18,7 @@ users (usr)
 - id, email (unique, lowercase), password_hash ("pbkdf2-sha256$100000$<salt b64>$<hash b64>"), display_name
 - native_language
 - speaker_names (JSON array of strings; "Your names" in the UI)
-- reminder_settings (JSON: embed_in_my_reminders; intensity light, normal or intense; active_from and active_to as "HH:MM")
+- reminder_settings (JSON: embed_in_my_reminders)
 - created_at, updated_at
 
 sessions (ses)
@@ -115,7 +115,6 @@ deliveries (dlv): a recommendation sent to the phone
 - id, user_id, recommendation_id (references recommendations, cascade), marker
 - status (pending, claimed, applied, failed, superseded), outcome (embed_updated, reminder_updated, embedded, created, or null)
 - claimed_by (the installation of the last claim), claimed_until, failures, error_code
-- earliest_at, repeat (JSON: frequency, interval, count): the schedule handed out with the last claim (the active hours come from the user's reminder_settings)
 - created_at, updated_at
 
 push_log (psh): every APNs request

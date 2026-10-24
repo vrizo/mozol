@@ -69,12 +69,7 @@ describe("POST /api/auth/sign-up", () => {
       displayName: "Petr S.",
       nativeLanguage: "ru",
       speakerNames: ["Petr S."],
-      reminderSettings: {
-        embedInMyReminders: true,
-        intensity: "normal",
-        activeFrom: "09:00",
-        activeTo: "21:00",
-      },
+      reminderSettings: { embedInMyReminders: true },
     });
     expect(user.id).toMatch(/^usr_/);
     expectSessionCookie(res, THIRTY_DAYS);
@@ -366,12 +361,7 @@ describe("PATCH /api/me", () => {
       displayName: "Petr Shardakov",
       nativeLanguage: "uk",
       speakerNames: ["Petr", "Petr S."],
-      reminderSettings: {
-        embedInMyReminders: false,
-        intensity: "intense",
-        activeFrom: "07:30",
-        activeTo: "23:59",
-      },
+      reminderSettings: { embedInMyReminders: false },
     };
     const res = await call("/api/me", { method: "PATCH", cookie, body: change });
 
@@ -390,24 +380,14 @@ describe("PATCH /api/me", () => {
     expect(UserResponse.parse(await res.json())).toEqual({ user });
   });
 
-  const settings = { embedInMyReminders: true, intensity: "normal", activeFrom: "09:00", activeTo: "21:00" };
   it.each([
     ["nativeLanguage", { nativeLanguage: "english" }],
     ["nativeLanguage", { nativeLanguage: "EN" }],
     ["displayName", { displayName: "x".repeat(81) }],
     ["speakerNames", { speakerNames: Array.from({ length: 11 }, (_, i) => `Name ${i}`) }],
     ["speakerNames.0", { speakerNames: [""] }],
-    ["reminderSettings.activeFrom", { reminderSettings: { ...settings, activeFrom: "9:00" } }],
-    ["reminderSettings.activeTo", { reminderSettings: { ...settings, activeTo: "24:00" } }],
-    [
-      "reminderSettings.activeTo",
-      { reminderSettings: { ...settings, activeFrom: "21:00", activeTo: "09:00" } },
-    ],
-    ["reminderSettings.intensity", { reminderSettings: { ...settings, intensity: "max" } }],
-    [
-      "reminderSettings.embedInMyReminders",
-      { reminderSettings: { activeFrom: "09:00", activeTo: "21:00", intensity: "normal" } },
-    ],
+    ["reminderSettings", { reminderSettings: { embedInMyReminders: true, intensity: "normal" } }],
+    ["reminderSettings.embedInMyReminders", { reminderSettings: {} }],
     ["", { email: "other@example.com" }],
   ])("answers 400 validation_failed at %s", async (path, body) => {
     const { user, cookie } = await signUp();

@@ -27,7 +27,7 @@ struct AppEventHandlerTests {
 
     private var installationID: String { environment.session.installationID }
 
-    private static let user = #"{"id":"usr_1","email":"learner@example.com","displayName":"Learner","nativeLanguage":"ru","speakerNames":["Learner"],"reminderSettings":{"embedInMyReminders":true,"intensity":"normal","activeFrom":"09:00","activeTo":"21:00"},"createdAt":"2026-10-24T12:00:00.000Z"}"#
+    private static let user = #"{"id":"usr_1","email":"learner@example.com","displayName":"Learner","nativeLanguage":"ru","speakerNames":["Learner"],"reminderSettings":{"embedInMyReminders":true},"createdAt":"2026-10-24T12:00:00.000Z"}"#
     private static let device = #"{"device":{"id":"dev_1","installationId":"x","platform":"ios","appVersion":null,"osVersion":null,"pushEnabled":false,"remindersAccess":"denied","lastSeenAt":"2026-10-24T12:00:00.000Z"}}"#
 
     private func signIn() async throws {

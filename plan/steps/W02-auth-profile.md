@@ -24,7 +24,7 @@ Do
    - signed out: the sign-in form with a link to sign up (both stay on this flow);
    - signed in: "Continue as <name>" and "Use another account" (signs out first);
    - on continue or after sign-in: POST /api/auth/app-code, then set window.location to the return address with code=<code> added as a query parameter; also show a link with the same address in case the app does not open.
-6. Profile (/profile): display name, native language, Your names (the speakerNames field; add and remove, at most 10), reminder settings (add recommendations to my own reminders on or off; intensity light, normal or intense; active hours from and to). Save with PATCH /api/me and show the saved state. Delete account: a confirm dialog that asks for the password, then DELETE /api/me, then the home page.
+6. Profile (/profile): display name, native language, Your names (the speakerNames field; add and remove, at most 10), reminder settings (add recommendations to my own reminders on or off). Save with PATCH /api/me and show the saved state. Delete account: a confirm dialog that asks for the password, then DELETE /api/me, then the home page.
 7. Strings in web/src/copy/en.ts by the copy subagent.
 
 Checks

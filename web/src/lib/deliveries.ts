@@ -23,6 +23,3 @@ export function deliveryText(delivery: Delivery | null): string {
   if (!delivery.outcome) throw new Error(`applied delivery ${delivery.id} has no outcome`);
   return t.state.applied(labels.deliveryOutcome[delivery.outcome]);
 }
-
-// "Send to phone" is offered only when no delivery is waiting.
-export const canSend = (delivery: Delivery | null) => deliveryState(delivery) !== "waiting";

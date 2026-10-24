@@ -91,17 +91,12 @@ final class RemindersStore {
         return reminder
     }
 
-    /// Title, notes, URL, priority and the schedule: due date, one alarm, the repeat rule.
+    /// Title, notes, URL and priority. MOZOL sets no due date, alarm or repeat rule; a reminder keeps its own.
     private func fill(_ reminder: EKReminder, with content: ReminderContent) {
         reminder.title = content.title
         reminder.notes = content.notes
         reminder.url = content.url
         reminder.priority = content.priority
-        reminder.dueDateComponents = content.schedule.dueComponents
-        reminder.alarms = [EKAlarm(absoluteDate: content.schedule.dueDate)]
-        reminder.recurrenceRules = content.schedule.repeatRule.map { rule in
-            [EKRecurrenceRule(recurrenceWith: .daily, interval: rule.interval, end: EKRecurrenceEnd(occurrenceCount: rule.count))]
-        }
     }
 
     private func save(_ reminder: EKReminder) throws(RemindersError) {

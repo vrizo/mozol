@@ -736,12 +736,7 @@ function createAccount(input: {
       displayName: input.displayName,
       nativeLanguage: input.nativeLanguage,
       speakerNames: [input.displayName],
-      reminderSettings: {
-        embedInMyReminders: true,
-        intensity: "normal",
-        activeFrom: "09:00",
-        activeTo: "21:00",
-      },
+      reminderSettings: { embedInMyReminders: true },
       createdAt: now(),
     },
   };
@@ -1079,15 +1074,6 @@ const routes: [string, RegExp, Handler][] = [
     ({ account, params }) => {
       const rec = owned(db.recs, account().user.id, (x) => x.r.id === params[0]);
       return json(200, RecommendationResponse, { recommendation: rec.r });
-    },
-  ],
-  [
-    "POST",
-    /^\/api\/recommendations\/([^/]+)\/deliver$/,
-    ({ account, params }) => {
-      const rec = owned(db.recs, account().user.id, (x) => x.r.id === params[0]);
-      rec.r.delivery = newDelivery("pending");
-      return json(202, RecommendationResponse, { recommendation: rec.r });
     },
   ],
 ];

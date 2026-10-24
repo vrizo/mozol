@@ -1,7 +1,7 @@
 // Recommendations, deliveries, and the claim and results endpoints of the app.
 import { z } from "zod";
 import { MatchTerm, PATTERN_KEY } from "./analysis";
-import { ClockTime, Id, InstallationId, LanguageCode, PageQuery, paged, Time } from "./common";
+import { Id, InstallationId, LanguageCode, PageQuery, paged, Time } from "./common";
 import { normalizeText } from "./matching";
 
 export const RecommendationKind = z.enum(["mistake", "word"]);
@@ -78,14 +78,6 @@ export const RecommendationsQuery = PageQuery.extend({
 });
 export type RecommendationsQuery = z.infer<typeof RecommendationsQuery>;
 
-// Every <interval> days, <count> times.
-export const Repeat = z.strictObject({
-  frequency: z.literal("daily"),
-  interval: z.number().int().min(1),
-  count: z.number().int().min(1),
-});
-export type Repeat = z.infer<typeof Repeat>;
-
 export const DeliveryItem = z.strictObject({
   deliveryId: Id,
   recommendation: RecommendationObject.pick({
@@ -101,13 +93,6 @@ export const DeliveryItem = z.strictObject({
     url: true,
     priority: true,
   }).superRefine(checkItemKey),
-  // earliestAt: 2 hours after the claim. The app moves it into the active hours in the phone's time zone.
-  schedule: z.strictObject({
-    earliestAt: Time,
-    activeFrom: ClockTime,
-    activeTo: ClockTime,
-    repeat: Repeat.nullable(),
-  }),
 });
 export type DeliveryItem = z.infer<typeof DeliveryItem>;
 

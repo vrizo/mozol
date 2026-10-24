@@ -1,7 +1,7 @@
 import type { Delivery } from "shared";
 import { describe, expect, it } from "vitest";
 import { copy } from "../copy/en";
-import { canSend, deliveryState, deliveryText } from "./deliveries";
+import { deliveryState, deliveryText } from "./deliveries";
 import { filterByLanguage, languagesOf, matchModeLabel, pickStatus } from "./knowledge";
 
 const delivery = (fields: Partial<Delivery>): Delivery => ({
@@ -37,14 +37,6 @@ describe("delivery state", () => {
 
   it("throws for an applied delivery without an outcome", () => {
     expect(() => deliveryText(delivery({ status: "applied" }))).toThrow();
-  });
-
-  it("offers sending only without a waiting delivery", () => {
-    expect(canSend(null)).toBe(true);
-    expect(canSend(delivery({ status: "pending" }))).toBe(false);
-    expect(canSend(delivery({ status: "claimed" }))).toBe(false);
-    expect(canSend(delivery({ status: "applied", outcome: "created" }))).toBe(true);
-    expect(canSend(delivery({ status: "failed" }))).toBe(true);
   });
 });
 

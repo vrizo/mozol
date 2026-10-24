@@ -18,12 +18,7 @@ public struct ErrorBody: Codable, Equatable, Sendable {
 // MARK: Accounts
 
 public struct ReminderSettings: Codable, Equatable, Sendable {
-    public enum Intensity: String, Codable, Sendable { case light, normal, intense }
-
     public let embedInMyReminders: Bool
-    public let intensity: Intensity
-    public let activeFrom: String
-    public let activeTo: String
 }
 
 public struct User: Codable, Equatable, Sendable {
@@ -156,25 +151,9 @@ public struct DeliveryRecommendation: Codable, Equatable, Sendable {
     public let priority: Int
 }
 
-public struct Repeat: Codable, Equatable, Sendable {
-    public let frequency: String
-    public let interval: Int
-    public let count: Int
-}
-
-public struct DeliverySchedule: Codable, Equatable, Sendable {
-    /// UTC ISO 8601 with milliseconds.
-    public let earliestAt: String
-    /// "HH:MM" in the phone's current time zone.
-    public let activeFrom: String
-    public let activeTo: String
-    public let `repeat`: Repeat?
-}
-
 public struct DeliveryItem: Codable, Equatable, Sendable {
     public let deliveryId: String
     public let recommendation: DeliveryRecommendation
-    public let schedule: DeliverySchedule
 }
 
 public struct ClaimBody: Codable, Equatable, Sendable {

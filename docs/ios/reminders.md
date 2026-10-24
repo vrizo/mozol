@@ -5,7 +5,7 @@ The app writes to the user's Apple Reminders (the system Reminders app) through 
 - Access: full access to Reminders (iOS 17 `requestFullAccessToReminders`), asked on the Permissions screen (permissions.md).
 - RemindersStore in ios/Mozol/Reminders/ reads the reminders of all lists, and adds and changes reminders. It has no UI.
 - There is no MOZOL list. The app works with all of the user's reminders. A new reminder goes to the user's default list for new reminders (`defaultCalendarForNewReminders`, set in the Reminders app).
-- The due time is earliestAt of the delivery in the phone's current time zone, moved into the active hours (shared/CONTRACT.md, "Applying a schedule"). A due date also sets an alarm at that time, so the Reminders app shows its alert. The app itself sends no notifications (messages.md).
+- The app sets no due date, no alarm and no repeat rule on any reminder. A reminder of the user keeps its own. The app itself sends no notifications (messages.md).
 - Without full access the app does not claim deliveries; they wait on the server. Every RemindersStore call fails with `noAccess`. Nothing is retried.
 - Logs carry counts, markers, outcomes and EventKit identifiers only, never titles or notes.
 
@@ -40,7 +40,7 @@ A delivery that cannot be applied is reported as failed with one of these codes:
 - `reminder_not_found`: the reminder chosen a moment before is gone.
 - `no_default_list`: the Reminders app has no default list.
 - `eventkit_save`: EventKit refused the save; the EventKit error code goes to the log.
-- `bad_marker`, `bad_schedule`, `bad_match_term`: the delivery breaks the contract (a marker that is not 8 lowercase hex characters, an earliestAt or clock time that does not parse, a match term that breaks its mode rules).
+- `bad_marker`, `bad_match_term`: the delivery breaks the contract (a marker that is not 8 lowercase hex characters, a match term that breaks its mode rules).
 
 Code: the tag and the planner are in ios/MozolCore (HiddenTag, DeliveryPlanner, TextMatching), tested with shared/fixtures/; the EventKit side is RemindersStore.
 

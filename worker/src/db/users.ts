@@ -19,9 +19,6 @@ const SpeakerNamesColumn = z.array(z.string());
 
 const ReminderSettingsColumn = z.strictObject({
   embed_in_my_reminders: z.boolean(),
-  intensity: z.enum(["light", "normal", "intense"]),
-  active_from: z.string(),
-  active_to: z.string(),
 });
 
 export function userFromRow(row: UserRow): User {
@@ -32,23 +29,13 @@ export function userFromRow(row: UserRow): User {
     displayName: row.display_name,
     nativeLanguage: row.native_language,
     speakerNames: readJson(row.speaker_names, SpeakerNamesColumn, "users.speaker_names"),
-    reminderSettings: {
-      embedInMyReminders: settings.embed_in_my_reminders,
-      intensity: settings.intensity,
-      activeFrom: settings.active_from,
-      activeTo: settings.active_to,
-    },
+    reminderSettings: { embedInMyReminders: settings.embed_in_my_reminders },
     createdAt: row.created_at,
   });
 }
 
 export function reminderSettingsColumn(settings: ReminderSettings): string {
-  return writeJson({
-    embed_in_my_reminders: settings.embedInMyReminders,
-    intensity: settings.intensity,
-    active_from: settings.activeFrom,
-    active_to: settings.activeTo,
-  });
+  return writeJson({ embed_in_my_reminders: settings.embedInMyReminders });
 }
 
 export async function findUserById(db: D1Database, id: string): Promise<UserRow | null> {

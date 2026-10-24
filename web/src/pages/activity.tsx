@@ -2,16 +2,9 @@
 
 import { useCallback, useEffect, useState } from "react";
 import type { Recommendation, Transcript, TranscriptDetail } from "shared";
-import {
-  ApiError,
-  analyzeAgain,
-  deleteTranscript,
-  deliverRecommendation,
-  getRecommendations,
-  getTranscript,
-} from "../api";
+import { ApiError, analyzeAgain, deleteTranscript, getRecommendations, getTranscript } from "../api";
 import { copy } from "../copy/en";
-import { canSend, deliveryText } from "../lib/deliveries";
+import { deliveryText } from "../lib/deliveries";
 import { formatDateTime } from "../lib/format";
 import { languageName } from "../lib/languageName";
 import { formatDuration, groupFindings, isBusy } from "../lib/transcripts";
@@ -354,47 +347,18 @@ function Pair({ said, better, lang }: { said: string; better: string; lang?: str
 }
 
 function RecommendationsBlock({ recommendations }: { recommendations: Recommendation[] }) {
-  const [items, setItems] = useState(recommendations);
-  const [busyId, setBusyId] = useState<string | null>(null);
-  const [error, setError] = useState<unknown>(null);
-  const [sentId, setSentId] = useState<string | null>(null);
-
-  useEffect(() => setItems(recommendations), [recommendations]);
-
-  const send = async (id: string) => {
-    setBusyId(id);
-    setError(null);
-    setSentId(null);
-    try {
-      const updated = await deliverRecommendation(id);
-      setItems((current) => current.map((r) => (r.id === id ? updated : r)));
-      setSentId(id);
-    } catch (e) {
-      setError(e);
-    } finally {
-      setBusyId(null);
-    }
-  };
-
   return (
     <section className="section" aria-labelledby="recommendations-heading">
       <h2 id="recommendations-heading">{t.recommendationsLabel}</h2>
-      {error !== null && <ErrorState what={t.send} error={error} />}
-      {items.length === 0 && <p>{t.noRecommendations}</p>}
+      {recommendations.length === 0 && <p>{t.noRecommendations}</p>}
       <ol className="list">
-        {items.map((rec) => (
+        {recommendations.map((rec) => (
           <li key={rec.id} className="card recommendation">
             <p className="recommendation-title">
               <span className="tag">{labels.recommendationKind[rec.kind]}</span>{" "}
               <Link href={`/r/${rec.id}`}>{rec.title}</Link>
             </p>
             <p className="small">{deliveryText(rec.delivery)}</p>
-            {sentId === rec.id && <Notice tone="success">{t.sent}</Notice>}
-            {canSend(rec.delivery) && (
-              <Button onClick={() => send(rec.id)} busy={busyId === rec.id} disabled={busyId !== null}>
-                {t.sendToPhone}
-              </Button>
-            )}
           </li>
         ))}
       </ol>

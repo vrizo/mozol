@@ -1,6 +1,6 @@
 // Users, reminder settings, and the /api/auth and /api/me endpoints.
 import { z } from "zod";
-import { ClockTime, Id, InstallationId, LanguageCode, Time } from "./common";
+import { Id, InstallationId, LanguageCode, Time } from "./common";
 
 const DisplayName = z.string().min(1).max(80);
 const SpeakerName = z.string().min(1).max(80);
@@ -8,18 +8,9 @@ const Password = z.string().min(10).max(200);
 // Sign-in and account deletion answer invalid_credentials for a wrong password, so only the size is checked.
 const GivenPassword = z.string().min(1).max(200);
 
-export const ReminderSettings = z
-  .strictObject({
-    embedInMyReminders: z.boolean(),
-    intensity: z.enum(["light", "normal", "intense"]),
-    activeFrom: ClockTime,
-    activeTo: ClockTime,
-  })
-  .refine((s) => s.activeTo > s.activeFrom, {
-    path: ["activeTo"],
-    message: "activeTo must be later than activeFrom",
-    when: (payload) => payload.issues.length === 0,
-  });
+export const ReminderSettings = z.strictObject({
+  embedInMyReminders: z.boolean(),
+});
 export type ReminderSettings = z.infer<typeof ReminderSettings>;
 
 export const User = z.strictObject({

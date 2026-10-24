@@ -18,9 +18,6 @@ export type SourceId = z.infer<typeof SourceId>;
 export const SourceKind = z.enum(["call", "chat", "text"]);
 export type SourceKind = z.infer<typeof SourceKind>;
 
-// "HH:MM", in the phone's current time zone.
-export const ClockTime = z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/);
-
 // Made by the app once per install and kept in the Keychain.
 export const InstallationId = z.string().regex(/^[A-Za-z0-9_-]{8,64}$/);
 

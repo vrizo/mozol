@@ -14,12 +14,6 @@
         "matchTerms": [],
         "url": "https://mozol.vrizo.net/r/rec_01K86PZQ2W4E6R8T0Y2V4N6M8P",
         "priority": 1
-      },
-      "schedule": {
-        "earliestAt": "2026-10-22T12:00:00.000Z",
-        "activeFrom": "09:00",
-        "activeTo": "21:00",
-        "repeat": { "frequency": "daily", "interval": 1, "count": 5 }
       }
     },
     {
@@ -34,18 +28,24 @@
         "notes": "С decision в английском используют глагол make, а не do.\n\nWe need to make a decision by Friday.\nНам нужно принять решение до пятницы.",
         "embedLine": "MOZOL: make a decision — принять решение",
         "matchTerms": [
-          { "text": "make a decision", "lang": "en", "mode": "phrase" },
-          { "text": "decision", "lang": "en", "mode": "word" },
-          { "text": "решени", "lang": "ru", "mode": "prefix" }
+          {
+            "text": "make a decision",
+            "lang": "en",
+            "mode": "phrase"
+          },
+          {
+            "text": "decision",
+            "lang": "en",
+            "mode": "word"
+          },
+          {
+            "text": "решени",
+            "lang": "ru",
+            "mode": "prefix"
+          }
         ],
         "url": "https://mozol.vrizo.net/r/rec_01K86PZQ2W4E6R8T0Y2V4N6M9Q",
         "priority": 5
-      },
-      "schedule": {
-        "earliestAt": "2026-10-22T12:00:00.000Z",
-        "activeFrom": "09:00",
-        "activeTo": "21:00",
-        "repeat": { "frequency": "daily", "interval": 1, "count": 5 }
       }
     }
   ],

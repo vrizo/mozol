@@ -56,8 +56,7 @@ const rows = {
     display_name: "Test",
     native_language: "ru",
     speaker_names: '["Petr"]',
-    reminder_settings:
-      '{"embed_in_my_reminders":true,"intensity":"normal","active_from":"09:00","active_to":"21:00"}',
+    reminder_settings: '{"embed_in_my_reminders":true}',
     created_at: T0,
     updated_at: T0,
   }),
@@ -418,17 +417,6 @@ describe("checks", () => {
     const ids = await seedUser();
     await expect(
       env.DB.prepare(`UPDATE ${table} SET ${column} = ? WHERE id = ?`).bind('{"open": ', ids[row]).run(),
-    ).rejects.toThrow(/CHECK constraint failed/);
-  });
-
-  it("deliveries.repeat takes null or JSON", async () => {
-    const ids = await seedUser();
-    expect(await value("deliveries", "repeat", ids.delivery)).toBeNull();
-    const repeat = '{"frequency":"daily","interval":2,"count":3}';
-    await env.DB.prepare("UPDATE deliveries SET repeat = ? WHERE id = ?").bind(repeat, ids.delivery).run();
-    expect(await value("deliveries", "repeat", ids.delivery)).toBe(repeat);
-    await expect(
-      env.DB.prepare("UPDATE deliveries SET repeat = ? WHERE id = ?").bind("daily", ids.delivery).run(),
     ).rejects.toThrow(/CHECK constraint failed/);
   });
 

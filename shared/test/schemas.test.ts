@@ -40,7 +40,7 @@ const user = {
   displayName: "Petr Ivanov",
   nativeLanguage: "ru",
   speakerNames: ["Petr Ivanov"],
-  reminderSettings: { embedInMyReminders: true, intensity: "normal", activeFrom: "09:00", activeTo: "21:00" },
+  reminderSettings: { embedInMyReminders: true },
   createdAt: "2026-10-20T08:00:00.000Z",
 };
 
@@ -197,18 +197,10 @@ describe("structured output", () => {
 });
 
 describe("request and response rules", () => {
-  test("refuses activeTo before or equal to activeFrom", () => {
-    const settings = {
-      embedInMyReminders: true,
-      intensity: "normal",
-      activeFrom: "21:00",
-      activeTo: "09:00",
-    };
-    expect(issuesOf(ReminderSettings, settings)).toEqual(["activeTo: custom"]);
-    expect(issuesOf(ReminderSettings, { ...settings, activeTo: "21:00" })).toEqual(["activeTo: custom"]);
-    expect(issuesOf(ReminderSettings, { ...settings, activeFrom: "08:30", activeTo: "22:15" })).toEqual([]);
-    expect(issuesOf(ReminderSettings, { ...settings, activeFrom: "8:30" })).toEqual([
-      "activeFrom: invalid_format",
+  test("reminder settings hold only embedInMyReminders", () => {
+    expect(issuesOf(ReminderSettings, { embedInMyReminders: false })).toEqual([]);
+    expect(issuesOf(ReminderSettings, { embedInMyReminders: true, intensity: "normal" })).toEqual([
+      ": unrecognized_keys",
     ]);
   });
 

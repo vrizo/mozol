@@ -24,7 +24,7 @@ Do
 3. worker/src/push/token.ts: the provider token. ES256 JWT, header { alg: "ES256", kid }, claims { iss, iat }; import the key as PKCS#8 from the base64 secret; sign with WebCrypto ECDSA P-256 SHA-256 (the signature is already the raw r||s form JWS needs). Keep it in worker_state under apns_token; reuse it while it is younger than 50 minutes.
 4. worker/src/push/apns.ts: send(device, payload, headers) for one device. It takes a fetch function as a parameter (tests pass a fake). Host by apnsEnvironment. Handle the answers as docs/backend/push.md says: write push_log for every request; 410 or 400 BadDeviceToken disables the device; 403 ExpiredProviderToken or InvalidProviderToken makes a new token and retries once; 429 and 5xx throw a retryable error; other 4xx are logged and not retried. In log mode: write push_log with status null, log the push (type, device id, no texts), send nothing.
 5. worker/src/push/payloads.ts: builders for the deliveries push and the test push from shared/src/push.ts, with the headers from the contract (push type background, priority 5, topic = device bundle id, expiration).
-6. worker/src/push/notify.ts: notifyUser(env, userId, { pending }) sends the deliveries push to every device of the user that has an APNs token and is not disabled. It returns counts (sent, skipped, failed) and throws a retryable error when any device got 429 or 5xx. B09 calls it from the pipeline and from "send to phone".
+6. worker/src/push/notify.ts: notifyUser(env, userId, { pending }) sends the deliveries push to every device of the user that has an APNs token and is not disabled. It returns counts (sent, skipped, failed) and throws a retryable error when any device got 429 or 5xx. B09 calls it from the pipeline.
 
 Checks
 

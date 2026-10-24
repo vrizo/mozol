@@ -10,7 +10,7 @@ Read first
 
 - AGENTS.md, plan/README.md
 - docs/product/web-app.md (Activity, Transcript), docs/product/analysis.md, docs/product/sources.md (Finding the user's turns), docs/rules/ui-copy.md
-- shared/CONTRACT.md: Transcript, TranscriptDetail, Analysis, AnalysisResult, Recommendation, "Endpoints: transcripts", POST /api/recommendations/:id/deliver
+- shared/CONTRACT.md: Transcript, TranscriptDetail, Analysis, AnalysisResult, Recommendation, "Endpoints: transcripts"
 - web/src/ from W01 to W03
 
 Do
@@ -21,7 +21,7 @@ Do
    - set lang attributes from the user's native language (explanations, titles, tips, translations) and the conversation language (quotes, corrections, words, examples) so screen readers read them right;
    - findings grouped by category, high severity first: title, severity, occurrences, examples (quote and correction, visually distinct and readable by screen readers as "you said" and "better"), explanation, tip;
    - words: term, type, translation, meaning, example and its translation, what the user said instead;
-   - recommendations block: every recommendation of this transcript in rank order with its delivery state (waiting, on the phone with its outcome, failed, not sent), a link to /r/<id>, and "send to phone" for one without a waiting delivery (empty until B09);
+   - recommendations block: every recommendation of this transcript in rank order with its delivery state (waiting, on the phone with its outcome, failed, not sent), and a link to /r/<id> (empty until B09);
    - the transcript itself, collapsed by default, with the learner's lines marked;
    - actions: analyze again (POST analyze; disabled while busy; 409 transcript_busy shown as a notice), delete (confirm dialog, then back to /activity).
    - queued and analyzing states refresh every 5 seconds; skipped and failed states explain the reason or code and offer analyze again.

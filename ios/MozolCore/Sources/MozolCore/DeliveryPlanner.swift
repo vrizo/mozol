@@ -17,68 +17,6 @@ public struct ReminderSnapshot: Equatable, Sendable {
     }
 }
 
-/// Due date components, alarm and repeat rule of a schedule.
-public struct ResolvedSchedule: Equatable, Sendable {
-    public let dueDate: Date
-    public let dueComponents: DateComponents
-    /// Every `interval` days, `count` times; nil for no repeat.
-    public let repeatRule: (interval: Int, count: Int)?
-
-    public static func == (a: ResolvedSchedule, b: ResolvedSchedule) -> Bool {
-        a.dueDate == b.dueDate && a.dueComponents == b.dueComponents
-            && a.repeatRule?.interval == b.repeatRule?.interval && a.repeatRule?.count == b.repeatRule?.count
-    }
-
-    /// The due time is earliestAt in `timeZone`; a time outside activeFrom..activeTo moves to the next activeFrom.
-    public static func resolve(_ schedule: DeliverySchedule, timeZone: TimeZone) throws(DeliveryPlanner.Failure) -> ResolvedSchedule {
-        guard let earliest = parseTime(schedule.earliestAt),
-              let from = parseClock(schedule.activeFrom),
-              let to = parseClock(schedule.activeTo),
-              from < to
-        else { throw .badSchedule }
-        var calendar = Calendar(identifier: .gregorian)
-        calendar.timeZone = timeZone
-
-        // Steps: whole minute at or after earliestAt, then the active window, then the components.
-        var due = calendar.dateInterval(of: .minute, for: earliest)!.start
-        if due < earliest { due = calendar.date(byAdding: .minute, value: 1, to: due)! }
-        let clock = calendar.dateComponents([.hour, .minute], from: due)
-        let minuteOfDay = clock.hour! * 60 + clock.minute!
-        if minuteOfDay < from || minuteOfDay > to {
-            let day = minuteOfDay < from ? due : calendar.date(byAdding: .day, value: 1, to: due)!
-            guard let moved = calendar.date(bySettingHour: from / 60, minute: from % 60, second: 0, of: day) else { throw .badSchedule }
-            due = moved
-        }
-        var components = calendar.dateComponents([.year, .month, .day, .hour, .minute], from: due)
-        components.timeZone = timeZone
-
-        var repeatRule: (Int, Int)?
-        if let rule = schedule.repeat {
-            guard rule.frequency == "daily", rule.interval >= 1, rule.count >= 1 else { throw .badSchedule }
-            repeatRule = (rule.interval, rule.count)
-        }
-        return ResolvedSchedule(dueDate: due, dueComponents: components, repeatRule: repeatRule)
-    }
-
-    /// ISO 8601 with an offset, with or without milliseconds.
-    static func parseTime(_ text: String) -> Date? {
-        let formatter = ISO8601DateFormatter()
-        formatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
-        if let date = formatter.date(from: text) { return date }
-        formatter.formatOptions = [.withInternetDateTime]
-        return formatter.date(from: text)
-    }
-
-    /// "HH:MM" as minutes since midnight.
-    static func parseClock(_ text: String) -> Int? {
-        let parts = text.split(separator: ":", omittingEmptySubsequences: false)
-        guard parts.count == 2, parts.allSatisfy({ $0.count == 2 && $0.allSatisfy(\.isASCII) && $0.allSatisfy(\.isNumber) }),
-              let hour = Int(parts[0]), let minute = Int(parts[1]), hour < 24, minute < 60
-        else { return nil }
-        return hour * 60 + minute
-    }
-}
-
 /// What a new or updated MOZOL reminder gets.
 public struct ReminderContent: Equatable, Sendable {
     public let title: String
@@ -86,7 +24,6 @@ public struct ReminderContent: Equatable, Sendable {
     public let notes: String
     public let url: URL?
     public let priority: Int
-    public let schedule: ResolvedSchedule
 }
 
 public struct NotesChange: Equatable, Sendable {
@@ -114,14 +51,12 @@ public enum DeliveryPlan: Equatable, Sendable {
 public enum DeliveryPlanner {
     public enum Failure: Error, Equatable {
         case badMarker
-        case badSchedule
         case badMatchTerm
 
         /// The errorCode reported with a failed result.
         public var code: String {
             switch self {
             case .badMarker: "bad_marker"
-            case .badSchedule: "bad_schedule"
             case .badMatchTerm: "bad_match_term"
             }
         }
@@ -130,8 +65,7 @@ public enum DeliveryPlanner {
     public static func plan(
         _ item: DeliveryItem,
         embedInMyReminders: Bool,
-        reminders: [ReminderSnapshot],
-        timeZone: TimeZone
+        reminders: [ReminderSnapshot]
     ) throws(Failure) -> DeliveryPlan {
         let rec = item.recommendation
         let tag: String
@@ -140,7 +74,6 @@ public enum DeliveryPlanner {
         } catch {
             throw .badMarker
         }
-        let schedule = try ResolvedSchedule.resolve(item.schedule, timeZone: timeZone)
         let parsed = reminders.map { Parsed(reminder: $0, lines: HiddenTag.lines($0.notes)) }
         let taggedLine = rec.embedLine + tag
 
@@ -161,8 +94,7 @@ public enum DeliveryPlanner {
             title: rec.title,
             notes: rec.notes.isEmpty ? tag : rec.notes + "\n" + tag,
             url: URL(string: rec.url),
-            priority: rec.priority,
-            schedule: schedule
+            priority: rec.priority
         )
 
         let own = parsed.filter { $0.lines.contains { $0.isOwnTag && $0.marker == rec.marker } }.map(\.reminder)

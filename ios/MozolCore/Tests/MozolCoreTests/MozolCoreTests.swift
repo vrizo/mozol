@@ -179,8 +179,6 @@ struct DeliveryPlannerTests {
         claim = try Contract.decoder.decode(ClaimResponse.self, from: Fixture.data("deliveries/claim-response.json"))
     }
 
-    let berlin = TimeZone(identifier: "Europe/Berlin")!
-
     private func tag(_ marker: String) -> String { try! HiddenTag.make(marker: marker) }
 
     private func reminder(_ id: String, _ title: String, notes: String = "", completed: Bool = false, modified: TimeInterval = 0) -> ReminderSnapshot {
@@ -188,7 +186,7 @@ struct DeliveryPlannerTests {
     }
 
     @Test func createsWhenNothingMatches() throws {
-        let plan = try DeliveryPlanner.plan(word, embedInMyReminders: true, reminders: [reminder("a", "Buy milk")], timeZone: berlin)
+        let plan = try DeliveryPlanner.plan(word, embedInMyReminders: true, reminders: [reminder("a", "Buy milk")])
         guard case let .create(content) = plan else { Issue.record("\(plan)"); return }
         #expect(content.title == word.recommendation.title)
         #expect(content.notes == word.recommendation.notes + "\n" + tag("fd2dd8e3"))
@@ -203,13 +201,13 @@ struct DeliveryPlannerTests {
             reminder("b", "Make a decision about the decision memo", notes: "Принять решение\n\n", modified: 5),
             reminder("c", "Buy milk", modified: 99),
         ]
-        let plan = try DeliveryPlanner.plan(word, embedInMyReminders: true, reminders: reminders, timeZone: berlin)
+        let plan = try DeliveryPlanner.plan(word, embedInMyReminders: true, reminders: reminders)
         #expect(plan == .embed(NotesChange(reminderID: "b", notes: "Принять решение\n" + word.recommendation.embedLine + tag("fd2dd8e3"))))
     }
 
     @Test func tiesGoToTheNewestThenTheSmallerID() throws {
         let reminders = [reminder("b", "decision", modified: 5), reminder("a", "decision", modified: 5), reminder("c", "decision", modified: 1)]
-        let plan = try DeliveryPlanner.plan(word, embedInMyReminders: true, reminders: reminders, timeZone: berlin)
+        let plan = try DeliveryPlanner.plan(word, embedInMyReminders: true, reminders: reminders)
         guard case let .embed(change) = plan else { Issue.record("\(plan)"); return }
         #expect(change.reminderID == "a")
         #expect(change.notes == word.recommendation.embedLine + tag("fd2dd8e3"))
@@ -218,7 +216,7 @@ struct DeliveryPlannerTests {
     @Test func updatesTheLineItAddedEarlier() throws {
         let old = "Prepare slides\nMOZOL: old text" + tag("fd2dd8e3") + "\nlast line"
         let reminders = [reminder("a", "Slides", notes: old), reminder("b", "decision")]
-        let plan = try DeliveryPlanner.plan(word, embedInMyReminders: true, reminders: reminders, timeZone: berlin)
+        let plan = try DeliveryPlanner.plan(word, embedInMyReminders: true, reminders: reminders)
         let expected = "Prepare slides\n" + word.recommendation.embedLine + tag("fd2dd8e3") + "\nlast line"
         #expect(plan == .embedUpdate([NotesChange(reminderID: "a", notes: expected)]))
     }
@@ -229,7 +227,7 @@ struct DeliveryPlannerTests {
             reminder("own2", "old title", notes: tag("fd2dd8e3"), completed: true, modified: 7),
             reminder("b", "decision"),
         ]
-        let plan = try DeliveryPlanner.plan(word, embedInMyReminders: true, reminders: reminders, timeZone: berlin)
+        let plan = try DeliveryPlanner.plan(word, embedInMyReminders: true, reminders: reminders)
         guard case let .reminderUpdate(id, content) = plan else { Issue.record("\(plan)"); return }
         #expect(id == "own2")
         #expect(content.title == word.recommendation.title)
@@ -240,99 +238,22 @@ struct DeliveryPlannerTests {
             reminder("own", "decision", notes: tag("01bf5320")),
             reminder("done", "decision", completed: true),
         ]
-        #expect(try DeliveryPlanner.plan(word, embedInMyReminders: true, reminders: reminders, timeZone: berlin).outcome == .created)
+        #expect(try DeliveryPlanner.plan(word, embedInMyReminders: true, reminders: reminders).outcome == .created)
     }
 
     @Test func linesItAddedDoNotCountForTheScore() throws {
         let reminders = [reminder("a", "Shopping", notes: "MOZOL: decision" + tag("01bf5320"))]
-        #expect(try DeliveryPlanner.plan(word, embedInMyReminders: true, reminders: reminders, timeZone: berlin).outcome == .created)
+        #expect(try DeliveryPlanner.plan(word, embedInMyReminders: true, reminders: reminders).outcome == .created)
     }
 
     @Test func embedOffSkipsTheUserReminders() throws {
         let reminders = [reminder("a", "Slides", notes: "x" + tag("fd2dd8e3")), reminder("b", "decision")]
-        #expect(try DeliveryPlanner.plan(word, embedInMyReminders: false, reminders: reminders, timeZone: berlin).outcome == .created)
+        #expect(try DeliveryPlanner.plan(word, embedInMyReminders: false, reminders: reminders).outcome == .created)
     }
 
     @Test func noMatchTermsMeansCreate() throws {
         #expect(mistake.recommendation.matchTerms.isEmpty)
-        let plan = try DeliveryPlanner.plan(mistake, embedInMyReminders: true, reminders: [reminder("a", "I saw it yesterday")], timeZone: berlin)
+        let plan = try DeliveryPlanner.plan(mistake, embedInMyReminders: true, reminders: [reminder("a", "I saw it yesterday")])
         #expect(plan.outcome == .created)
-    }
-
-    private func schedule(_ earliestAt: String, from: String = "09:00", to: String = "21:00") -> DeliverySchedule {
-        DeliverySchedule(earliestAt: earliestAt, activeFrom: from, activeTo: to, repeat: nil)
-    }
-
-    private func resolve(_ schedule: DeliverySchedule, in zone: String) throws -> ResolvedSchedule {
-        try ResolvedSchedule.resolve(schedule, timeZone: TimeZone(identifier: zone)!)
-    }
-
-    private func time(_ text: String) -> Date { ResolvedSchedule.parseTime(text)! }
-
-    @Test func insideActiveHoursTheDueTimeIsEarliestAt() throws {
-        let resolved = try ResolvedSchedule.resolve(word.schedule, timeZone: berlin)
-        #expect(resolved.dueComponents.year == 2026 && resolved.dueComponents.month == 10 && resolved.dueComponents.day == 22)
-        #expect(resolved.dueComponents.hour == 14 && resolved.dueComponents.minute == 0)
-        #expect(resolved.dueComponents.timeZone?.identifier == "Europe/Berlin")
-        #expect(resolved.dueDate == Date(timeIntervalSince1970: 1_792_670_400))
-        #expect(resolved.repeatRule?.interval == 1 && resolved.repeatRule?.count == 5)
-    }
-
-    @Test func beforeActiveFromMovesToActiveFromTheSameDay() throws {
-        let resolved = try resolve(schedule("2026-10-22T05:30:00.000Z"), in: "Europe/Berlin")
-        #expect(resolved.dueComponents.day == 22 && resolved.dueComponents.hour == 9 && resolved.dueComponents.minute == 0)
-        #expect(resolved.dueDate == time("2026-10-22T07:00:00.000Z"))
-        #expect(resolved.repeatRule == nil)
-    }
-
-    @Test func afterMidnightBeforeActiveFromStaysOnThatDay() throws {
-        let resolved = try resolve(schedule("2026-10-22T23:30:00.000Z"), in: "Europe/Berlin")
-        #expect(resolved.dueComponents.day == 23 && resolved.dueComponents.hour == 9)
-        #expect(resolved.dueDate == time("2026-10-23T07:00:00.000Z"))
-    }
-
-    @Test func afterActiveToMovesToActiveFromTheNextDay() throws {
-        let resolved = try resolve(schedule("2026-10-22T20:15:00.000Z"), in: "Europe/Berlin")
-        #expect(resolved.dueComponents.day == 23 && resolved.dueComponents.hour == 9 && resolved.dueComponents.minute == 0)
-        #expect(resolved.dueDate == time("2026-10-23T07:00:00.000Z"))
-    }
-
-    @Test func theNextDayCanHaveAnotherOffset() throws {
-        // Berlin leaves summer time on 2026-10-25.
-        let resolved = try resolve(schedule("2026-10-24T20:00:00.000Z"), in: "Europe/Berlin")
-        #expect(resolved.dueComponents.day == 25 && resolved.dueComponents.hour == 9)
-        #expect(resolved.dueDate == time("2026-10-25T08:00:00.000Z"))
-    }
-
-    @Test func activeHoursAreInThePhoneTimeZone() throws {
-        let newYork = try resolve(word.schedule, in: "America/New_York")
-        #expect(newYork.dueComponents.timeZone?.identifier == "America/New_York")
-        #expect(newYork.dueComponents.day == 22 && newYork.dueComponents.hour == 9 && newYork.dueComponents.minute == 0)
-        #expect(newYork.dueDate == time("2026-10-22T13:00:00.000Z"))
-        let tokyo = try resolve(word.schedule, in: "Asia/Tokyo")
-        #expect(tokyo.dueComponents.day == 22 && tokyo.dueComponents.hour == 21 && tokyo.dueComponents.minute == 0)
-        #expect(tokyo.dueDate == time("2026-10-22T12:00:00.000Z"))
-    }
-
-    @Test func secondsRoundUpToTheNextMinute() throws {
-        let resolved = try resolve(schedule("2026-10-22T12:00:30.500Z"), in: "Europe/Berlin")
-        #expect(resolved.dueComponents.hour == 14 && resolved.dueComponents.minute == 1)
-        #expect(resolved.dueDate == time("2026-10-22T12:01:00.000Z"))
-    }
-
-    @Test func badScheduleFails() {
-        let bad = [
-            schedule("tomorrow"),
-            schedule("2026-10-22T12:00:00.000Z", from: "9:00"),
-            schedule("2026-10-22T12:00:00.000Z", to: "24:00"),
-            schedule("2026-10-22T12:00:00.000Z", from: "21:00", to: "09:00"),
-            schedule("2026-10-22T12:00:00.000Z", from: "09:00", to: "09:00"),
-        ]
-        for item in bad {
-            let delivery = DeliveryItem(deliveryId: "d", recommendation: word.recommendation, schedule: item)
-            #expect(throws: DeliveryPlanner.Failure.badSchedule) {
-                try DeliveryPlanner.plan(delivery, embedInMyReminders: true, reminders: [], timeZone: berlin)
-            }
-        }
     }
 }

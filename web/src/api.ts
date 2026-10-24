@@ -175,7 +175,3 @@ export const getRecommendation = (id: string) =>
   request("GET", `/api/recommendations/${id}`, { schema: RecommendationResponse }).then(
     (r) => r.recommendation,
   );
-export const deliverRecommendation = (id: string) =>
-  request("POST", `/api/recommendations/${id}/deliver`, { schema: RecommendationResponse }).then(
-    (r) => r.recommendation,
-  );
