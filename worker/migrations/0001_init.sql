@@ -231,7 +231,7 @@ CREATE TABLE recommendations (
   user_id TEXT NOT NULL REFERENCES users (id) ON DELETE CASCADE,
   transcript_id TEXT REFERENCES transcripts (id) ON DELETE SET NULL,
   language TEXT NOT NULL,
-  kind TEXT NOT NULL CHECK (kind IN ('mistake', 'word')),
+  kind TEXT NOT NULL CHECK (kind IN ('mistake', 'word', 'phrase', 'rewrite')),
   item_key TEXT NOT NULL,
   marker TEXT NOT NULL,
   rank INTEGER NOT NULL,
@@ -258,6 +258,8 @@ CREATE TABLE deliveries (
   claimed_until TEXT,
   failures INTEGER NOT NULL DEFAULT 0,
   error_code TEXT,
+  earliest_at TEXT,
+  repeat TEXT CHECK (json_valid(repeat)),
   created_at TEXT NOT NULL,
   updated_at TEXT NOT NULL
 );
