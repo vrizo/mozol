@@ -14,15 +14,6 @@ export const NotificationsAccess = z.enum([
 ]);
 export type NotificationsAccess = z.infer<typeof NotificationsAccess>;
 
-export const PushType = z.enum(["alert", "background"]);
-export type PushType = z.infer<typeof PushType>;
-
-const PushTypes = z
-  .array(PushType)
-  .min(1)
-  .max(2)
-  .refine((types) => new Set(types).size === types.length, { message: "push types repeat" });
-
 export const Device = z.strictObject({
   id: Id,
   installationId: InstallationId,
@@ -31,7 +22,6 @@ export const Device = z.strictObject({
   osVersion: z.string().nullable(),
   // Has an APNs token that APNs did not reject.
   pushEnabled: z.boolean(),
-  pushTypes: PushTypes,
   remindersAccess: RemindersAccess,
   notificationsAccess: NotificationsAccess,
   lastSeenAt: Time,
@@ -52,7 +42,6 @@ export const PutDeviceBody = z
     apnsEnvironment: z.enum(["sandbox", "production"]).nullable(),
     remindersAccess: RemindersAccess,
     notificationsAccess: NotificationsAccess,
-    pushTypes: PushTypes.default(["alert", "background"]),
   })
   .refine((body) => (body.apnsToken === null) === (body.apnsEnvironment === null), {
     path: ["apnsEnvironment"],

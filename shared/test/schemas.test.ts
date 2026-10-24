@@ -238,13 +238,7 @@ describe("request and response rules", () => {
     expect(issuesOf(PutDeviceBody, { ...device, apnsToken: null, apnsEnvironment: null })).toEqual([]);
   });
 
-  test("pushTypes has 1 or 2 different values and defaults to both", () => {
-    expect(PutDeviceBody.parse(device).pushTypes).toEqual(["alert", "background"]);
-    expect(issuesOf(PutDeviceBody, { ...device, pushTypes: ["alert"] })).toEqual([]);
-    expect(issuesOf(PutDeviceBody, { ...device, pushTypes: [] })).toEqual(["pushTypes: too_small"]);
-    expect(issuesOf(PutDeviceBody, { ...device, pushTypes: ["alert", "alert"] })).toEqual([
-      "pushTypes: custom",
-    ]);
+  test("refuses an APNs token that is not lowercase hex", () => {
     expect(issuesOf(PutDeviceBody, { ...device, apnsToken: "A".repeat(64) })).toEqual([
       "apnsToken: invalid_format",
     ]);

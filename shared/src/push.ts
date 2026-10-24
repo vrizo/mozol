@@ -1,34 +1,16 @@
-// APNs payloads the worker sends. Custom keys sit next to `aps` under `mozol`.
+// APNs payloads the worker sends. Every push is a silent background push. Custom keys sit next to `aps` under `mozol`.
 import { z } from "zod";
-import { Id } from "./common";
 
-const AlertAps = z.strictObject({
-  alert: z.strictObject({ title: z.string().min(1), body: z.string().min(1) }),
-  sound: z.literal("default"),
-  "mutable-content": z.literal(1),
-  "thread-id": z.literal("mozol"),
-});
+const SilentAps = z.strictObject({ "content-available": z.literal(1) });
 
-// transcriptId is null for "send to phone".
-export const AlertPush = z.strictObject({
-  aps: AlertAps,
-  mozol: z.strictObject({
-    v: z.literal(1),
-    type: z.literal("deliveries"),
-    pending: z.number().int().min(1),
-    transcriptId: Id.nullable(),
-  }),
-});
-export type AlertPush = z.infer<typeof AlertPush>;
-
-export const BackgroundPush = z.strictObject({
-  aps: z.strictObject({ "content-available": z.literal(1) }),
+export const DeliveriesPush = z.strictObject({
+  aps: SilentAps,
   mozol: z.strictObject({ v: z.literal(1), type: z.literal("deliveries"), pending: z.number().int().min(1) }),
 });
-export type BackgroundPush = z.infer<typeof BackgroundPush>;
+export type DeliveriesPush = z.infer<typeof DeliveriesPush>;
 
 export const TestPush = z.strictObject({
-  aps: AlertAps,
+  aps: SilentAps,
   mozol: z.strictObject({ v: z.literal(1), type: z.literal("test") }),
 });
 export type TestPush = z.infer<typeof TestPush>;

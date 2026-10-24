@@ -9,14 +9,12 @@ import meetingGerman from "../fixtures/jamie/meeting-completed-german.json";
 import meetingUnknown from "../fixtures/jamie/meeting-completed-unknown-speakers.json";
 import jsonTranscript from "../fixtures/json/transcript.json";
 import pasteText from "../fixtures/paste/transcript.txt?raw";
-import alertPush from "../fixtures/push/deliveries-alert.json";
-import backgroundPush from "../fixtures/push/deliveries-background.json";
+import deliveriesPush from "../fixtures/push/deliveries.json";
 import testPush from "../fixtures/push/test.json";
 import {
-  AlertPush,
   AnalysisResult,
-  BackgroundPush,
   ClaimResponse,
+  DeliveriesPush,
   itemKey,
   JsonSourceBody,
   marker,
@@ -163,8 +161,7 @@ describe("delivery and push fixtures", () => {
   });
 
   test("push payloads parse", () => {
-    expect(AlertPush.parse(alertPush).mozol.pending).toBe(2);
-    expect(BackgroundPush.parse(backgroundPush).mozol.pending).toBe(2);
+    expect(DeliveriesPush.parse(deliveriesPush).mozol.pending).toBe(2);
     expect(TestPush.parse(testPush).mozol.type).toBe("test");
   });
 });

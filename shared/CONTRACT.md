@@ -4,7 +4,7 @@ Version 1. The source of truth for the worker, the web app and the iOS app. The 
 
 Conventions
 
-- Base URL: https://mozol.vrizo.net, API under /api. Local development: http://localhost:5190 serves the web pages and passes /api to the worker on http://localhost:8790. The iOS app uses one base URL for pages and API: http://localhost:5190 locally.
+- Base URL: https://mozol.vrizo.net, API under /api. Local development: http://localhost:5190 serves the web pages and passes /api to the worker on http://localhost:8790. The iOS app uses one base URL for pages and API: http://localhost:5190 locally; with scripts/stub-api.mjs in place of the worker, http://localhost:8790 (docs/ios/testing.md).
 - Bodies are JSON in UTF-8, field names in camelCase. A field shown as `T | null` is always present; a field marked optional (`?`) may be missing.
 - Times are ISO 8601 UTC strings with milliseconds ("2026-10-24T12:00:00.000Z"), unless a field says otherwise.
 - Ids are opaque strings with a type prefix ("usr_01JB8Z6Q4M2V7N3K5D9X1C0F8T"). Clients never parse them.
@@ -22,7 +22,7 @@ Authentication
 
 Sign-in handoff
 
-1. The app opens `<base>/app/signin?return=mozol://auth`, preferably in ASWebAuthenticationSession with the callback scheme mozol. A WKWebView also works when the app catches the navigation to mozol://.
+1. The app opens `<base>/app/signin?return=mozol://auth` in a WKWebView inside the app, not in the system browser. Its navigation delegate catches the navigation to mozol://auth, cancels it, takes the code and closes the web view.
 2. After sign-up or sign-in the page calls POST /api/auth/app-code and navigates to `mozol://auth?code=<code>`. It accepts only return addresses that start with mozol://.
 3. Within 2 minutes the app calls POST /api/auth/app-token with the code and its installationId, and keeps the token in the Keychain.
 4. The app registers its device: PUT /api/devices/:installationId.
@@ -182,7 +182,6 @@ type Word = {
 
 type RemindersAccess = "full" | "write_only" | "denied" | "restricted" | "not_determined";
 type NotificationsAccess = "authorized" | "provisional" | "ephemeral" | "denied" | "not_determined";
-type PushType = "alert" | "background";
 
 type Device = {
   id: Id;
@@ -191,7 +190,6 @@ type Device = {
   appVersion: string | null;
   osVersion: string | null;
   pushEnabled: boolean;                // has an APNs token that APNs did not reject
-  pushTypes: PushType[];
   remindersAccess: RemindersAccess;
   notificationsAccess: NotificationsAccess;
   lastSeenAt: Time;
@@ -272,7 +270,7 @@ Rules:
 
 Recommendations
 
-Every item of an analysis (finding, word, phrase, rewrite) becomes one recommendation, and every recommendation goes to the phone, except those of dismissed patterns and of words marked known or dismissed. On the phone one recommendation becomes one reminder: the app adds it to a reminder of the user that mentions it, or creates a new reminder in the MOZOL list. Rules: docs/product/reminders.md.
+Every item of an analysis (finding, word, phrase, rewrite) becomes one recommendation, and every recommendation goes to the phone, except those of dismissed patterns and of words marked known or dismissed. On the phone one recommendation becomes one reminder: the app adds it to a reminder of the user that mentions it, or creates a new reminder in the user's default list. Rules: docs/product/reminders.md.
 
 ```ts
 type RecommendationKind = "mistake" | "word" | "phrase" | "rewrite";
@@ -283,7 +281,7 @@ type Recommendation = {
   language: LanguageCode;              // the conversation language
   kind: RecommendationKind;
   itemKey: string;                     // the same mistake, word or phrase has the same key in every transcript
-  marker: string;                      // 8 lowercase hex characters; the app keeps it hidden in what it writes
+  marker: string;                      // 8 lowercase hex characters; the app keeps it hidden in what it writes (docs/ios/reminders.md)
   title: string;                       // title of a new MOZOL reminder
   notes: string;                       // notes of a new MOZOL reminder
   embedLine: string;                   // one line for the user's own reminder, at most 200 characters
@@ -308,7 +306,7 @@ type Repeat = { frequency: "daily"; interval: number; count: number };   // ever
 ```
 
 - itemKey: the pattern key for a mistake; "word:" + the normalized term for a word; "phrase:" + the normalized phrase for a phrase; "rewrite:" + the first 16 hex characters of SHA-256 of the normalized original for a rewrite.
-- marker: the first 8 hex characters of SHA-256 of "<language>:<itemKey>". The same item in the same language always has the same marker. The app attaches it, hidden from the user, to every reminder it creates and every line it adds, and finds earlier placements by it. The hidden marker travels with the reminder through iCloud, so every device of the user finds it.
+- marker: the first 8 hex characters of SHA-256 of "<language>:<itemKey>". The same item in the same language always has the same marker. The app attaches it, hidden from the user, to every reminder it creates and every line it adds, and finds earlier placements by it. The hidden marker travels with the reminder through iCloud, so every device of the user finds it. How the app hides it: docs/ios/reminders.md.
 
 Text normalization
 
@@ -400,14 +398,13 @@ type PutDeviceBody = {
   apnsEnvironment: "sandbox" | "production" | null;   // null exactly when apnsToken is null
   remindersAccess: RemindersAccess;
   notificationsAccess: NotificationsAccess;
-  pushTypes?: PushType[];              // 1 or 2 different values; default both
 };
 ```
 
 - PUT /api/devices/:installationId PutDeviceBody → 200 `{ device: Device }`. Creates or updates the device of the current user. The app calls it after sign-in, on every launch, and whenever the APNs token or a permission changes. A device registered by another user moves to the current user. A new or changed APNs token makes pushEnabled true again.
 - GET /api/devices → 200 `{ devices: Device[] }`.
 - DELETE /api/devices/:installationId → 204. The app calls it before signing out.
-- POST /api/devices/:installationId/test-push → 202 `{ ok: true }`. Sends a test alert push to that device. Errors: not_found, push_not_configured.
+- POST /api/devices/:installationId/test-push → 202 `{ ok: true }`. Sends the test push (silent) to that device. Errors: not_found, push_not_configured.
 
 Endpoints: recommendations and deliveries
 
@@ -435,48 +432,30 @@ type DeliveryResult = {
 
 How the app applies a delivery
 
-The app needs full access to Reminders. It reads the incomplete reminders of all lists and all reminders of the MOZOL list, and applies each delivery in claim order. The first step that fits decides the outcome.
+The app needs full access to Reminders. It reads the reminders of all lists and applies each delivery in claim order. There is no list of MOZOL's own: the app works with all of the user's reminders. It tells the reminders it created and the lines it added from everything else by hidden tags that carry the marker (docs/ios/reminders.md). The first step that fits decides the outcome.
 
-1. embed_updated (only when embedInMyReminders is true): incomplete reminders outside the MOZOL list that hold a line the app added with this marker. In each, replace that line with embedLine.
-2. reminder_updated: a reminder in the MOZOL list (completed or not) that the app created with this marker. Set its title, notes, URL and priority, apply the schedule, and mark it not completed.
-3. embedded (only when embedInMyReminders is true): the best incomplete reminder outside the MOZOL list. Its score is the number of matchTerms that match its title and notes, without the lines the app added. The best one has the highest score of at least 1; ties go to the most recently modified reminder, then to the smaller calendarItemIdentifier. Append embedLine as the last line of its notes: remove trailing line breaks, then add "\n" and embedLine (empty notes become embedLine alone). Nothing else changes.
-4. created: create a reminder in the MOZOL list (create the list when it is missing) with title, notes, URL (the recommendation url) and priority, and apply the schedule.
+1. embed_updated (only when embedInMyReminders is true): incomplete reminders the app did not create that hold a line the app added with this marker. In each, replace that line with embedLine.
+2. reminder_updated: a reminder the app created with this marker, in any list, completed or not; when there are several, the most recently modified one. Set its title, notes, URL and priority, apply the schedule, and mark it not completed.
+3. embedded (only when embedInMyReminders is true): the best incomplete reminder the app did not create. Its score is the number of matchTerms that match its title and notes, without the lines the app added. The best one has the highest score of at least 1; ties go to the most recently modified reminder, then to the smaller calendarItemIdentifier. Append embedLine as the last line of its notes: remove trailing line breaks, then add "\n" and embedLine (empty notes become embedLine alone). Nothing else changes.
+4. created: create a reminder in the user's default list for new reminders (the one set in the Reminders app) with title, notes, URL (the recommendation url) and priority, and apply the schedule.
 
 - Applying a schedule: due date components from dueAt in the schedule's time zone, one alarm at the due time, the repeat rule (or none), not completed.
 - The app reports each outcome with POST /api/deliveries/results. failed covers anything that stopped the delivery; the worker hands it out again, up to 3 failed results in total.
 - The worker never receives the user's reminders, their titles, notes or identifiers.
-- A notification service extension claims deliveries only when it can apply them with EventKit in its own process.
+- The app applies deliveries in its own process: in the foreground, or when a silent push or the background task wakes it. There is no notification service extension.
 
 Push notifications
 
-A push only says "deliveries are waiting". It can be late, merged or dropped, so the app also claims deliveries on every launch and every return to the foreground. The worker sends pushes through APNs to every device of the user that has an APNs token, to the host that matches the device's apnsEnvironment. Custom keys sit next to `aps` under `mozol`: `v` (payload version, 1) and `type`.
+Every push is a silent background push: the user sees nothing. A push only says "deliveries are waiting". It can be late, merged or dropped (iOS wakes an app in the background a few times per hour at most, and not at all after the user swipes it away), so the app also claims deliveries on every launch and every return to the foreground. The worker sends pushes through APNs to every device of the user that has an APNs token, to the host that matches the device's apnsEnvironment. Custom keys sit next to `aps` under `mozol`: `v` (payload version, 1) and `type`.
 
-When an analysis or a "send to phone" creates deliveries, the worker sends two pushes to each device whose pushTypes allow them.
-
-Alert push. The app's notification service extension (or the app, when it is open) claims and applies the deliveries.
-
-```json
-{
-  "aps": {
-    "alert": { "title": "<title>", "body": "<body>" },
-    "sound": "default",
-    "mutable-content": 1,
-    "thread-id": "mozol"
-  },
-  "mozol": { "v": 1, "type": "deliveries", "pending": 2, "transcriptId": "trn_01JB..." }
-}
-```
-
-Headers: apns-push-type alert, apns-priority 10, apns-topic the device's bundle id, apns-collapse-id the transcript id (or the recommendation id for "send to phone"), apns-expiration 24 hours ahead. transcriptId is null for "send to phone".
-
-Background push. iOS may wake the app for 30 seconds to claim and apply the deliveries.
+When an analysis or a "send to phone" creates deliveries, the worker sends one push to each device:
 
 ```json
 { "aps": { "content-available": 1 }, "mozol": { "v": 1, "type": "deliveries", "pending": 2 } }
 ```
 
-Headers: apns-push-type background, apns-priority 5, apns-topic the bundle id, apns-expiration 1 hour ahead.
+Headers: apns-push-type background, apns-priority 5, apns-topic the device's bundle id, apns-expiration 1 hour ahead.
 
-- type "test": the test push from the web app, alert shape only, without pending.
-- Alert texts come from worker/src/copy.ts.
+- type "test": the test push from the web app, the same shape without pending: `{ "aps": { "content-available": 1 }, "mozol": { "v": 1, "type": "test" } }`. The app logs it and shows the time of the last test push in Settings.
+- The app shows no notifications for pushes. Hint notifications are planned for the second version, inside a Shortcuts flow (docs/ios/shortcuts.md).
 - APNs answers 410 (Unregistered, ExpiredToken) or 400 BadDeviceToken: the worker stops pushing to that device until the app registers a new token.
