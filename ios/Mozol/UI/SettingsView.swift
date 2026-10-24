@@ -1,13 +1,11 @@
 import EventKit
 import MozolCore
 import SwiftUI
-import UserNotifications
 
 struct SettingsView: View {
     @Environment(SessionStore.self) private var session
     @Environment(AppEventHandler.self) private var events
     @Environment(DeviceRegistration.self) private var push
-    @Environment(NotificationPermission.self) private var notifications
     @Environment(RemindersStore.self) private var reminders
     @Environment(DeliverySync.self) private var sync
     @Environment(\.appConfig) private var config
@@ -33,8 +31,6 @@ struct SettingsView: View {
                     }
 
                     section("Permissions") {
-                        CardRow(label: "Notifications") { Text(notificationStatus) }
-                        CardDivider()
                         CardRow(label: "Reminders") { Text(remindersStatus) }
                     } footer: {
                         Button("Open Settings") { openURL(URL(string: UIApplication.openSettingsURLString)!) }
@@ -101,7 +97,6 @@ struct SettingsView: View {
         }
         .task(id: scenePhase) {
             guard scenePhase == .active else { return }
-            await notifications.refresh()
             reminders.refreshAuthorization()
         }
     }
@@ -116,17 +111,6 @@ struct SettingsView: View {
             VStack(spacing: 0) { content() }
                 .card()
             footer()
-        }
-    }
-
-    private var notificationStatus: LocalizedStringKey {
-        switch notifications.status {
-        case .authorized: "Allowed"
-        case .denied: "Not allowed"
-        case .notDetermined: "Not asked yet"
-        case .provisional: "Quiet only"
-        case .ephemeral: "Temporary"
-        @unknown default: "Not asked yet"
         }
     }
 

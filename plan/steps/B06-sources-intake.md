@@ -4,7 +4,7 @@ Track: backend. Depends on: B04. Runs at the same time as B05. Next: B08 (B07 ca
 
 Goal
 
-Users connect sources and get webhook URLs. Jamie, the JSON webhook and pasted text turn into stored transcripts, with the user's speaker found or asked for. Each new transcript starts an AnalyzeTranscript workflow run (the workflow steps come in B08).
+Users connect sources and get webhook URLs. Jamie, the JSON webhook and pasted text turn into stored transcripts, with the user's speaker found by the rules or left for the model (B08). Each new transcript starts an AnalyzeTranscript workflow run (the workflow steps come in B08).
 
 Read first
 
@@ -28,7 +28,7 @@ Do
    - GET /api/sources (from the registry).
    - Connections: GET, POST (makes the hook token: 32 random bytes in base64url), PATCH (label, status, signingSecret), POST rotate, DELETE, GET events (newest 20). webhookUrl is APP_ORIGIN + "/api/hooks/<source>/<token>". Connections of another user answer 404.
    - POST /api/hooks/:source/:token: intake steps 1 to 8 of docs/backend/pipeline.md with the exact answers of the contract. Every request with a known token gets a hook_events row, also the refused ones. Rate limit HOOK_LIMITER: 60 per minute per token. Update the connection's last_event_* columns on every event.
-   - POST /api/transcripts (paste), GET /api/transcripts (paged by occurredAt), GET /api/transcripts/:id (speakers with word count and up to 3 first lines, segments; analysis null and reminders [] until B08 and B09), POST /api/transcripts/:id/speaker (sets learner_speaker_id, saves the speaker's name into the user's speakerNames when it is missing and not a placeholder, starts the analysis; 409 transcript_busy while queued or analyzing and changed less than 30 minutes ago).
+   - POST /api/transcripts (paste), GET /api/transcripts (paged by occurredAt), GET /api/transcripts/:id (segments; analysis null and reminders [] until B08 and B09). There is no speaker endpoint: the user never chooses a speaker.
 6. Logs: one line per hook event with rid, connection id, outcome, error code and size. Never the body.
 
 Checks
@@ -38,8 +38,8 @@ Checks
   - the same delivery again gives 200 duplicate with the same transcript id;
   - with a signing secret: a valid signature passes; a wrong one, a missing one and one older than 2 hours give 401 signature_invalid;
   - a paused connection gives 403 hook_paused; an unknown token or a token of another source gives 404 hook_not_found and no hook event; more than 1,000,000 bytes gives 413 with an empty stored body; another content type gives 415; broken JSON gives 400 bad_json; a body without a transcript gives 422 payload_invalid; segments over 1,500,000 bytes as JSON give 422; every refused request with a known token has a hook_events row with outcome refused and its error code;
-  - the unknown-speakers fixture gives status needs_speaker; choosing "Speaker 2" starts the analysis and does not add "Speaker 2" to speakerNames; a later transcript with a speaker named "Speaker 2" is not matched by name;
-  - two speakers that both match a speaker name give needs_speaker;
+  - the unknown-speakers fixture is queued with learner_speaker_id null (the model chooses in B08); a speaker named "Speaker 2" is never matched by name;
+  - two speakers that both match one of the user's names give learner_speaker_id null;
   - the paste fixture (kind call) and a paste without names (kind text, the user is the only speaker); the json fixture with learnerSpeaker;
   - a failing workflow create (stub the binding) leaves the transcript failed with internal and still answers 202;
   - connections: create, rename, pause, rotate (the old URL then gives 404), delete (transcripts keep connectionId null), events list;

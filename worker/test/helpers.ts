@@ -71,7 +71,6 @@ export function signUpBody(overrides: Record<string, unknown> = {}) {
     password: PASSWORD,
     displayName: "Petr",
     nativeLanguage: "ru",
-    timezone: "Europe/Berlin",
     ...overrides,
   };
 }

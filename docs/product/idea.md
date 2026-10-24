@@ -1,6 +1,6 @@
 Idea
 
-MOZOL helps a person learn a language through small, frequent reminders. A word, a phrase or a short rule appears again and again in places the person already looks at — notifications, the lock screen, the home screen. The name comes from the Russian "мозолить глаза": to be in front of your eyes all the time.
+MOZOL helps a person learn a language through small, frequent reminders. A word, a phrase or a short rule appears again and again in places the person already looks at — the Reminders app and its alerts. The name comes from the Russian "мозолить глаза": to be in front of your eyes all the time.
 
 - A reminder is small: its title teaches one thing in a few seconds.
 - Repetition does the work. The same item comes back until the person knows it.

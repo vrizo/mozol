@@ -66,7 +66,7 @@ function SendToPhone({
   );
 }
 
-function DeliveryLine({ recommendation }: { recommendation: Recommendation }) {
+export function DeliveryLine({ recommendation }: { recommendation: Recommendation }) {
   const { delivery } = recommendation;
   return (
     <p className="delivery-line">
@@ -233,10 +233,6 @@ function DeviceCard({ device }: { device: Device }) {
         <div>
           <dt>{d.reminders}</dt>
           <dd>{d.remindersAccess[device.remindersAccess]}</dd>
-        </div>
-        <div>
-          <dt>{d.notifications}</dt>
-          <dd>{d.notificationsAccess[device.notificationsAccess]}</dd>
         </div>
         <div>
           <dt>{d.lastContact}</dt>

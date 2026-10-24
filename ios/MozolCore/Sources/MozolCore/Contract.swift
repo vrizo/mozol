@@ -32,7 +32,6 @@ public struct User: Codable, Equatable, Sendable {
     public let displayName: String
     public let nativeLanguage: String
     public let speakerNames: [String]
-    public let timezone: String
     public let reminderSettings: ReminderSettings
     public let createdAt: String
 }
@@ -62,10 +61,6 @@ public enum RemindersAccess: String, Codable, Sendable {
     case full, writeOnly = "write_only", denied, restricted, notDetermined = "not_determined"
 }
 
-public enum NotificationsAccess: String, Codable, Sendable {
-    case authorized, provisional, ephemeral, denied, notDetermined = "not_determined"
-}
-
 public enum APNsEnvironment: String, Codable, Sendable { case sandbox, production }
 
 public struct PutDeviceBody: Codable, Equatable, Sendable {
@@ -73,32 +68,26 @@ public struct PutDeviceBody: Codable, Equatable, Sendable {
     public let bundleId: String
     public let appVersion: String?
     public let osVersion: String?
-    public let timezone: String
     public let apnsToken: String?
     public let apnsEnvironment: APNsEnvironment?
     public let remindersAccess: RemindersAccess
-    public let notificationsAccess: NotificationsAccess
 
     /// apnsEnvironment is sent only together with a token, as the contract requires.
     public init(
         bundleId: String,
         appVersion: String?,
         osVersion: String?,
-        timezone: String,
         apnsToken: String?,
         environment: APNsEnvironment,
-        remindersAccess: RemindersAccess,
-        notificationsAccess: NotificationsAccess
+        remindersAccess: RemindersAccess
     ) {
         platform = "ios"
         self.bundleId = bundleId
         self.appVersion = appVersion
         self.osVersion = osVersion
-        self.timezone = timezone
         self.apnsToken = apnsToken
         apnsEnvironment = apnsToken == nil ? nil : environment
         self.remindersAccess = remindersAccess
-        self.notificationsAccess = notificationsAccess
     }
 
     /// Nulls are written out: a `T | null` field is always present.
@@ -108,11 +97,9 @@ public struct PutDeviceBody: Codable, Equatable, Sendable {
         try container.encode(bundleId, forKey: .bundleId)
         try container.encode(appVersion, forKey: .appVersion)
         try container.encode(osVersion, forKey: .osVersion)
-        try container.encode(timezone, forKey: .timezone)
         try container.encode(apnsToken, forKey: .apnsToken)
         try container.encode(apnsEnvironment, forKey: .apnsEnvironment)
         try container.encode(remindersAccess, forKey: .remindersAccess)
-        try container.encode(notificationsAccess, forKey: .notificationsAccess)
     }
 }
 
@@ -176,9 +163,11 @@ public struct Repeat: Codable, Equatable, Sendable {
 }
 
 public struct DeliverySchedule: Codable, Equatable, Sendable {
-    /// ISO 8601 with the user's UTC offset.
-    public let dueAt: String
-    public let timezone: String
+    /// UTC ISO 8601 with milliseconds.
+    public let earliestAt: String
+    /// "HH:MM" in the phone's current time zone.
+    public let activeFrom: String
+    public let activeTo: String
     public let `repeat`: Repeat?
 }
 

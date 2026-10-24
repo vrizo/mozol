@@ -17,7 +17,6 @@ final class AppEnvironment {
     let modelContainer: ModelContainer
     let session: SessionStore
     let api: APIClient
-    let notifications: NotificationPermission
     let reminders: RemindersStore
     let devices: DeviceRegistration
     let sync: DeliverySync
@@ -38,11 +37,9 @@ final class AppEnvironment {
         }
         session = SessionStore(keychain: Keychain(service: keychainService), defaults: defaults)
         api = APIClient(baseURL: config.baseURL, urlSession: urlSession, token: { [session] in session.token })
-        notifications = NotificationPermission()
         reminders = RemindersStore()
         devices = DeviceRegistration(
-            api: api, session: session, defaults: defaults, environment: config.apnsEnvironment,
-            notifications: notifications, reminders: reminders
+            api: api, session: session, defaults: defaults, environment: config.apnsEnvironment, reminders: reminders
         )
         sync = DeliverySync(api: api, session: session, reminders: reminders, context: modelContainer.mainContext, defaults: defaults)
         events = AppEventHandler(api: api, session: session, sync: sync, devices: devices)

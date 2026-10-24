@@ -1,6 +1,6 @@
 import { introspectWorkflow } from "cloudflare:test";
 import { env } from "cloudflare:workers";
-import { ConnectionsResponse, HookResponse, UserResponse } from "shared";
+import { ConnectionsResponse, HookResponse } from "shared";
 import meeting from "shared/fixtures/jamie/meeting-completed.json";
 import meetingUnknown from "shared/fixtures/jamie/meeting-completed-unknown-speakers.json";
 import jsonTranscript from "shared/fixtures/json/transcript.json";
@@ -212,35 +212,17 @@ describe("POST /api/hooks/jamie/:token", () => {
     expect(await lastHookEvent(connection.id)).toMatchObject({ outcome: "ignored", error_code: null });
   });
 
-  it("waits for the speaker when Jamie does not know the voices", async () => {
+  it("starts the analysis without a learner when Jamie does not know the voices", async () => {
     const { cookie } = await signUp({ displayName: "Petr" });
+    await call("/api/me", { method: "PATCH", cookie, body: { speakerNames: ["Petr", "Speaker 2"] } });
     const connection = await connect(cookie, "jamie");
-    const raw = JSON.stringify(meetingUnknown);
-    const transcriptId = await accepted(await postHook(hookPath(connection), raw));
-    expect(await storedTranscript(transcriptId)).toMatchObject({
-      status: "needs_speaker",
-      learner_speaker_id: null,
-      run: 0,
-    });
-
-    const chosen = await call(`/api/transcripts/${transcriptId}/speaker`, {
-      cookie,
-      body: { speakerId: "2" },
-    });
-    expect(chosen.status).toBe(200);
+    const transcriptId = await accepted(await postHook(hookPath(connection), JSON.stringify(meetingUnknown)));
+    // A saved "Speaker 2" never matches a placeholder name.
     expect(await storedTranscript(transcriptId)).toMatchObject({
       status: "queued",
-      learner_speaker_id: "2",
+      learner_speaker_id: null,
       run: 1,
     });
-    const me = UserResponse.parse(await (await call("/api/me", { cookie })).json());
-    expect(me.user.speakerNames).toEqual(["Petr"]);
-
-    // Saved by hand, "Speaker 2" still never matches a placeholder name.
-    await call("/api/me", { method: "PATCH", cookie, body: { speakerNames: ["Petr", "Speaker 2"] } });
-    const later = { ...meetingUnknown, metadata: { ...meetingUnknown.metadata, id: crypto.randomUUID() } };
-    const laterId = await accepted(await postHook(hookPath(connection), JSON.stringify(later)));
-    expect((await storedTranscript(laterId)).status).toBe("needs_speaker");
   });
 
   it("leaves the transcript failed with internal when the workflow cannot start, and still answers 202", async () => {
@@ -296,7 +278,7 @@ describe("POST /api/hooks/json/:token", () => {
     });
   });
 
-  it("waits for the speaker when two speakers match a speaker name", async () => {
+  it("starts the analysis without a learner when two speakers match a speaker name", async () => {
     const { cookie } = await signUp({ displayName: "Petr" });
     const connection = await connect(cookie, "json");
     const body = {
@@ -306,7 +288,10 @@ describe("POST /api/hooks/json/:token", () => {
       ],
     };
     const transcriptId = await accepted(await postHook(hookPath(connection), JSON.stringify(body)));
-    expect((await storedTranscript(transcriptId)).status).toBe("needs_speaker");
+    expect(await storedTranscript(transcriptId)).toMatchObject({
+      status: "queued",
+      learner_speaker_id: null,
+    });
   });
 
   it("refuses segments over 1,500,000 bytes as JSON with 422", async () => {

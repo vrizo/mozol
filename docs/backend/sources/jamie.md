@@ -52,6 +52,6 @@ Mapping
 - A body without data.transcript, or with no segment that has text, is refused with 422 payload_invalid. The raw body stays in hook_events.
 - Speaker names of the form "Speaker <number>", including "Speaker -1", are placeholder names (../../product/sources.md).
 
-Speakers Jamie does not know yet are named "Speaker 0", "Speaker 1", "Speaker 2". Jamie asks the user to name them after the meeting, and the webhook does not repeat the event after that. Such a transcript usually waits for "Which speaker are you?" (../../product/sources.md).
+Speakers Jamie does not know yet are named "Speaker 0", "Speaker 1", "Speaker 2". Jamie asks the user to name them after the meeting, and the webhook does not repeat the event after that. For such a transcript the model usually chooses the user's speaker (../../product/sources.md).
 
-Speaker -1 (speakerId "-1", name "Speaker -1") holds turns that Jamie gave to no voice. Usually these are short replies such as "Mm-hm." or "Yes. True.". When Jamie tells no voices apart, the whole recording comes as one Speaker -1 turn with several people in it (shared/fixtures/jamie/real/meeting-completed-unknown-speakers.json). How the speaker choice treats Speaker -1 is open (../../product/pending.md).
+Speaker -1 (speakerId "-1", name "Speaker -1") holds turns that Jamie gave to no voice. Usually these are short replies such as "Mm-hm." or "Yes. True.". When Jamie tells no voices apart, the whole recording comes as one Speaker -1 turn with several people in it (shared/fixtures/jamie/real/meeting-completed-unknown-speakers.json). Whether the model's choice should skip Speaker -1 is open (../../product/pending.md).

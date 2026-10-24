@@ -1,14 +1,12 @@
 // Users, reminder settings, and the /api/auth and /api/me endpoints.
 import { z } from "zod";
-import { Id, InstallationId, LanguageCode, Time, Timezone } from "./common";
+import { ClockTime, Id, InstallationId, LanguageCode, Time } from "./common";
 
 const DisplayName = z.string().min(1).max(80);
 const SpeakerName = z.string().min(1).max(80);
 const Password = z.string().min(10).max(200);
 // Sign-in and account deletion answer invalid_credentials for a wrong password, so only the size is checked.
 const GivenPassword = z.string().min(1).max(200);
-// "HH:MM", local time.
-const ClockTime = z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/);
 
 export const ReminderSettings = z
   .strictObject({
@@ -30,7 +28,6 @@ export const User = z.strictObject({
   displayName: DisplayName,
   nativeLanguage: LanguageCode,
   speakerNames: z.array(SpeakerName).max(10),
-  timezone: Timezone,
   reminderSettings: ReminderSettings,
   createdAt: Time,
 });
@@ -44,7 +41,6 @@ export const SignUpBody = z.strictObject({
   password: Password,
   displayName: DisplayName,
   nativeLanguage: LanguageCode,
-  timezone: Timezone,
 });
 export type SignUpBody = z.infer<typeof SignUpBody>;
 
@@ -68,7 +64,6 @@ export const PatchMeBody = z.strictObject({
   displayName: DisplayName.optional(),
   nativeLanguage: LanguageCode.optional(),
   speakerNames: z.array(SpeakerName).max(10).optional(),
-  timezone: Timezone.optional(),
   reminderSettings: ReminderSettings.optional(),
 });
 export type PatchMeBody = z.infer<typeof PatchMeBody>;

@@ -20,7 +20,6 @@ meRoutes.patch("/", requireUser, async (c) => {
   if (body.displayName !== undefined) changes.push(["display_name", body.displayName]);
   if (body.nativeLanguage !== undefined) changes.push(["native_language", body.nativeLanguage]);
   if (body.speakerNames !== undefined) changes.push(["speaker_names", writeJson(body.speakerNames)]);
-  if (body.timezone !== undefined) changes.push(["timezone", body.timezone]);
   if (body.reminderSettings !== undefined) {
     changes.push(["reminder_settings", reminderSettingsColumn(body.reminderSettings)]);
   }

@@ -1,14 +1,12 @@
-// /api/transcripts: paste, list, read and choose the user's speaker (shared/CONTRACT.md, "Endpoints: transcripts").
+// /api/transcripts: paste, list and read transcripts (shared/CONTRACT.md, "Endpoints: transcripts").
 import { Hono } from "hono";
 import {
   PageQuery,
   PasteTranscriptBody,
-  SpeakerBody,
   Time,
   TranscriptDetailResponse,
   TranscriptResponse,
   TranscriptsPage,
-  type User,
 } from "shared";
 import { requireUser } from "../auth/session";
 import {
@@ -18,21 +16,12 @@ import {
   type TranscriptRow,
   transcriptFromRow,
 } from "../db/transcripts";
-import type { AppEnv, Env } from "../env";
+import type { AppEnv } from "../env";
 import { ApiError, parseInput, readJson } from "../errors";
-import { log } from "../log";
 import { storeTranscript } from "../pipeline/intake";
-import { startAnalysis } from "../pipeline/start";
-import { nameKey, speakersOf } from "../sources/learner";
 import { pasteAdapter, pasteTranscript } from "../sources/paste";
-import { sourceById } from "../sources/registry";
-import type { SourceAdapter } from "../sources/types";
-import { addSeconds, nowIso } from "../time";
+import { nowIso } from "../time";
 
-// Choosing a speaker waits while a run is queued or analyzing and changed less than 30 minutes ago.
-const BUSY_SECONDS = 30 * 60;
-const MAX_SPEAKER_NAMES = 10;
-const MAX_SPEAKER_NAME_LENGTH = 80;
 const TRANSCRIPT_ID = /^trn_[0-9A-HJKMNP-TV-Z]{26}$/;
 
 export const transcriptRoutes = new Hono<AppEnv>();
@@ -88,71 +77,12 @@ transcriptRoutes.get("/:id", requireUser, async (c) => {
   const segments = readSegments(row.segments);
   const transcript = {
     ...transcriptFromRow(row),
-    speakers: speakersOf(segments),
     segments,
     analysis: null,
     recommendations: [],
   };
   return c.json(TranscriptDetailResponse.parse({ transcript }));
 });
-
-// Makes the speaker the learner, saves its name as a speaker name of the user and starts the analysis.
-transcriptRoutes.post("/:id/speaker", requireUser, async (c) => {
-  const body = await readJson(c, SpeakerBody);
-  const row = await c.env.DB.prepare(
-    "SELECT id, source, segments FROM transcripts WHERE id = ? AND user_id = ?",
-  )
-    .bind(c.req.param("id"), c.var.user.id)
-    .first<{ id: string; source: string; segments: string }>();
-  if (row === null) throw new ApiError(404, "not_found");
-  const speaker = speakersOf(readSegments(row.segments)).find((s) => s.id === body.speakerId);
-  if (speaker === undefined) {
-    throw new ApiError(400, "validation_failed", [{ path: "speakerId", code: "invalid_value" }]);
-  }
-  const adapter = sourceById(row.source);
-  if (adapter === null) throw new Error(`speaker: no adapter for source ${row.source}`);
-
-  const now = nowIso();
-  const updated = await c.env.DB.prepare(
-    `UPDATE transcripts SET learner_speaker_id = ?, learner_word_count = ?, updated_at = ?
-     WHERE id = ? AND NOT (status IN ('queued', 'analyzing') AND updated_at > ?)
-     RETURNING id`,
-  )
-    .bind(speaker.id, speaker.wordCount, now, row.id, addSeconds(now, -BUSY_SECONDS))
-    .first<{ id: string }>();
-  if (updated === null) throw new ApiError(409, "transcript_busy");
-
-  await saveSpeakerName(c.env, c.get("rid"), c.var.user, adapter, speaker.name);
-  await startAnalysis(c.env, row.id, c.get("rid"));
-  const transcript = await findTranscript(c.env.DB, c.var.user.id, row.id);
-  if (transcript === null) throw new Error("speaker: the transcript does not exist after the update");
-  return c.json(TranscriptResponse.parse({ transcript: transcriptFromRow(transcript) }));
-});
-
-// Adds the name unless it is a placeholder or already saved. A name that does not fit the profile limits
-// (10 names of 1..80 characters) is not saved, and the log says why.
-async function saveSpeakerName(
-  env: Env,
-  rid: string,
-  user: User,
-  adapter: SourceAdapter,
-  name: string,
-): Promise<void> {
-  const clean = name.trim().replace(/\s+/g, " ");
-  if (clean === "" || adapter.isPlaceholderName(clean)) return;
-  if (user.speakerNames.some((saved) => nameKey(saved) === nameKey(clean))) return;
-  if (clean.length > MAX_SPEAKER_NAME_LENGTH || user.speakerNames.length >= MAX_SPEAKER_NAMES) {
-    const reason = clean.length > MAX_SPEAKER_NAME_LENGTH ? "too_long" : "list_full";
-    log(rid, "speaker_name_not_saved", { user: user.id, reason });
-    return;
-  }
-  await env.DB.prepare(
-    `UPDATE users SET speaker_names = json_insert(speaker_names, '$[#]', ?), updated_at = ?
-     WHERE id = ? AND json_array_length(speaker_names) < ?`,
-  )
-    .bind(clean, nowIso(), user.id, MAX_SPEAKER_NAMES)
-    .run();
-}
 
 function parseCursor(cursor: string): { occurredAt: string; id: string } {
   const split = cursor.indexOf("_");

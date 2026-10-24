@@ -1,42 +1,43 @@
-// Activity (the user's transcripts) and Transcript (one analysis) pages.
+// Activity (recommendations MOZOL put into the user's Reminders) and Transcript (one analysis) pages.
 
 import { useCallback, useEffect, useState } from "react";
 import type { Recommendation, Transcript, TranscriptDetail } from "shared";
 import {
   ApiError,
   analyzeAgain,
-  chooseSpeaker,
   deleteTranscript,
   deliverRecommendation,
+  getRecommendations,
   getTranscript,
-  getTranscripts,
 } from "../api";
 import { copy } from "../copy/en";
 import { canSend, deliveryText } from "../lib/deliveries";
 import { formatDateTime } from "../lib/format";
 import { languageName } from "../lib/languageName";
-import { anyBusy, formatDuration, groupFindings, isBusy } from "../lib/transcripts";
+import { formatDuration, groupFindings, isBusy } from "../lib/transcripts";
 import { usePolling } from "../lib/usePolling";
 import { Link, navigate, useRoute } from "../router";
 import { useUser } from "../session";
 import { Button, ConfirmDialog } from "../ui/controls";
 import { Empty, ErrorState, Loading, Notice, PageHeader } from "../ui/states";
 import { NotFoundState } from "./NotFound";
+import { DeliveryLine } from "./recommendations";
 import "./activity.css";
+import "./knowledge.css";
 
 const t = copy.transcript;
 const labels = copy.labels;
 
 export function ActivityPage() {
-  const [items, setItems] = useState<Transcript[] | null>(null);
+  const [items, setItems] = useState<Recommendation[] | null>(null);
   const [nextCursor, setNextCursor] = useState<string | null>(null);
   const [error, setError] = useState<unknown>(null);
-  const [moreBusy, setMoreBusy] = useState(false);
+  const [more, setMore] = useState<{ busy: boolean; error: unknown }>({ busy: false, error: null });
 
   const loadFirst = useCallback(async () => {
     setError(null);
     try {
-      const page = await getTranscripts();
+      const page = await getRecommendations(true);
       setItems(page.items);
       setNextCursor(page.nextCursor);
     } catch (e) {
@@ -51,9 +52,9 @@ export function ActivityPage() {
   // Polling refreshes the first page and keeps any older pages already loaded.
   const refresh = async () => {
     try {
-      const page = await getTranscripts();
+      const page = await getRecommendations(true);
       setItems((current) => {
-        const fresh = new Map(page.items.map((item) => [item.id, item]));
+        const fresh = new Set(page.items.map((item) => item.id));
         const older = (current ?? []).filter((item) => !fresh.has(item.id));
         return [...page.items, ...older];
       });
@@ -61,24 +62,20 @@ export function ActivityPage() {
       setError(e);
     }
   };
-  usePolling(refresh, 5000, items !== null && anyBusy(items));
+  usePolling(refresh, 5000, items !== null && error === null);
 
   const loadMore = async () => {
     if (!nextCursor) return;
-    setMoreBusy(true);
+    setMore({ busy: true, error: null });
     try {
-      const page = await getTranscripts(nextCursor);
+      const page = await getRecommendations(true, nextCursor);
       setItems((current) => [...(current ?? []), ...page.items]);
       setNextCursor(page.nextCursor);
+      setMore({ busy: false, error: null });
     } catch (e) {
-      setError(e);
-    } finally {
-      setMoreBusy(false);
+      setMore({ busy: false, error: e });
     }
   };
-
-  const replace = (transcript: Transcript) =>
-    setItems((current) => (current ?? []).map((item) => (item.id === transcript.id ? transcript : item)));
 
   return (
     <main id="main-content" className="page" tabIndex={-1}>
@@ -94,14 +91,15 @@ export function ActivityPage() {
         <ul className="list">
           {items.map((item) => (
             <li key={item.id}>
-              <TranscriptRow transcript={item} onChange={replace} />
+              <ActivityRow recommendation={item} />
             </li>
           ))}
         </ul>
       )}
+      {more.error !== null && <ErrorState what={copy.activity.load} error={more.error} />}
       {nextCursor && (
         <div className="actions activity-more">
-          <Button onClick={loadMore} busy={moreBusy}>
+          <Button onClick={loadMore} busy={more.busy}>
             {copy.common.loadMore}
           </Button>
         </div>
@@ -110,28 +108,22 @@ export function ActivityPage() {
   );
 }
 
-function TranscriptRow({
-  transcript,
-  onChange,
-}: {
-  transcript: Transcript;
-  onChange: (transcript: Transcript) => void;
-}) {
+function ActivityRow({ recommendation: r }: { recommendation: Recommendation }) {
   return (
-    <article className="card transcript-row">
-      <h2 className="transcript-row-title">
-        <Link href={`/activity/${transcript.id}`}>{transcript.title ?? copy.activity.untitled}</Link>
+    <article className="card knowledge-card">
+      <div className="knowledge-tags">
+        <span className="tag">{labels.recommendationKind[r.kind]}</span>
+        <span className="tag">{languageName(r.language)}</span>
+      </div>
+      <h2>
+        <Link href={`/r/${r.id}`}>{r.title}</Link>
       </h2>
-      <TranscriptMeta transcript={transcript} />
-      <StatusNote transcript={transcript} />
-      {transcript.status === "needs_speaker" && (
-        <SpeakerChoice transcriptId={transcript.id} onChosen={onChange} />
-      )}
+      <DeliveryLine recommendation={r} />
     </article>
   );
 }
 
-function TranscriptMeta({ transcript, learner }: { transcript: Transcript; learner?: boolean }) {
+function TranscriptMeta({ transcript }: { transcript: Transcript }) {
   return (
     <dl className="meta">
       <div>
@@ -148,7 +140,7 @@ function TranscriptMeta({ transcript, learner }: { transcript: Transcript; learn
           <dd>{formatDuration(transcript.durationSec)}</dd>
         </div>
       )}
-      {learner && transcript.language && (
+      {transcript.language && (
         <div>
           <dt>{t.language}</dt>
           <dd>{languageName(transcript.language)}</dd>
@@ -157,12 +149,10 @@ function TranscriptMeta({ transcript, learner }: { transcript: Transcript; learn
       <div>
         <dt>{t.status}</dt>
         <dd>
-          <span className={`tag${transcript.status === "needs_speaker" ? " tag-strong" : ""}`}>
-            {labels.transcriptStatus[transcript.status]}
-          </span>
+          <span className="tag">{labels.transcriptStatus[transcript.status]}</span>
         </dd>
       </div>
-      {learner && transcript.learnerSpeakerName && (
+      {transcript.learnerSpeakerName && (
         <div>
           <dt>{t.learner}</dt>
           <dd>{transcript.learnerSpeakerName}</dd>
@@ -180,84 +170,6 @@ function StatusNote({ transcript }: { transcript: Transcript }) {
     return <p className="danger-text">{labels.transcriptError(transcript.errorCode ?? "internal")}</p>;
   }
   return null;
-}
-
-// "Which speaker are you?": each speaker with word count and first lines, one button per speaker.
-function SpeakerChoice({
-  transcriptId,
-  onChosen,
-}: {
-  transcriptId: string;
-  onChosen: (transcript: Transcript) => void;
-}) {
-  const [speakers, setSpeakers] = useState<TranscriptDetail["speakers"] | null>(null);
-  const [loadError, setLoadError] = useState<unknown>(null);
-  const [sendError, setSendError] = useState<unknown>(null);
-  const [busyId, setBusyId] = useState<string | null>(null);
-
-  const load = useCallback(async () => {
-    setLoadError(null);
-    try {
-      setSpeakers((await getTranscript(transcriptId)).speakers);
-    } catch (e) {
-      setLoadError(e);
-    }
-  }, [transcriptId]);
-
-  useEffect(() => {
-    void load();
-  }, [load]);
-
-  const choose = async (speakerId: string) => {
-    setBusyId(speakerId);
-    setSendError(null);
-    try {
-      onChosen(await chooseSpeaker(transcriptId, speakerId));
-    } catch (e) {
-      setSendError(e);
-    } finally {
-      setBusyId(null);
-    }
-  };
-
-  return (
-    <fieldset className="speaker-choice">
-      <legend>{copy.activity.whichSpeaker}</legend>
-      {loadError !== null && (
-        <ErrorState what={copy.activity.loadSpeakers} error={loadError} onRetry={load} />
-      )}
-      {speakers === null && loadError === null && <Loading />}
-      {sendError !== null && <ErrorState what={copy.activity.chooseSpeaker} error={sendError} />}
-      {speakers && (
-        <ul className="speaker-list">
-          {speakers.map((speaker) => (
-            <li key={speaker.id} className="speaker">
-              <p className="speaker-name">
-                <strong>{speaker.name}</strong>{" "}
-                <span className="secondary-text small">{copy.activity.speakerWords(speaker.wordCount)}</span>
-              </p>
-              {speaker.firstLines.length > 0 && (
-                <blockquote className="speaker-lines">
-                  {speaker.firstLines.map((line, i) => (
-                    // biome-ignore lint/suspicious/noArrayIndexKey: lines have no id and never reorder
-                    <p key={i}>{line}</p>
-                  ))}
-                </blockquote>
-              )}
-              <Button
-                variant="primary"
-                busy={busyId === speaker.id}
-                disabled={busyId !== null}
-                onClick={() => choose(speaker.id)}
-              >
-                {copy.activity.thisIsMe(speaker.name)}
-              </Button>
-            </li>
-          ))}
-        </ul>
-      )}
-    </fieldset>
-  );
 }
 
 export function TranscriptPage() {
@@ -312,25 +224,15 @@ function TranscriptView({
   const native = user.nativeLanguage;
   const spoken = transcript.language ?? undefined;
   const result = transcript.analysis?.result ?? null;
-  const [changingSpeaker, setChangingSpeaker] = useState(false);
 
   return (
     <>
       <PageHeader title={transcript.title ?? copy.activity.untitled} />
-      <TranscriptMeta transcript={transcript} learner />
+      <TranscriptMeta transcript={transcript} />
 
       <div className="transcript-status">
         {isBusy(transcript.status) && <Notice>{t.working}</Notice>}
         <StatusNote transcript={transcript} />
-        {(transcript.status === "needs_speaker" || changingSpeaker) && (
-          <SpeakerChoice
-            transcriptId={transcript.id}
-            onChosen={() => {
-              setChangingSpeaker(false);
-              void reload();
-            }}
-          />
-        )}
       </div>
 
       {result?.status === "ok" && (
@@ -500,12 +402,7 @@ function TranscriptView({
         </details>
       </section>
 
-      <TranscriptActions
-        transcript={transcript}
-        reload={reload}
-        changingSpeaker={changingSpeaker}
-        toggleSpeaker={() => setChangingSpeaker(!changingSpeaker)}
-      />
+      <TranscriptActions transcript={transcript} reload={reload} />
     </>
   );
 }
@@ -578,13 +475,9 @@ function RecommendationsBlock({ recommendations }: { recommendations: Recommenda
 function TranscriptActions({
   transcript,
   reload,
-  changingSpeaker,
-  toggleSpeaker,
 }: {
   transcript: TranscriptDetail;
   reload: () => Promise<void>;
-  changingSpeaker: boolean;
-  toggleSpeaker: () => void;
 }) {
   const [analyzing, setAnalyzing] = useState(false);
   const [error, setError] = useState<{ what: string; error: unknown } | null>(null);
@@ -631,11 +524,6 @@ function TranscriptActions({
         <Button variant="primary" onClick={analyze} busy={analyzing} disabled={busy}>
           {t.analyzeAgain}
         </Button>
-        {transcript.status !== "needs_speaker" && transcript.speakers.length > 1 && (
-          <Button onClick={toggleSpeaker} disabled={busy} aria-expanded={changingSpeaker}>
-            {changingSpeaker ? t.hideSpeakers : t.changeSpeaker}
-          </Button>
-        )}
         <Button variant="danger" onClick={() => setConfirm(true)}>
           {t.deleteTranscript}
         </Button>

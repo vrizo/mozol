@@ -18,10 +18,10 @@ Do
    - common.ts: Id, Time, LanguageCode, Level, SourceId, SourceKind, the error code list, ErrorBody (with optional issues), a helper for paged responses.
    - accounts.ts: User, ReminderSettings (activeTo later than activeFrom), the bodies and responses of every /api/auth and /api/me endpoint.
    - sources.ts: Source, Connection, HookOutcome, HookEvent, connection bodies, the webhook responses, JsonSourceBody.
-   - transcripts.ts: TranscriptStatus, Transcript, TranscriptDetail, Analysis, the paste body, the speaker body.
+   - transcripts.ts: TranscriptStatus, Transcript, TranscriptDetail, Analysis, the paste body.
    - analysis.ts: Category, MatchTerm, Finding, WordSuggestion, Phrase, Rewrite, AnalysisResult, PATTERN_KEY (the regular expression from the contract) and the per-item limits (1 to 3 examples, 0 to 8 match terms, 1 to 8 for words, title at most 60 characters). The lists have no maximum length. Refinements: a finding's category equals the first part of its patternKey; patternKey values are unique in one result; word keys are unique in one result; the match term rules of the contract.
    - knowledge.ts: Pattern, Word, their PATCH bodies, the list queries (status, language).
-   - devices.ts: RemindersAccess, NotificationsAccess, Device, PutDeviceBody (apnsEnvironment is null exactly when apnsToken is null).
+   - devices.ts: RemindersAccess, Device, PutDeviceBody (apnsEnvironment is null exactly when apnsToken is null).
    - recommendations.ts: RecommendationKind, Recommendation, Delivery, DeliveryOutcome, Repeat, DeliveryItem, DeliveryResult, the claim and results bodies (with their size limits) and responses.
    - push.ts: the deliveries push and the test push payloads (both silent).
    Schemas follow the contract exactly: same field names, nullability, enums and limits. Request bodies are strict objects (unknown keys fail). Response schemas are strict too, so a worker that sends a wrong field fails its tests.

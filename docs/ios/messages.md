@@ -1,13 +1,13 @@
 Sync with the server
 
-The server reaches the app in two ways: a silent push and the deliveries claim (shared/CONTRACT.md, "Recommendations and deliveries" and "Push notifications"). The app shows no notifications for either.
+The server reaches the app in two ways: a silent push and the deliveries claim (shared/CONTRACT.md, "Recommendations and deliveries" and "Push notifications"). The app shows no notifications for either, and sends no notifications at all.
 
 Silent push
 
 - Every push from MOZOL is silent: `"aps": {"content-available": 1}`, no alert, no sound, no badge. There is no alert push and no notification service extension.
 - The app registers for remote notifications at every launch, signed in or not. A silent push needs no notification permission.
 - `mozol.type` "deliveries": the app claims and applies deliveries (below). "test": the app logs it, and Settings shows the time of the last test push.
-- The device goes to the server with PUT /api/devices/:installationId after sign-in, on every launch, and whenever the APNs token or a permission changes. Settings shows the token and whether the server accepted it.
+- The device goes to the server with PUT /api/devices/:installationId after sign-in, on every launch, and whenever the APNs token or the Reminders access changes. Settings shows the token and whether the server accepted it.
 - Device testing with a TestFlight build: push-testing.md.
 
 Claiming deliveries

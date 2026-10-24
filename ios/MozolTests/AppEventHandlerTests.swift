@@ -27,8 +27,8 @@ struct AppEventHandlerTests {
 
     private var installationID: String { environment.session.installationID }
 
-    private static let user = #"{"id":"usr_1","email":"learner@example.com","displayName":"Learner","nativeLanguage":"ru","speakerNames":["Learner"],"timezone":"Europe/Berlin","reminderSettings":{"embedInMyReminders":true,"intensity":"normal","activeFrom":"09:00","activeTo":"21:00"},"createdAt":"2026-10-24T12:00:00.000Z"}"#
-    private static let device = #"{"device":{"id":"dev_1","installationId":"x","platform":"ios","appVersion":null,"osVersion":null,"pushEnabled":false,"remindersAccess":"denied","notificationsAccess":"denied","lastSeenAt":"2026-10-24T12:00:00.000Z"}}"#
+    private static let user = #"{"id":"usr_1","email":"learner@example.com","displayName":"Learner","nativeLanguage":"ru","speakerNames":["Learner"],"reminderSettings":{"embedInMyReminders":true,"intensity":"normal","activeFrom":"09:00","activeTo":"21:00"},"createdAt":"2026-10-24T12:00:00.000Z"}"#
+    private static let device = #"{"device":{"id":"dev_1","installationId":"x","platform":"ios","appVersion":null,"osVersion":null,"pushEnabled":false,"remindersAccess":"denied","lastSeenAt":"2026-10-24T12:00:00.000Z"}}"#
 
     private func signIn() async throws {
         StubURLProtocol.route("POST /api/auth/app-token", 201, #"{"token":"tok_1","user":\#(Self.user)}"#)
@@ -55,7 +55,8 @@ struct AppEventHandlerTests {
         #expect(body["platform"] as? String == "ios")
         #expect(body["apnsToken"] is NSNull)
         #expect(body["apnsEnvironment"] is NSNull)
-        #expect(body["timezone"] as? String == TimeZone.current.identifier)
+        #expect(body["remindersAccess"] != nil)
+        #expect(body["timezone"] == nil && body["notificationsAccess"] == nil)
     }
 
     @Test func aRefusedCodeKeepsTheAppSignedOut() async {

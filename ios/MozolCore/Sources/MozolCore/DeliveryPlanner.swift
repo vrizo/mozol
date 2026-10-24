@@ -29,19 +29,35 @@ public struct ResolvedSchedule: Equatable, Sendable {
             && a.repeatRule?.interval == b.repeatRule?.interval && a.repeatRule?.count == b.repeatRule?.count
     }
 
-    public static func resolve(_ schedule: DeliverySchedule) throws(DeliveryPlanner.Failure) -> ResolvedSchedule {
-        guard let timeZone = TimeZone(identifier: schedule.timezone) else { throw .badSchedule }
-        guard let dueDate = parseTime(schedule.dueAt) else { throw .badSchedule }
+    /// The due time is earliestAt in `timeZone`; a time outside activeFrom..activeTo moves to the next activeFrom.
+    public static func resolve(_ schedule: DeliverySchedule, timeZone: TimeZone) throws(DeliveryPlanner.Failure) -> ResolvedSchedule {
+        guard let earliest = parseTime(schedule.earliestAt),
+              let from = parseClock(schedule.activeFrom),
+              let to = parseClock(schedule.activeTo),
+              from < to
+        else { throw .badSchedule }
         var calendar = Calendar(identifier: .gregorian)
         calendar.timeZone = timeZone
-        var components = calendar.dateComponents([.year, .month, .day, .hour, .minute], from: dueDate)
+
+        // Steps: whole minute at or after earliestAt, then the active window, then the components.
+        var due = calendar.dateInterval(of: .minute, for: earliest)!.start
+        if due < earliest { due = calendar.date(byAdding: .minute, value: 1, to: due)! }
+        let clock = calendar.dateComponents([.hour, .minute], from: due)
+        let minuteOfDay = clock.hour! * 60 + clock.minute!
+        if minuteOfDay < from || minuteOfDay > to {
+            let day = minuteOfDay < from ? due : calendar.date(byAdding: .day, value: 1, to: due)!
+            guard let moved = calendar.date(bySettingHour: from / 60, minute: from % 60, second: 0, of: day) else { throw .badSchedule }
+            due = moved
+        }
+        var components = calendar.dateComponents([.year, .month, .day, .hour, .minute], from: due)
         components.timeZone = timeZone
+
         var repeatRule: (Int, Int)?
         if let rule = schedule.repeat {
             guard rule.frequency == "daily", rule.interval >= 1, rule.count >= 1 else { throw .badSchedule }
             repeatRule = (rule.interval, rule.count)
         }
-        return ResolvedSchedule(dueDate: dueDate, dueComponents: components, repeatRule: repeatRule)
+        return ResolvedSchedule(dueDate: due, dueComponents: components, repeatRule: repeatRule)
     }
 
     /// ISO 8601 with an offset, with or without milliseconds.
@@ -51,6 +67,15 @@ public struct ResolvedSchedule: Equatable, Sendable {
         if let date = formatter.date(from: text) { return date }
         formatter.formatOptions = [.withInternetDateTime]
         return formatter.date(from: text)
+    }
+
+    /// "HH:MM" as minutes since midnight.
+    static func parseClock(_ text: String) -> Int? {
+        let parts = text.split(separator: ":", omittingEmptySubsequences: false)
+        guard parts.count == 2, parts.allSatisfy({ $0.count == 2 && $0.allSatisfy(\.isASCII) && $0.allSatisfy(\.isNumber) }),
+              let hour = Int(parts[0]), let minute = Int(parts[1]), hour < 24, minute < 60
+        else { return nil }
+        return hour * 60 + minute
     }
 }
 
@@ -105,7 +130,8 @@ public enum DeliveryPlanner {
     public static func plan(
         _ item: DeliveryItem,
         embedInMyReminders: Bool,
-        reminders: [ReminderSnapshot]
+        reminders: [ReminderSnapshot],
+        timeZone: TimeZone
     ) throws(Failure) -> DeliveryPlan {
         let rec = item.recommendation
         let tag: String
@@ -114,7 +140,7 @@ public enum DeliveryPlanner {
         } catch {
             throw .badMarker
         }
-        let schedule = try ResolvedSchedule.resolve(item.schedule)
+        let schedule = try ResolvedSchedule.resolve(item.schedule, timeZone: timeZone)
         let parsed = reminders.map { Parsed(reminder: $0, lines: HiddenTag.lines($0.notes)) }
         let taggedLine = rec.embedLine + tag
 

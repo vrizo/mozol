@@ -1,4 +1,5 @@
 // AnalyzeTranscript: the workflow that analyzes one transcript run (docs/backend/pipeline.md, "Workflow").
+// learner_speaker_id may be null at the start; the first step (speaker) must set it before buildModelInput runs.
 import { WorkflowEntrypoint, type WorkflowEvent, type WorkflowStep } from "cloudflare:workers";
 import { NonRetryableError } from "cloudflare:workflows";
 import type { Env } from "../env";

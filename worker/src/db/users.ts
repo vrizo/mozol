@@ -9,7 +9,6 @@ export type UserRow = {
   password_hash: string;
   display_name: string;
   native_language: string;
-  timezone: string;
   speaker_names: string;
   reminder_settings: string;
   created_at: string;
@@ -33,7 +32,6 @@ export function userFromRow(row: UserRow): User {
     displayName: row.display_name,
     nativeLanguage: row.native_language,
     speakerNames: readJson(row.speaker_names, SpeakerNamesColumn, "users.speaker_names"),
-    timezone: row.timezone,
     reminderSettings: {
       embedInMyReminders: settings.embed_in_my_reminders,
       intensity: settings.intensity,

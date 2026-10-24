@@ -1,4 +1,4 @@
-// Pure helpers of the Activity and Transcript pages.
+// Pure helpers of the Transcript page.
 import type { Category, Finding, Severity, Transcript } from "shared";
 
 const SEVERITY_ORDER: Record<Severity, number> = { high: 0, medium: 1, low: 2 };
@@ -22,10 +22,6 @@ export function groupFindings(findings: Finding[]): { category: Category; findin
 
 export function isBusy(status: Transcript["status"]): boolean {
   return status === "received" || status === "queued" || status === "analyzing";
-}
-
-export function anyBusy(transcripts: Pick<Transcript, "status">[]): boolean {
-  return transcripts.some((t) => isBusy(t.status));
 }
 
 // "45 s", "12 min", "1 h 05 min".

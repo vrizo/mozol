@@ -1,18 +1,9 @@
-// The user's iOS devices, their permissions and push registration.
+// The user's iOS devices, their Reminders access and push registration.
 import { z } from "zod";
-import { Id, InstallationId, Time, Timezone } from "./common";
+import { Id, InstallationId, Time } from "./common";
 
 export const RemindersAccess = z.enum(["full", "write_only", "denied", "restricted", "not_determined"]);
 export type RemindersAccess = z.infer<typeof RemindersAccess>;
-
-export const NotificationsAccess = z.enum([
-  "authorized",
-  "provisional",
-  "ephemeral",
-  "denied",
-  "not_determined",
-]);
-export type NotificationsAccess = z.infer<typeof NotificationsAccess>;
 
 export const Device = z.strictObject({
   id: Id,
@@ -23,7 +14,6 @@ export const Device = z.strictObject({
   // Has an APNs token that APNs did not reject.
   pushEnabled: z.boolean(),
   remindersAccess: RemindersAccess,
-  notificationsAccess: NotificationsAccess,
   lastSeenAt: Time,
 });
 export type Device = z.infer<typeof Device>;
@@ -34,14 +24,12 @@ export const PutDeviceBody = z
     bundleId: z.string().min(1).max(200),
     appVersion: z.string().min(1).max(50).nullable(),
     osVersion: z.string().min(1).max(50).nullable(),
-    timezone: Timezone,
     apnsToken: z
       .string()
       .regex(/^[0-9a-f]{64,200}$/)
       .nullable(),
     apnsEnvironment: z.enum(["sandbox", "production"]).nullable(),
     remindersAccess: RemindersAccess,
-    notificationsAccess: NotificationsAccess,
   })
   .refine((body) => (body.apnsToken === null) === (body.apnsEnvironment === null), {
     path: ["apnsEnvironment"],

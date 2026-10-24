@@ -3,7 +3,6 @@ import Foundation
 import MozolCore
 import Observation
 import UIKit
-import UserNotifications
 
 /// The APNs token and this device on the server (PUT /api/devices/:installationId): docs/ios/messages.md.
 @Observable
@@ -31,20 +30,17 @@ final class DeviceRegistration {
     @ObservationIgnored private let session: SessionStore
     @ObservationIgnored private let defaults: UserDefaults
     @ObservationIgnored private let environment: APNsEnvironment
-    @ObservationIgnored private let notifications: NotificationPermission
     @ObservationIgnored private let reminders: RemindersStore
     /// The body the server accepted last in this launch, so the first call of every launch sends.
     @ObservationIgnored private var accepted: PutDeviceBody?
     @ObservationIgnored private var isSending = false
     @ObservationIgnored private var sendAgain = false
 
-    init(api: APIClient, session: SessionStore, defaults: UserDefaults, environment: APNsEnvironment,
-         notifications: NotificationPermission, reminders: RemindersStore) {
+    init(api: APIClient, session: SessionStore, defaults: UserDefaults, environment: APNsEnvironment, reminders: RemindersStore) {
         self.api = api
         self.session = session
         self.defaults = defaults
         self.environment = environment
-        self.notifications = notifications
         self.reminders = reminders
         lastTestPush = defaults.object(forKey: Self.lastTestPushKey) as? Date
     }
@@ -83,7 +79,6 @@ final class DeviceRegistration {
         defer { isSending = false }
         repeat {
             sendAgain = false
-            await notifications.refresh()
             reminders.refreshAuthorization()
             let body = makeBody()
             guard body != accepted else { break }
@@ -128,11 +123,9 @@ final class DeviceRegistration {
             bundleId: Bundle.main.bundleIdentifier!,
             appVersion: version,
             osVersion: UIDevice.current.systemVersion,
-            timezone: TimeZone.current.identifier,
             apnsToken: tokenHex,
             environment: environment,
-            remindersAccess: Self.access(reminders.authorization),
-            notificationsAccess: Self.access(notifications.status)
+            remindersAccess: Self.access(reminders.authorization)
         )
     }
 
@@ -144,17 +137,6 @@ final class DeviceRegistration {
         case .restricted: .restricted
         case .notDetermined: .notDetermined
         @unknown default: fatalError("unknown EKAuthorizationStatus \(status.rawValue)")
-        }
-    }
-
-    static func access(_ status: UNAuthorizationStatus) -> NotificationsAccess {
-        switch status {
-        case .authorized: .authorized
-        case .provisional: .provisional
-        case .ephemeral: .ephemeral
-        case .denied: .denied
-        case .notDetermined: .notDetermined
-        @unknown default: fatalError("unknown UNAuthorizationStatus \(status.rawValue)")
         }
     }
 }

@@ -1,5 +1,6 @@
 // Stores a normalized transcript, finds the user's speaker and starts the analysis (docs/backend/pipeline.md,
-// "Intake", steps 5 to 8). The webhook route and the paste route both end here.
+// "Intake", steps 5 to 8). The webhook route and the paste route both end here. A transcript never waits for the
+// user: when no rule finds the learner, learner_speaker_id stays null and the workflow's speaker step chooses.
 import type { User } from "shared";
 import { byteLength, MAX_SEGMENTS_BYTES, participantsColumn, segmentsColumn } from "../db/transcripts";
 import type { Env } from "../env";
@@ -54,7 +55,7 @@ export async function storeTranscript(env: Env, rid: string, input: StoreInput):
       segments,
       learner?.speakerId ?? null,
       learner?.wordCount ?? null,
-      learner === null ? "needs_speaker" : "received",
+      "received",
       now,
       now,
     )
@@ -77,6 +78,6 @@ export async function storeTranscript(env: Env, rid: string, input: StoreInput):
     learnerFound: learner !== null,
     learnerWords: learner?.wordCount ?? null,
   });
-  if (learner !== null) await startAnalysis(env, id, rid);
+  await startAnalysis(env, id, rid);
   return { outcome: "accepted", transcriptId: id };
 }

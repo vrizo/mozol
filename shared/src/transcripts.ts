@@ -1,18 +1,10 @@
-// Transcripts, their analysis, and the paste and speaker endpoints.
+// Transcripts, their analysis, and the paste endpoint.
 import { z } from "zod";
 import { AnalysisResult } from "./analysis";
 import { Id, LanguageCode, paged, SourceId, SourceKind, Time } from "./common";
 import { Recommendation } from "./recommendations";
 
-export const TranscriptStatus = z.enum([
-  "received",
-  "needs_speaker",
-  "queued",
-  "analyzing",
-  "analyzed",
-  "skipped",
-  "failed",
-]);
+export const TranscriptStatus = z.enum(["received", "queued", "analyzing", "analyzed", "skipped", "failed"]);
 export type TranscriptStatus = z.infer<typeof TranscriptStatus>;
 
 export const TranscriptErrorCode = z.enum([
@@ -58,14 +50,6 @@ export const Analysis = z.strictObject({
 export type Analysis = z.infer<typeof Analysis>;
 
 export const TranscriptDetail = Transcript.extend({
-  speakers: z.array(
-    z.strictObject({
-      id: z.string().min(1),
-      name: z.string(),
-      wordCount: Count,
-      firstLines: z.array(z.string()).max(3),
-    }),
-  ),
   segments: z.array(
     z.strictObject({ speakerId: z.string().min(1), speakerName: z.string(), text: z.string() }),
   ),
@@ -91,6 +75,3 @@ export const PasteTranscriptBody = z.strictObject({
   text: z.string().min(1).max(400_000),
 });
 export type PasteTranscriptBody = z.infer<typeof PasteTranscriptBody>;
-
-export const SpeakerBody = z.strictObject({ speakerId: z.string().min(1) });
-export type SpeakerBody = z.infer<typeof SpeakerBody>;

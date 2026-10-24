@@ -68,7 +68,6 @@ describe("POST /api/auth/sign-up", () => {
       email: `${name.toLowerCase()}@example.com`,
       displayName: "Petr S.",
       nativeLanguage: "ru",
-      timezone: "Europe/Berlin",
       speakerNames: ["Petr S."],
       reminderSettings: {
         embedInMyReminders: true,
@@ -114,8 +113,6 @@ describe("POST /api/auth/sign-up", () => {
     ["password", { password: "short" }],
     ["displayName", { displayName: "" }],
     ["nativeLanguage", { nativeLanguage: "RU" }],
-    ["timezone", { timezone: "+02:00" }],
-    ["timezone", { timezone: "Mars/Olympus" }],
   ])("answers 400 validation_failed for a bad %s", async (path, overrides) => {
     const res = await call("/api/auth/sign-up", { body: signUpBody(overrides) });
     const body = await expectError(res, 400, "validation_failed");
@@ -369,7 +366,6 @@ describe("PATCH /api/me", () => {
       displayName: "Petr Shardakov",
       nativeLanguage: "uk",
       speakerNames: ["Petr", "Petr S."],
-      timezone: "America/New_York",
       reminderSettings: {
         embedInMyReminders: false,
         intensity: "intense",
@@ -398,7 +394,6 @@ describe("PATCH /api/me", () => {
   it.each([
     ["nativeLanguage", { nativeLanguage: "english" }],
     ["nativeLanguage", { nativeLanguage: "EN" }],
-    ["timezone", { timezone: "GMT+2" }],
     ["displayName", { displayName: "x".repeat(81) }],
     ["speakerNames", { speakerNames: Array.from({ length: 11 }, (_, i) => `Name ${i}`) }],
     ["speakerNames.0", { speakerNames: [""] }],
@@ -439,9 +434,9 @@ describe("DELETE /api/me", () => {
     await appCode(cookie);
     const now = nowIso();
     await env.DB.prepare(
-      `INSERT INTO devices (id, user_id, installation_id, platform, bundle_id, timezone, reminders_access,
-         notifications_access, last_seen_at, created_at, updated_at)
-       VALUES (?, ?, ?, 'ios', 'net.vrizo.mozol', 'Europe/Berlin', 'full', 'authorized', ?, ?, ?)`,
+      `INSERT INTO devices (id, user_id, installation_id, platform, bundle_id, reminders_access,
+         last_seen_at, created_at, updated_at)
+       VALUES (?, ?, ?, 'ios', 'net.vrizo.mozol', 'full', ?, ?, ?)`,
     )
       .bind(newId("dev"), user.id, `install-${user.id}`, now, now, now)
       .run();

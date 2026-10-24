@@ -40,7 +40,6 @@ const user = {
   displayName: "Petr Ivanov",
   nativeLanguage: "ru",
   speakerNames: ["Petr Ivanov"],
-  timezone: "Europe/Berlin",
   reminderSettings: { embedInMyReminders: true, intensity: "normal", activeFrom: "09:00", activeTo: "21:00" },
   createdAt: "2026-10-20T08:00:00.000Z",
 };
@@ -50,11 +49,9 @@ const device = {
   bundleId: "net.vrizo.mozol",
   appVersion: "1.0 (12)",
   osVersion: "26.1",
-  timezone: "Europe/Berlin",
   apnsToken: "a".repeat(64),
   apnsEnvironment: "sandbox",
   remindersAccess: "full",
-  notificationsAccess: "authorized",
 };
 
 describe("analysis result rules", () => {
@@ -280,7 +277,6 @@ describe("request and response rules", () => {
       password: "correct horse",
       displayName: "Petr",
       nativeLanguage: "ru",
-      timezone: "Europe/Berlin",
     };
     expect(issuesOf(SignUpBody, body)).toEqual([]);
     expect(
@@ -289,15 +285,8 @@ describe("request and response rules", () => {
         email: "petr",
         password: "short",
         nativeLanguage: "RU",
-        timezone: "Mars/Base",
       }),
-    ).toEqual([
-      "email: invalid_format",
-      "password: too_small",
-      "nativeLanguage: invalid_format",
-      "timezone: custom",
-    ]);
-    expect(issuesOf(SignUpBody, { ...body, timezone: "+02:00" })).toEqual(["timezone: invalid_format"]);
+    ).toEqual(["email: invalid_format", "password: too_small", "nativeLanguage: invalid_format"]);
   });
 
   test("queries: limit 1..100 with default 20, delivered is true or false", () => {

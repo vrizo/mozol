@@ -55,7 +55,6 @@ const rows = {
     password_hash: "pbkdf2-sha256$100000$c2FsdA==$aGFzaA==",
     display_name: "Test",
     native_language: "ru",
-    timezone: "Europe/Berlin",
     speaker_names: '["Petr"]',
     reminder_settings:
       '{"embed_in_my_reminders":true,"intensity":"normal","active_from":"09:00","active_to":"21:00"}',
@@ -169,9 +168,7 @@ const rows = {
     bundle_id: "net.vrizo.mozol",
     apns_token: "ab".repeat(32),
     apns_environment: "sandbox",
-    timezone: "Europe/Berlin",
     reminders_access: "full",
-    notifications_access: "authorized",
     last_seen_at: T0,
     created_at: T0,
     updated_at: T0,
@@ -403,7 +400,7 @@ describe("checks", () => {
   it.each([
     ["transcripts", "status", "done", "transcript"],
     ["deliveries", "status", "sent", "delivery"],
-    ["devices", "notifications_access", "allowed", "device"],
+    ["devices", "reminders_access", "allowed", "device"],
     ["push_log", "push_type", "alert", "push"],
     ["recommendations", "priority", 3, "recommendation"],
   ] as const)("%s.%s refuses %s", async (table, column, wrong, row) => {

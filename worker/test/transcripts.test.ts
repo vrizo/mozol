@@ -1,14 +1,7 @@
 import { env } from "cloudflare:workers";
-import {
-  type Transcript,
-  TranscriptDetailResponse,
-  TranscriptResponse,
-  TranscriptsPage,
-  UserResponse,
-} from "shared";
+import { type Transcript, TranscriptDetailResponse, TranscriptResponse, TranscriptsPage } from "shared";
 import pasteText from "shared/fixtures/paste/transcript.txt?raw";
 import { describe, expect, it } from "vitest";
-import { addSeconds, nowIso } from "../src/time";
 import { call, expectError, signUp } from "./helpers";
 import { storedTranscript } from "./hooks-helpers";
 
@@ -100,20 +93,13 @@ describe("GET /api/transcripts", () => {
 });
 
 describe("GET /api/transcripts/:id", () => {
-  it("shows speakers with word counts and first lines, and the segments", async () => {
+  it("shows the segments", async () => {
     const { cookie } = await signUp({ displayName: "Petr" });
     const { id } = await paste(cookie, { text: pasteText });
     const res = await call(`/api/transcripts/${id}`, { cookie });
     expect(res.status).toBe(200);
     const { transcript } = TranscriptDetailResponse.parse(await res.json());
-    expect(transcript.speakers.map((s) => [s.id, s.firstLines.length])).toEqual([
-      ["Maria Lopez", 3],
-      ["Petr", 3],
-    ]);
-    expect(transcript.speakers[1]?.firstLines[0]).toBe(
-      "Good morning. Yes, I have prepared the report for the actual quarter yesterday evening.",
-    );
-    expect(transcript.speakers[1]?.wordCount).toBe((await storedTranscript(id)).learner_word_count);
+    expect(transcript).not.toHaveProperty("speakers");
     expect(transcript.segments).toHaveLength(7);
     expect(transcript.segments[0]).toEqual({
       speakerId: "Maria Lopez",
@@ -131,80 +117,23 @@ describe("GET /api/transcripts/:id", () => {
   });
 });
 
-describe("POST /api/transcripts/:id/speaker", () => {
-  it("sets the learner, saves the speaker name and starts the analysis", async () => {
+describe("a transcript where no rule finds the user", () => {
+  it("starts the analysis with learner_speaker_id null", async () => {
     const { cookie } = await signUp({ displayName: "Petr" });
-    const { id, status } = await paste(cookie, { text: TWO_SPEAKERS });
-    expect(status).toBe("needs_speaker");
-
-    const res = await call(`/api/transcripts/${id}/speaker`, { cookie, body: { speakerId: "Boris" } });
-    expect(res.status).toBe(200);
-    const { transcript } = TranscriptResponse.parse(await res.json());
-    expect(transcript).toMatchObject({ status: "queued", learnerSpeakerName: "Boris" });
-    expect(await storedTranscript(id)).toMatchObject({
-      learner_speaker_id: "Boris",
-      learner_word_count: 5,
+    const transcript = await paste(cookie, { text: TWO_SPEAKERS });
+    expect(transcript).toMatchObject({ status: "queued", learnerSpeakerName: null });
+    expect(await storedTranscript(transcript.id)).toMatchObject({
+      status: "queued",
+      learner_speaker_id: null,
+      learner_word_count: null,
       run: 1,
     });
-    const me = UserResponse.parse(await (await call("/api/me", { cookie })).json());
-    expect(me.user.speakerNames).toEqual(["Petr", "Boris"]);
   });
 
-  it("does not save a name that is already saved, and not into a full list", async () => {
-    const { cookie } = await signUp({ displayName: "Petr" });
-    const names = ["boris", "A", "B", "C", "D", "E", "F", "G", "H"];
-    await call("/api/me", { method: "PATCH", cookie, body: { speakerNames: names } });
-    const first = await paste(cookie, { text: "Boris: Hello.\nAnna Berg: Hi.\nBoris Petrov: Hey." });
-    await call(`/api/transcripts/${first.id}/speaker`, { cookie, body: { speakerId: "Boris" } });
-    let me = UserResponse.parse(await (await call("/api/me", { cookie })).json());
-    expect(me.user.speakerNames).toEqual(names);
-
-    await call("/api/me", { method: "PATCH", cookie, body: { speakerNames: [...names, "I"] } });
-    const second = await paste(cookie, { text: "Anna Berg: Hi.\nCarla: Hey." });
-    const res = await call(`/api/transcripts/${second.id}/speaker`, {
-      cookie,
-      body: { speakerId: "Anna Berg" },
-    });
-    expect(res.status).toBe(200);
-    me = UserResponse.parse(await (await call("/api/me", { cookie })).json());
-    expect(me.user.speakerNames).toEqual([...names, "I"]);
-    expect((await storedTranscript(second.id)).learner_speaker_id).toBe("Anna Berg");
-  });
-
-  it("refuses an unknown speaker with validation_failed", async () => {
+  it("has no speaker endpoint", async () => {
     const { cookie } = await signUp({ displayName: "Petr" });
     const { id } = await paste(cookie, { text: TWO_SPEAKERS });
-    const res = await call(`/api/transcripts/${id}/speaker`, { cookie, body: { speakerId: "Carla" } });
-    const body = await expectError(res, 400, "validation_failed");
-    expect(body.issues).toEqual([{ path: "speakerId", code: "invalid_value" }]);
-  });
-
-  it("answers 409 transcript_busy while queued or analyzing for less than 30 minutes", async () => {
-    const { cookie } = await signUp({ displayName: "Petr" });
-    const { id } = await paste(cookie, { text: TWO_SPEAKERS });
-    const choose = () => call(`/api/transcripts/${id}/speaker`, { cookie, body: { speakerId: "Anna Berg" } });
-    expect((await choose()).status).toBe(200);
-    await expectError(await choose(), 409, "transcript_busy");
-
-    await env.DB.prepare("UPDATE transcripts SET status = 'analyzing', updated_at = ? WHERE id = ?")
-      .bind(addSeconds(nowIso(), -29 * 60), id)
-      .run();
-    await expectError(await choose(), 409, "transcript_busy");
-    await env.DB.prepare("UPDATE transcripts SET updated_at = ? WHERE id = ?")
-      .bind(addSeconds(nowIso(), -31 * 60), id)
-      .run();
-    expect((await choose()).status).toBe(200);
-    expect((await storedTranscript(id)).run).toBe(2);
-  });
-
-  it("answers 404 for a transcript of another user", async () => {
-    const { cookie } = await signUp({ displayName: "Petr" });
-    const { id } = await paste(cookie, { text: TWO_SPEAKERS });
-    const other = await signUp();
-    const res = await call(`/api/transcripts/${id}/speaker`, {
-      cookie: other.cookie,
-      body: { speakerId: "Boris" },
-    });
-    await expectError(res, 404, "not_found");
+    const res = await call(`/api/transcripts/${id}/speaker`, { cookie, body: { speakerId: "Boris" } });
+    expect(res.status).toBe(404);
   });
 });

@@ -1,10 +1,10 @@
-// Profile: details, speaker names, reminder settings, sign out and account deletion.
+// Profile: details, your names in transcripts, reminder settings, sign out and account deletion.
 
 import { type FormEvent, useState } from "react";
 import type { ReminderSettings } from "shared";
 import { ApiError, deleteMe, patchMe } from "../api";
 import { copy } from "../copy/en";
-import { languageOptions, timezoneOptions } from "../languages";
+import { languageOptions } from "../languages";
 import { fieldErrors } from "../lib/auth";
 import { navigate } from "../router";
 import { useSession, useUser } from "../session";
@@ -26,7 +26,6 @@ export function ProfilePage() {
   const [form, setForm] = useState({
     displayName: user.displayName,
     nativeLanguage: user.nativeLanguage,
-    timezone: user.timezone,
     speakerNames: user.speakerNames,
     reminderSettings: user.reminderSettings,
   });
@@ -91,13 +90,6 @@ export function ProfilePage() {
             value={form.nativeLanguage}
             onChange={(e) => setForm({ ...form, nativeLanguage: e.target.value })}
             error={fieldText(errors.nativeLanguage)}
-          />
-          <Select
-            label={copy.auth.timezone}
-            options={timezoneOptions(form.timezone)}
-            value={form.timezone}
-            onChange={(e) => setForm({ ...form, timezone: e.target.value })}
-            error={fieldText(errors.timezone)}
           />
         </section>
 

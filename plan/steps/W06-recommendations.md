@@ -16,7 +16,7 @@ Read first
 Do
 
 1. Recommendations (/recommendations): two tabs in the URL (?delivered=true, the default, and ?delivered=false). Each recommendation: kind, language, title, the embed line, the delivery state and outcome in plain words (waiting, on the phone: added to one of your reminders, updated, new reminder; failed with its code), the date, a link to its transcript (none when transcriptId is null), and "send to phone" for one without a waiting delivery. Paged with "load more".
-2. Below the list: the user's devices with app version, push enabled, Reminders and notifications permission, last contact, and a "send test push" button (POST test-push; 503 push_not_configured shown as a notice).
+2. Below the list: the user's devices with app version, push enabled, Reminders access, last contact, and a "send test push" button (POST test-push; 503 push_not_configured shown as a notice).
 3. Recommendation (/r/:id): title, the notes as they look on the phone (pre-wrapped text), the embed line, the match terms with their languages and modes, priority, the delivery history state, a link to the transcript, and "send to phone". A recommendation of another user or an unknown id shows the not-found state. A signed-out visitor goes to sign in and comes back.
 4. Strings in web/src/copy/en.ts by the copy subagent.
 

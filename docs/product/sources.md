@@ -25,9 +25,11 @@ MOZOL analyzes only the user's own turns. The other speakers' turns are context.
 
 1. The speaker that the source names as the user: for Jamie, the participant whose email is the recorder's email; for the json source, the speaker in learnerSpeaker.
 2. A speaker whose email is the user's account email.
-3. A speaker whose name matches one of the user's speaker names. Matching ignores case, accents and extra spaces, and a speaker name also matches the first word of a longer name ("Petr" matches "Petr Shardakov"). When more than one speaker matches, the transcript waits for the user (below).
+3. A speaker whose name matches one of the user's names (Your names in the profile, accounts.md). Matching ignores case, accents and extra spaces, and a name also matches the first word of a longer name ("Petr" matches "Petr Shardakov").
 4. The only speaker, when the transcript has one.
 
-When none of these works, the transcript waits with status needs_speaker. The web app shows each speaker with their first lines and asks "Which speaker are you?". The chosen speaker's name is saved as a speaker name, and the analysis starts.
+The first rule that finds exactly one speaker decides. When no rule does (no match, or several speakers match), the model chooses the user's speaker before the analysis (../backend/ai-analysis.md, "Choosing the learner"). The model must choose one of the transcript's speakers; "unknown" is not an answer. When the model gives no valid speaker, MOZOL picks one of the speakers at random. This is a prototype rule.
 
-Placeholder names are names a source gives to voices it does not know, for Jamie "Speaker 1", "Speaker 2". They are never saved as speaker names and never match one.
+The user never chooses a speaker, and a transcript never waits for the user.
+
+Placeholder names are names a source gives to voices it does not know, for Jamie "Speaker 1", "Speaker 2". They never match one of the user's names.

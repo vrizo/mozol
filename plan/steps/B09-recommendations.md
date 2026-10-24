@@ -23,7 +23,7 @@ Do
    - embed line: one line, at most 200 characters; a longer line drops its optional parts in a fixed order written in the code and covered by tests;
    - priority: 1 for a high-severity mistake or a mistake of a recurring pattern, else 5;
    - all fixed wording from worker/src/copy.ts, written by the copy subagent (labels such as the ones before a wrong and a correct form). Learning content comes from the analysis as it is.
-3. worker/src/recommendations/schedule.ts: the schedule given at claim time: due time at least 2 hours after now, moved into the active hours in the user's time zone, written as ISO 8601 with the user's UTC offset; the repeat rule by intensity (light: interval 3, count 3; normal: interval 1, count 5; intense: interval 1, count 10). Use Intl for time zones.
+3. worker/src/recommendations/schedule.ts: the schedule given at claim time: earliestAt = now + 2 hours (UTC), activeFrom and activeTo from the user's reminder settings, and the repeat rule by intensity (light: interval 3, count 3; normal: interval 1, count 5; intense: interval 1, count 10). The worker knows no time zone: the app computes the due time in the phone's time zone.
 4. worker/src/recommendations/apply.ts: recommend(env, transcriptId), one D1 batch:
    - on a later run, delete the transcript's recommendations that have no delivery;
    - insert a recommendation for every ranked item whose item key has none in this transcript (marker and match terms through shared/src/matching.ts; content = the item as the model returned it);

@@ -43,9 +43,9 @@ authRoutes.post("/sign-up", authLimit, async (c) => {
   const now = nowIso();
   const insertUser = c.env.DB.prepare(
     `INSERT INTO users
-       (id, email, password_hash, display_name, native_language, timezone, speaker_names, reminder_settings,
+       (id, email, password_hash, display_name, native_language, speaker_names, reminder_settings,
         created_at, updated_at)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
      RETURNING *`,
   ).bind(
     userId,
@@ -53,7 +53,6 @@ authRoutes.post("/sign-up", authLimit, async (c) => {
     await hashPassword(body.password),
     body.displayName,
     body.nativeLanguage,
-    body.timezone,
     writeJson([body.displayName]),
     reminderSettingsColumn(DEFAULT_REMINDER_SETTINGS),
     now,

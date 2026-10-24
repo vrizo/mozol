@@ -1,6 +1,6 @@
 import type { Finding } from "shared";
 import { describe, expect, it } from "vitest";
-import { anyBusy, formatDuration, groupFindings } from "./transcripts";
+import { formatDuration, groupFindings, isBusy } from "./transcripts";
 
 const finding = (patternKey: string, severity: Finding["severity"]): Finding => ({
   patternKey,
@@ -32,12 +32,14 @@ describe("groupFindings", () => {
   });
 });
 
-describe("anyBusy", () => {
-  it("is true while a transcript is queued or analyzing", () => {
-    expect(anyBusy([{ status: "analyzed" }, { status: "queued" }])).toBe(true);
-    expect(anyBusy([{ status: "analyzing" }])).toBe(true);
-    expect(anyBusy([{ status: "analyzed" }, { status: "needs_speaker" }, { status: "failed" }])).toBe(false);
-    expect(anyBusy([])).toBe(false);
+describe("isBusy", () => {
+  it("is true while a transcript is received, queued or analyzing", () => {
+    expect(isBusy("received")).toBe(true);
+    expect(isBusy("queued")).toBe(true);
+    expect(isBusy("analyzing")).toBe(true);
+    expect(isBusy("analyzed")).toBe(false);
+    expect(isBusy("skipped")).toBe(false);
+    expect(isBusy("failed")).toBe(false);
   });
 });
 

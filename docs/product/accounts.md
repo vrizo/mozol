@@ -8,13 +8,14 @@ Sign-up fields
 - Password, at least 10 characters.
 - Display name.
 - Native language: a BCP 47 language code, for example "ru". Any language. The languages the user learns are found in each transcript (analysis.md).
-- Time zone: an IANA name such as "Europe/Berlin", detected by the browser.
+
+MOZOL keeps no time zone. Times in the web app use the browser's time zone; the iOS app schedules reminders in the phone's time zone (reminders.md).
 
 Profile
 
 The user can change every sign-up field except the email, and can also set:
 
-- Speaker names: the names under which the user appears in meeting transcripts, for example "Petr" and "Petr S.". Sign-up puts the display name here. The analysis uses them to find the user's turns: sources.md.
+- Your names (API field speakerNames): the names under which the user appears in meeting transcripts, for example "Petr" and "Petr S.". Sign-up puts the display name here. MOZOL uses them to find the user's turns: sources.md.
 - Reminder settings (reminders.md): whether the app may add recommendations to the user's own reminders, repeat intensity and active hours.
 
 Sessions

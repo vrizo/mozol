@@ -1,6 +1,6 @@
 UI copy
 
-Rules for user-facing strings: iOS app, web app, notifications, worker messages.
+Rules for user-facing strings: iOS app, web app, reminder texts, worker messages.
 
 - One UI language: English.
 - The product name is written "MOZOL" everywhere a user sees it. Identifiers in code, file names and domains stay lowercase (mozol-api, mozol.vrizo.net).

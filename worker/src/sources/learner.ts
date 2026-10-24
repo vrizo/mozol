@@ -4,7 +4,7 @@ import type { NormalizedTranscript, Segment, SourceAdapter } from "./types";
 
 export type Learner = { speakerId: string; wordCount: number };
 
-export type Speaker = { id: string; name: string; wordCount: number; firstLines: string[] };
+export type Speaker = { id: string; name: string; wordCount: number };
 
 // The rules in order: the speaker the source names as the user, the account email, a speaker name, the only
 // speaker. The first rule that finds exactly one speaker decides; a rule that finds several gives null.
@@ -58,11 +58,10 @@ export function speakersOf(segments: Segment[]): Speaker[] {
   for (const segment of segments) {
     let speaker = speakers.get(segment.speakerId);
     if (speaker === undefined) {
-      speaker = { id: segment.speakerId, name: segment.speakerName, wordCount: 0, firstLines: [] };
+      speaker = { id: segment.speakerId, name: segment.speakerName, wordCount: 0 };
       speakers.set(segment.speakerId, speaker);
     }
     speaker.wordCount += countWords(segment.text);
-    if (speaker.firstLines.length < 3) speaker.firstLines.push(segment.text);
   }
   return [...speakers.values()];
 }

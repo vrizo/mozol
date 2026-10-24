@@ -142,10 +142,6 @@ export const getTranscripts = (cursor?: string) =>
   request("GET", "/api/transcripts", { query: { cursor }, schema: TranscriptsPage });
 export const getTranscript = (id: string) =>
   request("GET", `/api/transcripts/${id}`, { schema: TranscriptDetailResponse }).then((r) => r.transcript);
-export const chooseSpeaker = (id: string, speakerId: string) =>
-  request("POST", `/api/transcripts/${id}/speaker`, { body: { speakerId }, schema: TranscriptResponse }).then(
-    (r) => r.transcript,
-  );
 export const analyzeAgain = (id: string) =>
   request("POST", `/api/transcripts/${id}/analyze`, { schema: TranscriptResponse }).then((r) => r.transcript);
 export const deleteTranscript = (id: string) => request("DELETE", `/api/transcripts/${id}`);

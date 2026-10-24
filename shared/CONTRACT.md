@@ -44,7 +44,7 @@ Every error is an HTTP status with the body `{ "error": "<code>" }`. validation_
 | 404 | not_found | no such resource for this user, or an installationId that is not a device of this user |
 | 404 | hook_not_found | unknown webhook token, or the token belongs to another source |
 | 409 | email_taken | sign-up with an email that has an account |
-| 409 | transcript_busy | analyze again or choose a speaker while the transcript is queued or analyzing |
+| 409 | transcript_busy | analyze again while the transcript is queued or analyzing |
 | 413 | payload_too_large | a webhook body over 1,000,000 bytes |
 | 415 | unsupported_media_type | a webhook body that is not application/json |
 | 422 | payload_invalid | a webhook body the source adapter cannot read, or a transcript too large to store |
@@ -69,8 +69,7 @@ type User = {
   email: string;
   displayName: string;                 // 1..80 characters
   nativeLanguage: LanguageCode;
-  speakerNames: string[];              // 0..10 names, 1..80 characters each
-  timezone: string;                    // IANA, "Europe/Berlin"
+  speakerNames: string[];              // "Your names" in the UI: 0..10 names, 1..80 characters each
   reminderSettings: ReminderSettings;
   createdAt: Time;
 };
@@ -78,7 +77,7 @@ type User = {
 type ReminderSettings = {
   embedInMyReminders: boolean;         // default true: the app may add recommendations to the user's own reminders
   intensity: "light" | "normal" | "intense";   // repeat rule of new MOZOL reminders
-  activeFrom: string;                  // "HH:MM", local time
+  activeFrom: string;                  // "HH:MM", in the phone's current time zone
   activeTo: string;                    // "HH:MM", later than activeFrom
 };
 
@@ -115,7 +114,7 @@ type HookEvent = {
 };
 
 type TranscriptStatus =
-  "received" | "needs_speaker" | "queued" | "analyzing" | "analyzed" | "skipped" | "failed";
+  "received" | "queued" | "analyzing" | "analyzed" | "skipped" | "failed";
 
 type Transcript = {
   id: Id;
@@ -129,13 +128,12 @@ type Transcript = {
   status: TranscriptStatus;
   skipReason: string | null;
   errorCode: string | null;
-  learnerSpeakerName: string | null;
+  learnerSpeakerName: string | null;   // null until the learner is chosen (docs/product/sources.md)
   counts: { findings: number; words: number; phrases: number; rewrites: number } | null;   // null until analyzed
   createdAt: Time;
 };
 
 type TranscriptDetail = Transcript & {
-  speakers: { id: string; name: string; wordCount: number; firstLines: string[] }[];  // firstLines: up to 3
   segments: { speakerId: string; speakerName: string; text: string }[];
   analysis: Analysis | null;
   recommendations: Recommendation[];   // in delivery order
@@ -181,7 +179,6 @@ type Word = {
 };
 
 type RemindersAccess = "full" | "write_only" | "denied" | "restricted" | "not_determined";
-type NotificationsAccess = "authorized" | "provisional" | "ephemeral" | "denied" | "not_determined";
 
 type Device = {
   id: Id;
@@ -191,7 +188,6 @@ type Device = {
   osVersion: string | null;
   pushEnabled: boolean;                // has an APNs token that APNs did not reject
   remindersAccess: RemindersAccess;
-  notificationsAccess: NotificationsAccess;
   lastSeenAt: Time;
 };
 ```
@@ -330,13 +326,13 @@ Endpoints: health
 
 Endpoints: accounts
 
-- POST /api/auth/sign-up `{ email, password, displayName, nativeLanguage, timezone }` → 201 `{ user: User }` and the session cookie. Password 10..200 characters. Errors: validation_failed, email_taken, rate_limited.
+- POST /api/auth/sign-up `{ email, password, displayName, nativeLanguage }` → 201 `{ user: User }` and the session cookie. Password 10..200 characters. Errors: validation_failed, email_taken, rate_limited.
 - POST /api/auth/sign-in `{ email, password }` → 200 `{ user: User }` and the session cookie. Errors: invalid_credentials, rate_limited.
 - POST /api/auth/sign-out → 204. Ends the current session (cookie or bearer) and clears the cookie.
 - POST /api/auth/app-code (web session) → 201 `{ code: string, expiresAt: Time }`. The code is 32 random bytes in base64url, valid once, for 2 minutes. Errors: forbidden for an app session.
 - POST /api/auth/app-token `{ code, installationId }` (no session) → 201 `{ token: string, user: User }`. installationId: 8..64 characters of letters, digits, "-" and "_", made by the app once per install and kept in the Keychain. Errors: code_invalid, rate_limited.
 - GET /api/me → 200 `{ user: User }`.
-- PATCH /api/me `{ displayName?, nativeLanguage?, speakerNames?, timezone?, reminderSettings? }` → 200 `{ user: User }`. reminderSettings is sent whole.
+- PATCH /api/me `{ displayName?, nativeLanguage?, speakerNames?, reminderSettings? }` → 200 `{ user: User }`. reminderSettings is sent whole.
 - DELETE /api/me `{ password }` → 204. Deletes the account and all its data. Errors: invalid_credentials.
 
 Endpoints: sources and connections
@@ -374,7 +370,6 @@ Endpoints: transcripts
 - POST /api/transcripts `{ title?, occurredAt?, text }` → 201 `{ transcript: Transcript }`. The paste source; text 1..400,000 characters, format in docs/product/sources.md.
 - GET /api/transcripts → 200 paged `Transcript`, newest occurredAt first.
 - GET /api/transcripts/:id → 200 `{ transcript: TranscriptDetail }`.
-- POST /api/transcripts/:id/speaker `{ speakerId }` → 200 `{ transcript: Transcript }`. Makes that speaker the learner, saves its name to the user's speaker names (placeholder names such as "Speaker 1" are not saved), and starts the analysis. Errors: validation_failed (no such speaker), transcript_busy.
 - POST /api/transcripts/:id/analyze → 202 `{ transcript: Transcript }`. Analyze again. Errors: transcript_busy (queued or analyzing for less than 30 minutes).
 - DELETE /api/transcripts/:id → 204. Deletes the transcript, its analysis, findings and suggestions; pattern and word counts are recomputed. Recommendations stay, with transcriptId null.
 
@@ -393,15 +388,13 @@ type PutDeviceBody = {
   bundleId: string;                    // 1..200 characters
   appVersion: string | null;           // 1..50 characters
   osVersion: string | null;            // 1..50 characters
-  timezone: string;                    // IANA; shown in the web app (scheduling uses the profile time zone)
   apnsToken: string | null;            // lowercase hex, 64..200 characters
   apnsEnvironment: "sandbox" | "production" | null;   // null exactly when apnsToken is null
   remindersAccess: RemindersAccess;
-  notificationsAccess: NotificationsAccess;
 };
 ```
 
-- PUT /api/devices/:installationId PutDeviceBody → 200 `{ device: Device }`. Creates or updates the device of the current user. The app calls it after sign-in, on every launch, and whenever the APNs token or a permission changes. A device registered by another user moves to the current user. A new or changed APNs token makes pushEnabled true again.
+- PUT /api/devices/:installationId PutDeviceBody → 200 `{ device: Device }`. Creates or updates the device of the current user. The app calls it after sign-in, on every launch, and whenever the APNs token or the Reminders access changes. A device registered by another user moves to the current user. A new or changed APNs token makes pushEnabled true again.
 - GET /api/devices → 200 `{ devices: Device[] }`.
 - DELETE /api/devices/:installationId → 204. The app calls it before signing out.
 - POST /api/devices/:installationId/test-push → 202 `{ ok: true }`. Sends the test push (silent) to that device. Errors: not_found, push_not_configured.
@@ -419,8 +412,8 @@ type DeliveryItem = {
   deliveryId: Id;
   recommendation: Pick<Recommendation,
     "id" | "language" | "kind" | "itemKey" | "marker" | "title" | "notes" | "embedLine" | "matchTerms" | "url" | "priority">;
-  schedule: { dueAt: string; timezone: string; repeat: Repeat | null };
-  // dueAt: ISO 8601 with the user's UTC offset; timezone: the user's profile time zone
+  schedule: { earliestAt: Time; activeFrom: string; activeTo: string; repeat: Repeat | null };
+  // earliestAt: 2 hours after the claim; activeFrom, activeTo: from the user's reminderSettings
 };
 
 type DeliveryResult = {
@@ -439,7 +432,7 @@ The app needs full access to Reminders. It reads the reminders of all lists and 
 3. embedded (only when embedInMyReminders is true): the best incomplete reminder the app did not create. Its score is the number of matchTerms that match its title and notes, without the lines the app added. The best one has the highest score of at least 1; ties go to the most recently modified reminder, then to the smaller calendarItemIdentifier. Append embedLine as the last line of its notes: remove trailing line breaks, then add "\n" and embedLine (empty notes become embedLine alone). Nothing else changes.
 4. created: create a reminder in the user's default list for new reminders (the one set in the Reminders app) with title, notes, URL (the recommendation url) and priority, and apply the schedule.
 
-- Applying a schedule: due date components from dueAt in the schedule's time zone, one alarm at the due time, the repeat rule (or none), not completed.
+- Applying a schedule: the due time is earliestAt in the phone's current time zone; a time outside activeFrom..activeTo moves to the next activeFrom (the same day or the next one). Due date components in that time zone, one alarm at the due time, the repeat rule (or none), not completed. The worker knows no time zone.
 - The app reports each outcome with POST /api/deliveries/results. failed covers anything that stopped the delivery; the worker hands it out again, up to 3 failed results in total.
 - The worker never receives the user's reminders, their titles, notes or identifiers.
 - The app applies deliveries in its own process: in the foreground, or when a silent push or the background task wakes it. There is no notification service extension.
@@ -457,5 +450,5 @@ When an analysis or a "send to phone" creates deliveries, the worker sends one p
 Headers: apns-push-type background, apns-priority 5, apns-topic the device's bundle id, apns-expiration 1 hour ahead.
 
 - type "test": the test push from the web app, the same shape without pending: `{ "aps": { "content-available": 1 }, "mozol": { "v": 1, "type": "test" } }`. The app logs it and shows the time of the last test push in Settings.
-- The app shows no notifications for pushes. Hint notifications are planned for the second version, inside a Shortcuts flow (docs/ios/shortcuts.md).
+- The app shows no notifications, for pushes or anything else. A later version may show a hint when the user opens Instagram, only inside a Shortcuts flow (docs/ios/shortcuts.md).
 - APNs answers 410 (Unregistered, ExpiredToken) or 400 BadDeviceToken: the worker stops pushing to that device until the app registers a new token.

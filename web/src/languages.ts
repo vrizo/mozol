@@ -1,4 +1,4 @@
-// Language and time zone choices for the profile and sign-up forms.
+// Language choices for the profile and sign-up forms.
 
 const codes = (
   "af am ar az be bg bn bs ca cs cy da de el en eo es et eu fa fi fil fr ga gl gu ha he hi hr ht hu " +
@@ -23,14 +23,4 @@ export function languageOptions(current?: string): { value: string; label: strin
 export function browserLanguage(): string {
   const primary = (navigator.language || "en").split("-")[0]?.toLowerCase() ?? "en";
   return /^[a-z]{2,3}$/.test(primary) ? primary : "en";
-}
-
-export function timezoneOptions(current?: string): { value: string; label: string }[] {
-  const zones = Intl.supportedValuesOf("timeZone");
-  const list = current && !zones.includes(current) ? [current, ...zones] : zones;
-  return list.map((zone) => ({ value: zone, label: zone.replaceAll("_", " ") }));
-}
-
-export function browserTimezone(): string {
-  return Intl.DateTimeFormat().resolvedOptions().timeZone;
 }

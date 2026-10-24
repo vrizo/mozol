@@ -36,7 +36,7 @@ Steps 1 and 3 run only when the profile setting embedInMyReminders is on (defaul
 
 Schedule of a new or updated MOZOL reminder
 
-- The due time is at least 2 hours after the app received the recommendation, inside the user's active hours (default 09:00 to 21:00 in the user's time zone). A time outside the active hours moves to the start of the next active period.
+- The due time is at least 2 hours after the app received the recommendation, inside the user's active hours (default 09:00 to 21:00). Active hours are read in the phone's current time zone; the worker knows no time zone. A time outside the active hours moves to the start of the next active period.
 - Repeat intensity, from the profile: light (every 3 days, 3 times), normal (every day, 5 times, the default) or intense (every day, 10 times).
 - Priority: high for a high-severity mistake or a mistake of a recurring pattern, otherwise medium.
 - A line added to a reminder of the user changes nothing else in that reminder.

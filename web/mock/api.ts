@@ -40,7 +40,6 @@ import {
   SignUpBody,
   type Source,
   SourcesResponse,
-  SpeakerBody,
   TestPushResponse,
   type Transcript,
   type TranscriptDetail,
@@ -68,7 +67,7 @@ const DEMO = { email: "demo@mozol.test", password: "mozol-demo-password" };
 
 // ---------- State ----------
 
-type Speaker = TranscriptDetail["speakers"][number];
+type Speaker = { id: string; name: string };
 type Segment = TranscriptDetail["segments"][number];
 
 type Account = { user: User; password: string };
@@ -83,7 +82,6 @@ type StoredTranscript = {
   userId: string;
   t: Transcript;
   externalId: string | null;
-  speakers: Speaker[];
   segments: Segment[];
   analysis: TranscriptDetail["analysis"];
   mockResult: AnalysisResult;
@@ -201,26 +199,12 @@ function page<T>(items: T[], query: { limit: number; cursor?: string }) {
   return { items: slice, nextCursor: next };
 }
 
-function wordCount(text: string): number {
-  return text.split(/\s+/).filter(Boolean).length;
-}
-
-const isPlaceholderName = (name: string) => /^Speaker \d+$/.test(name);
-
 // ---------- Transcripts ----------
 
 function speakersOf(segments: Segment[]): Speaker[] {
   const speakers = new Map<string, Speaker>();
   for (const s of segments) {
-    const speaker = speakers.get(s.speakerId) ?? {
-      id: s.speakerId,
-      name: s.speakerName,
-      wordCount: 0,
-      firstLines: [],
-    };
-    speaker.wordCount += wordCount(s.text);
-    if (speaker.firstLines.length < 3) speaker.firstLines.push(s.text);
-    speakers.set(s.speakerId, speaker);
+    if (!speakers.has(s.speakerId)) speakers.set(s.speakerId, { id: s.speakerId, name: s.speakerName });
   }
   return [...speakers.values()];
 }
@@ -251,10 +235,15 @@ function parsePaste(text: string, user: User): { kind: Transcript["kind"]; segme
   return { kind: "call", segments: segmentsFromNames(turns) };
 }
 
-function learnerFor(user: User, speakers: Speaker[], preferred?: string | null): string | null {
+// The learner: the given speaker, else the first speaker named like one of the user's names, else a random one.
+// The real worker asks the model before it falls back to a random speaker.
+function learnerFor(user: User, speakers: Speaker[], preferred?: string | null): string {
+  if (speakers.length === 0) throw new Error("[mock] a transcript without speakers has no learner");
   if (preferred && speakers.some((s) => s.name === preferred)) return preferred;
   const names = user.speakerNames.map((n) => n.toLowerCase());
-  return speakers.find((s) => names.includes(s.name.toLowerCase()))?.name ?? null;
+  const named = speakers.find((s) => names.includes(s.name.toLowerCase()));
+  if (named) return named.name;
+  return (speakers[Math.floor(Math.random() * speakers.length)] as Speaker).name;
 }
 
 function addTranscript(
@@ -274,7 +263,9 @@ function addTranscript(
 ): StoredTranscript {
   const speakers = speakersOf(input.segments);
   const learner =
-    input.kind === "text" ? (speakers[0]?.name ?? null) : learnerFor(account.user, speakers, input.learner);
+    input.kind === "text"
+      ? learnerFor(account.user, speakers.slice(0, 1))
+      : learnerFor(account.user, speakers, input.learner);
   const stored: StoredTranscript = {
     userId: account.user.id,
     t: {
@@ -286,7 +277,7 @@ function addTranscript(
       occurredAt: input.occurredAt,
       durationSec: input.durationSec,
       language: null,
-      status: learner ? "queued" : "needs_speaker",
+      status: "queued",
       skipReason: null,
       errorCode: null,
       learnerSpeakerName: learner,
@@ -294,14 +285,13 @@ function addTranscript(
       createdAt: now(),
     },
     externalId: input.externalId ?? null,
-    speakers,
     segments: input.segments,
     analysis: null,
     mockResult: input.mockResult ?? resultOk,
     run: 0,
   };
   db.transcripts.push(stored);
-  if (stored.t.status === "queued") scheduleAnalysis(stored);
+  scheduleAnalysis(stored);
   return stored;
 }
 
@@ -761,7 +751,6 @@ function createAccount(input: {
   password: string;
   displayName: string;
   nativeLanguage: string;
-  timezone: string;
 }): Account {
   const account: Account = {
     password: input.password,
@@ -771,7 +760,6 @@ function createAccount(input: {
       displayName: input.displayName,
       nativeLanguage: input.nativeLanguage,
       speakerNames: [input.displayName],
-      timezone: input.timezone,
       reminderSettings: {
         embedInMyReminders: true,
         intensity: "normal",
@@ -816,7 +804,6 @@ function owned<T extends { userId: string }>(list: T[], userId: string, find: (x
 function transcriptDetail(stored: StoredTranscript): TranscriptDetail {
   return {
     ...stored.t,
-    speakers: stored.speakers,
     segments: stored.segments,
     analysis: stored.analysis,
     recommendations: db.recs.filter((x) => x.r.transcriptId === stored.t.id).map((x) => x.r),
@@ -1004,32 +991,11 @@ const routes: [string, RegExp, Handler][] = [
   ],
   [
     "POST",
-    /^\/api\/transcripts\/([^/]+)\/speaker$/,
-    async ({ account, body, params }) => {
-      const a = account();
-      const stored = owned(db.transcripts, a.user.id, (x) => x.t.id === params[0]);
-      const input = parse(SpeakerBody, await body());
-      if (busy(stored.t)) throw new HttpError(409, "transcript_busy");
-      const speaker = stored.speakers.find((s) => s.id === input.speakerId);
-      if (!speaker)
-        throw new HttpError(400, "validation_failed", [{ path: "speakerId", code: "invalid_value" }]);
-      stored.t.learnerSpeakerName = speaker.name;
-      const names = a.user.speakerNames;
-      if (!isPlaceholderName(speaker.name) && !names.includes(speaker.name) && names.length < 10) {
-        a.user = { ...a.user, speakerNames: [...names, speaker.name] };
-      }
-      scheduleAnalysis(stored);
-      return json(200, TranscriptResponse, { transcript: stored.t });
-    },
-  ],
-  [
-    "POST",
     /^\/api\/transcripts\/([^/]+)\/analyze$/,
     ({ account, params }) => {
       const stored = owned(db.transcripts, account().user.id, (x) => x.t.id === params[0]);
       if (busy(stored.t)) throw new HttpError(409, "transcript_busy");
-      if (stored.t.learnerSpeakerName) scheduleAnalysis(stored);
-      else stored.t.status = "needs_speaker";
+      scheduleAnalysis(stored);
       return json(202, TranscriptResponse, { transcript: stored.t });
     },
   ],
@@ -1242,7 +1208,6 @@ async function seed() {
     password: DEMO.password,
     displayName: "Petr",
     nativeLanguage: "ru",
-    timezone: "Europe/Berlin",
   });
   a.user = { ...a.user, speakerNames: ["Petr", "Petr Ivanov"], createdAt: ago(60 * 24 * 7) };
 
@@ -1298,7 +1263,7 @@ async function seed() {
   const unknown = JSON.parse(jamieUnknownText) as JamieBody;
   const t4 = jamieTranscript(a, unknown, jamie.c.id);
   if (!t4) throw new Error("the unknown-speakers fixture has no segments");
-  t4.run++;
+  // The analysis of this one runs on its timer, so the mock shows a transcript in progress for 8 s after start.
   t4.t.occurredAt = ago(60 * 3);
 
   const t5 = make({
@@ -1396,7 +1361,6 @@ async function seed() {
       osVersion: "26.1",
       pushEnabled: true,
       remindersAccess: "full",
-      notificationsAccess: "authorized",
       lastSeenAt: ago(12),
     },
   });

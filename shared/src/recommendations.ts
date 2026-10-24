@@ -1,7 +1,7 @@
 // Recommendations, deliveries, and the claim and results endpoints of the app.
 import { z } from "zod";
 import { MatchTerm, PATTERN_KEY } from "./analysis";
-import { Id, InstallationId, LanguageCode, PageQuery, paged, Time, Timezone } from "./common";
+import { ClockTime, Id, InstallationId, LanguageCode, PageQuery, paged, Time } from "./common";
 import { normalizeText } from "./matching";
 
 export const RecommendationKind = z.enum(["mistake", "word", "phrase", "rewrite"]);
@@ -103,10 +103,11 @@ export const DeliveryItem = z.strictObject({
     url: true,
     priority: true,
   }).superRefine(checkItemKey),
-  // dueAt: ISO 8601 with the user's UTC offset; timezone: the user's profile time zone.
+  // earliestAt: 2 hours after the claim. The app moves it into the active hours in the phone's time zone.
   schedule: z.strictObject({
-    dueAt: z.iso.datetime({ offset: true }),
-    timezone: Timezone,
+    earliestAt: Time,
+    activeFrom: ClockTime,
+    activeTo: ClockTime,
     repeat: Repeat.nullable(),
   }),
 });

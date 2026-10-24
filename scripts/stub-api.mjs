@@ -26,8 +26,9 @@
 //                            recommendations of shared/fixtures/deliveries/claim-response.json.
 //                            items: [{ recommendation, schedule? }]. recommendation needs language, kind,
 //                            itemKey, title, notes, embedLine; id, url, marker, priority (5) and
-//                            matchTerms ([]) are filled in when missing. schedule default: due in
-//                            2 hours, Europe/Berlin, daily, 5 times.
+//                            matchTerms ([]) are filled in when missing. schedule default, made at
+//                            each claim: earliestAt 2 hours after the claim, the user's active hours,
+//                            daily, 5 times.
 //   POST   /stub/settings     { email?, embedInMyReminders } → { user }
 //   GET    /stub/state        users, devices and deliveries with their status
 //
@@ -41,19 +42,19 @@ import { createServer } from "node:http";
 const port = Number(process.env.MOZOL_WORKER_PORT ?? 8790);
 const FIXTURE_URL = new URL("../shared/fixtures/deliveries/claim-response.json", import.meta.url);
 const DEFAULT_EMAIL = "learner@example.com";
-const TIMEZONE = "Europe/Berlin";
 const LEASE_SECONDS = 120;
 const CODE_TTL_MS = 2 * 60 * 1000;
 const MAX_FAILURES = 3;
 const INSTALLATION_ID = /^[A-Za-z0-9_-]{8,64}$/;
 const APNS_TOKEN = /^[0-9a-f]{64,200}$/;
+const CLOCK_TIME = /^([01][0-9]|2[0-3]):[0-5][0-9]$/;
+const SCHEDULE_DELAY_MS = 2 * 60 * 60 * 1000;
 const REMINDERS_ACCESS = ["full", "write_only", "denied", "restricted", "not_determined"];
-const NOTIFICATIONS_ACCESS = ["authorized", "provisional", "ephemeral", "denied", "not_determined"];
 const APPLIED_OUTCOMES = ["embed_updated", "reminder_updated", "embedded", "created"];
 const KINDS = ["mistake", "word", "phrase", "rewrite"];
 const DEVICE_KEYS = [
-  "platform", "bundleId", "appVersion", "osVersion", "timezone",
-  "apnsToken", "apnsEnvironment", "remindersAccess", "notificationsAccess",
+  "platform", "bundleId", "appVersion", "osVersion",
+  "apnsToken", "apnsEnvironment", "remindersAccess",
 ];
 
 const usersByEmail = new Map();
@@ -79,24 +80,6 @@ const sha256Hex = (text) => createHash("sha256").update(text).digest("hex");
 function newId(prefix) {
   const alphabet = "0123456789ABCDEFGHJKMNPQRSTVWXYZ";
   return `${prefix}_${[...randomBytes(26)].map((b) => alphabet[b % 32]).join("")}`;
-}
-
-// ISO 8601 with milliseconds and the UTC offset of the time zone, e.g. 2026-10-24T17:00:00.000+02:00.
-function zonedIso(date, timeZone) {
-  const parts = Object.fromEntries(
-    new Intl.DateTimeFormat("en-US", {
-      timeZone, hourCycle: "h23",
-      year: "numeric", month: "2-digit", day: "2-digit",
-      hour: "2-digit", minute: "2-digit", second: "2-digit",
-    }).formatToParts(date).map((p) => [p.type, p.value]),
-  );
-  const localAsUtc = Date.UTC(+parts.year, +parts.month - 1, +parts.day, +parts.hour, +parts.minute, +parts.second);
-  const offset = Math.round((localAsUtc - Math.floor(date.getTime() / 1000) * 1000) / 60000);
-  const abs = Math.abs(offset);
-  const pad = (n) => String(n).padStart(2, "0");
-  const ms = String(date.getUTCMilliseconds()).padStart(3, "0");
-  return `${parts.year}-${parts.month}-${parts.day}T${parts.hour}:${parts.minute}:${parts.second}.${ms}` +
-    `${offset < 0 ? "-" : "+"}${pad(Math.floor(abs / 60))}:${pad(abs % 60)}`;
 }
 
 function readBody(req) {
@@ -142,16 +125,16 @@ function checkInstallationId(issues, path, value) {
 }
 
 function publicUser(user) {
-  const { id, email, displayName, nativeLanguage, speakerNames, timezone, reminderSettings, createdAt } = user;
-  return { id, email, displayName, nativeLanguage, speakerNames, timezone, reminderSettings, createdAt };
+  const { id, email, displayName, nativeLanguage, speakerNames, reminderSettings, createdAt } = user;
+  return { id, email, displayName, nativeLanguage, speakerNames, reminderSettings, createdAt };
 }
 
 function publicDevice(device) {
-  const { id, installationId, platform, appVersion, osVersion, remindersAccess, notificationsAccess, lastSeenAt } = device;
+  const { id, installationId, platform, appVersion, osVersion, remindersAccess, lastSeenAt } = device;
   return {
     id, installationId, platform, appVersion, osVersion,
     pushEnabled: device.apnsToken !== null,
-    remindersAccess, notificationsAccess, lastSeenAt,
+    remindersAccess, lastSeenAt,
   };
 }
 
@@ -165,7 +148,6 @@ function userFor(email) {
     displayName,
     nativeLanguage: "ru",
     speakerNames: [displayName],
-    timezone: TIMEZONE,
     reminderSettings: { embedInMyReminders: true, intensity: "normal", activeFrom: "09:00", activeTo: "21:00" },
     createdAt: nowIso(),
   };
@@ -261,8 +243,14 @@ function checkSchedule(issues, schedule, path) {
     issues.push({ path, code: "invalid_type" });
     return;
   }
-  checkText(issues, `${path}.dueAt`, schedule.dueAt, 1, 40);
-  checkText(issues, `${path}.timezone`, schedule.timezone, 1, 100);
+  if (typeof schedule.earliestAt !== "string" || Number.isNaN(Date.parse(schedule.earliestAt))) {
+    issues.push({ path: `${path}.earliestAt`, code: "invalid_format" });
+  }
+  for (const key of ["activeFrom", "activeTo"]) {
+    if (typeof schedule[key] !== "string" || !CLOCK_TIME.test(schedule[key])) {
+      issues.push({ path: `${path}.${key}`, code: "invalid_format" });
+    }
+  }
   const r = schedule.repeat;
   if (r !== null && (!r || r.frequency !== "daily" || !Number.isInteger(r.interval) || !Number.isInteger(r.count))) {
     issues.push({ path: `${path}.repeat`, code: "invalid_type" });
@@ -281,10 +269,12 @@ function fixtureRecommendations() {
   return items.map((item) => ({ recommendation: item.recommendation }));
 }
 
-function defaultSchedule() {
+// earliestAt: UTC, 2 hours after the claim; the phone applies its own time zone and the active hours.
+function claimSchedule(user, claimedAt) {
   return {
-    dueAt: zonedIso(new Date(Date.now() + 2 * 60 * 60 * 1000), TIMEZONE),
-    timezone: TIMEZONE,
+    earliestAt: new Date(claimedAt + SCHEDULE_DELAY_MS).toISOString(),
+    activeFrom: user.reminderSettings.activeFrom,
+    activeTo: user.reminderSettings.activeTo,
     repeat: { frequency: "daily", interval: 1, count: 5 },
   };
 }
@@ -350,7 +340,6 @@ const handlers = {
     checkText(issues, "bundleId", body.bundleId, 1, 200);
     checkText(issues, "appVersion", body.appVersion, 1, 50, true);
     checkText(issues, "osVersion", body.osVersion, 1, 50, true);
-    checkText(issues, "timezone", body.timezone, 1, 100);
     const tokenOk = body.apnsToken === null || (typeof body.apnsToken === "string" && APNS_TOKEN.test(body.apnsToken));
     if (!tokenOk) issues.push({ path: "apnsToken", code: typeof body.apnsToken === "string" ? "invalid_format" : "invalid_type" });
     const envOk = ["sandbox", "production", null].includes(body.apnsEnvironment);
@@ -359,7 +348,6 @@ const handlers = {
       issues.push({ path: "apnsEnvironment", code: "custom", message: "null exactly when apnsToken is null" });
     }
     checkEnum(issues, "remindersAccess", body.remindersAccess, REMINDERS_ACCESS);
-    checkEnum(issues, "notificationsAccess", body.notificationsAccess, NOTIFICATIONS_ACCESS);
     if (issues.length) throw invalid(issues);
 
     const previous = devices.get(installationId);
@@ -429,7 +417,8 @@ const handlers = {
     }
     const leaseUntil = now + LEASE_SECONDS * 1000;
     for (const d of picked) {
-      Object.assign(d, { status: "claimed", claimedBy: device.installationId, leaseUntil, updatedAt: nowIso() });
+      const schedule = d.customSchedule ?? claimSchedule(user, now);
+      Object.assign(d, { status: "claimed", claimedBy: device.installationId, leaseUntil, schedule, updatedAt: nowIso() });
     }
     device.lastSeenAt = nowIso();
     return [200, {
@@ -511,7 +500,8 @@ const handlers = {
           url: rec.url ?? `${ctx.origin}/r/${id}`,
           priority: rec.priority ?? 5,
         },
-        schedule: item.schedule ?? defaultSchedule(),
+        customSchedule: item.schedule ?? null,
+        schedule: null,
         status: "pending",
         outcome: null,
         errorCode: null,
@@ -541,7 +531,7 @@ const handlers = {
     return [200, {
       users: [...usersByEmail.values()].map(publicUser),
       devices: [...devices.values()].map((d) => ({
-        ...publicDevice(d), userEmail: emailOf(d.userId), bundleId: d.bundleId, timezone: d.timezone,
+        ...publicDevice(d), userEmail: emailOf(d.userId), bundleId: d.bundleId,
         apnsToken: d.apnsToken, apnsEnvironment: d.apnsEnvironment,
       })),
       deliveries: deliveries.map((d) => ({

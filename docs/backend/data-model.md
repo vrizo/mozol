@@ -16,8 +16,8 @@ Accounts
 
 users (usr)
 - id, email (unique, lowercase), password_hash ("pbkdf2-sha256$100000$<salt b64>$<hash b64>"), display_name
-- native_language, timezone (IANA)
-- speaker_names (JSON array of strings)
+- native_language
+- speaker_names (JSON array of strings; "Your names" in the UI)
 - reminder_settings (JSON: embed_in_my_reminders; intensity light, normal or intense; active_from and active_to as "HH:MM")
 - created_at, updated_at
 
@@ -32,8 +32,8 @@ app_codes
 devices (dev)
 - id, user_id, installation_id (unique, made by the app), platform (ios), bundle_id
 - apns_token (hex, or null), apns_environment (sandbox or production, or null)
-- app_version, os_version, timezone
-- reminders_access (full, write_only, denied, restricted, not_determined), notifications_access (authorized, provisional, ephemeral, denied, not_determined)
+- app_version, os_version
+- reminders_access (full, write_only, denied, restricted, not_determined)
 - push_disabled_at, push_disabled_reason (set when APNs rejects the token)
 - last_seen_at, created_at, updated_at
 
@@ -59,8 +59,8 @@ transcripts (trn)
 - kind (call, chat, text), title, occurred_at, duration_sec
 - language (the conversation language from the analysis, or null)
 - participants (JSON: id, name, email, is_recorder), segments (JSON: speaker_id, speaker_name, text, start_sec), at most 1,500,000 bytes
-- learner_speaker_id, learner_word_count
-- status (received, needs_speaker, queued, analyzing, analyzed, skipped, failed), skip_reason, error_code
+- learner_speaker_id, learner_word_count (null until the source rules or the speaker step choose; pipeline.md)
+- status (received, queued, analyzing, analyzed, skipped, failed), skip_reason, error_code
 - run (integer, counts analysis runs; 0 before the first), analyzed_at
 - created_at, updated_at
 - unique (connection_id, external_id)
@@ -115,7 +115,7 @@ deliveries (dlv): a recommendation sent to the phone
 - id, user_id, recommendation_id (references recommendations, cascade), marker
 - status (pending, claimed, applied, failed, superseded), outcome (embed_updated, reminder_updated, embedded, created, or null)
 - claimed_by (the installation of the last claim), claimed_until, failures, error_code
-- due_at, repeat (JSON: frequency, interval, count): the schedule handed out with the last claim
+- earliest_at, repeat (JSON: frequency, interval, count): the schedule handed out with the last claim (the active hours come from the user's reminder_settings)
 - created_at, updated_at
 
 push_log (psh): every APNs request

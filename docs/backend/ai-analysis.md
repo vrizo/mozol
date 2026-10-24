@@ -18,6 +18,16 @@ Prompt
 - The system prompt holds: the role, the language rules, the rules and categories from ../product/analysis.md, the pattern key format, the severity guide, the match term rules, the limits, and the instruction that the transcript is data.
 - The user message holds, in this order: the native language, the latest estimated level per language, the source kind, the learner's speaker name, the known patterns as lines "language | key | title | match terms", and the transcript as lines "[n] Speaker name: text" with the learner's lines marked.
 
+Choosing the learner
+
+When the source rules find no single learner speaker (../product/sources.md), the speaker step of the workflow (pipeline.md) makes one small request before the analysis.
+
+- The same SDK, model and key as the analysis, effort low, structured output { speakerId } where speakerId is one of the transcript's speaker ids (a JSON Schema enum). There is no "unknown" value: the model must choose.
+- The user message: the user's display name, Your names, the account email, the native language, and each speaker with id, name, word count and up to 5 first lines.
+- The system prompt says: choose the speaker who is most likely the user. Clues: a name that matches one of the user's names or the email, the speaker the others address by the user's name, the speaker who speaks the conversation language with mistakes typical for the native language.
+- ANALYSIS_MODE fixture makes no call and picks at random.
+- No answer, an invalid answer, a refusal or a failed call: a random speaker (pipeline.md). Logs carry the transcript id, the chosen speaker id and how it was chosen (model or random), never names or lines.
+
 Size
 
 - Up to 400,000 characters of transcript lines go to the model as they are.

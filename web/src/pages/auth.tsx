@@ -4,7 +4,7 @@ import { type FormEvent, useState } from "react";
 import type { User } from "shared";
 import { ApiError, createAppCode, signIn, signUp } from "../api";
 import { copy } from "../copy/en";
-import { browserLanguage, browserTimezone, languageOptions, timezoneOptions } from "../languages";
+import { browserLanguage, languageOptions } from "../languages";
 import { fieldErrors, isAppReturn, withCode } from "../lib/auth";
 import { Link, navigate, safeNext, useRoute } from "../router";
 import { useSession } from "../session";
@@ -35,7 +35,6 @@ function SignUpForm({ onDone, switchLink }: FormProps) {
     password: "",
     displayName: "",
     nativeLanguage: browserLanguage(),
-    timezone: browserTimezone(),
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [notice, setNotice] = useState<string | null>(null);
@@ -99,13 +98,6 @@ function SignUpForm({ onDone, switchLink }: FormProps) {
         value={form.nativeLanguage}
         onChange={set("nativeLanguage")}
         error={fieldText(errors.nativeLanguage)}
-      />
-      <Select
-        label={t.timezone}
-        options={timezoneOptions(form.timezone)}
-        value={form.timezone}
-        onChange={set("timezone")}
-        error={fieldText(errors.timezone)}
       />
       <div className="actions">
         <Button variant="primary" type="submit" busy={busy}>

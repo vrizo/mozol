@@ -6,7 +6,6 @@ CREATE TABLE users (
   password_hash TEXT NOT NULL,
   display_name TEXT NOT NULL,
   native_language TEXT NOT NULL,
-  timezone TEXT NOT NULL,
   speaker_names TEXT NOT NULL CHECK (json_valid(speaker_names)),
   reminder_settings TEXT NOT NULL CHECK (json_valid(reminder_settings)),
   created_at TEXT NOT NULL,
@@ -45,11 +44,8 @@ CREATE TABLE devices (
   apns_environment TEXT CHECK (apns_environment IN ('sandbox', 'production')),
   app_version TEXT,
   os_version TEXT,
-  timezone TEXT NOT NULL,
   reminders_access TEXT NOT NULL
     CHECK (reminders_access IN ('full', 'write_only', 'denied', 'restricted', 'not_determined')),
-  notifications_access TEXT NOT NULL
-    CHECK (notifications_access IN ('authorized', 'provisional', 'ephemeral', 'denied', 'not_determined')),
   push_disabled_at TEXT,
   push_disabled_reason TEXT,
   last_seen_at TEXT NOT NULL,
@@ -92,7 +88,7 @@ CREATE TABLE transcripts (
   learner_speaker_id TEXT,
   learner_word_count INTEGER,
   status TEXT NOT NULL
-    CHECK (status IN ('received', 'needs_speaker', 'queued', 'analyzing', 'analyzed', 'skipped', 'failed')),
+    CHECK (status IN ('received', 'queued', 'analyzing', 'analyzed', 'skipped', 'failed')),
   skip_reason TEXT CHECK (skip_reason IN ('too_short', 'too_little_speech', 'native_language')),
   error_code TEXT CHECK (error_code IN (
     'analysis_failed', 'analysis_refused', 'analysis_truncated', 'analysis_invalid', 'transcript_too_long', 'internal'
@@ -262,7 +258,7 @@ CREATE TABLE deliveries (
   claimed_until TEXT,
   failures INTEGER NOT NULL DEFAULT 0,
   error_code TEXT,
-  due_at TEXT,
+  earliest_at TEXT,
   repeat TEXT CHECK (json_valid(repeat)),
   created_at TEXT NOT NULL,
   updated_at TEXT NOT NULL
