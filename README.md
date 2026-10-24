@@ -16,6 +16,8 @@ Built at the Jamie × {Tech: Europe} hackathon.
 
 Learn a language with small reminders that stay in front of your eyes. A word or a short phrase shows up again and again during the day, until you know it.
 
+<img src="assets/readme/mozol-demo.gif" alt="MOZOL app on iPhone" width="300">
+
 If you are an AI agent, start with AGENTS.md, then docs/ by topic.
 
 ## Parts
