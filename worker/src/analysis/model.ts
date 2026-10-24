@@ -7,7 +7,7 @@ import type {
   BetaMessageStreamParams,
   BetaTextBlock,
 } from "@anthropic-ai/sdk/resources/beta/messages/messages";
-import { AnalysisResult, normalizeText } from "shared";
+import { type AnalysisResult, ModelAnalysisResult, normalizeText } from "shared";
 import resultOk from "shared/fixtures/analysis/result-ok.json";
 import type { Env } from "../env";
 import { log, logError } from "../log";
@@ -41,7 +41,7 @@ export const FALLBACK_BETA = "server-side-fallback-2026-07-01";
 
 // Only the JSON schema: with the helper's parse function the SDK stream would parse every text block itself and
 // fail before interpretFinalMessage sees the stop reason.
-const { type: formatType, schema: formatSchema } = zodOutputFormat(AnalysisResult);
+const { type: formatType, schema: formatSchema } = zodOutputFormat(ModelAnalysisResult);
 const OUTPUT_FORMAT = { type: formatType, schema: formatSchema };
 
 // The part of the SDK client the model uses; tests pass a fake.
@@ -124,7 +124,7 @@ export function interpretFinalMessage(message: BetaMessage): AnalysisResult {
     // The parser's message quotes the text, so it stays out of the error.
     throw new AnalysisError("analysis_invalid", false, "the answer is not JSON");
   }
-  const parsed = AnalysisResult.safeParse(json);
+  const parsed = ModelAnalysisResult.safeParse(json);
   if (!parsed.success) {
     const issues = parsed.error.issues.slice(0, 5).map((i) => `${i.path.join(".")}:${i.code}`);
     throw new AnalysisError("analysis_invalid", false, issues.join(", "));
@@ -136,7 +136,7 @@ export class FixtureModel implements AnalysisModel {
   readonly name = "fixture";
 
   async analyze(input: ModelInput): Promise<ModelOutput> {
-    const result = AnalysisResult.parse(resultOk);
+    const result = ModelAnalysisResult.parse(resultOk);
     return {
       result,
       model: this.name,

@@ -52,7 +52,7 @@ Every error is an HTTP status with the body `{ "error": "<code>" }`. validation_
 | 500 | internal | an unexpected worker error |
 | 503 | push_not_configured | a test push while the worker has no APNs key |
 
-Transcript error codes (Transcript.errorCode): analysis_failed, analysis_refused, analysis_truncated, analysis_invalid, transcript_too_long, internal. Skip reasons (Transcript.skipReason): too_short, too_little_speech, native_language.
+Transcript error codes (Transcript.errorCode): analysis_failed, analysis_refused, analysis_truncated, analysis_invalid, transcript_too_long, internal. Skip reasons (Transcript.skipReason): too_short, too_little_speech, native_language (only from analyses before prompt analysis-v4).
 
 Types
 
@@ -202,7 +202,7 @@ type MatchTerm = {
 };
 
 type AnalysisResult = {
-  status: "ok" | "too_little_speech" | "native_language";
+  status: "ok" | "too_little_speech" | "native_language"; // the model answers only ok or too_little_speech (ModelAnalysisResult); native_language is in analyses before prompt analysis-v4
   language: LanguageCode | null;       // the language the learner mostly speaks here; null only with too_little_speech
   findings: Finding[];                 // 0..3, most important first; [] when status is not ok
   words: WordSuggestion[];             // 0..3, most important first; [] when status is not ok

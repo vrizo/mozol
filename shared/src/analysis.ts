@@ -90,46 +90,62 @@ export type WordSuggestion = z.infer<typeof WordSuggestion>;
 export const AnalysisStatus = z.enum(["ok", "too_little_speech", "native_language"]);
 export type AnalysisStatus = z.infer<typeof AnalysisStatus>;
 
-export const AnalysisResult = z
-  .strictObject({
-    status: AnalysisStatus,
-    language: LanguageCode.nullable(),
-    findings: z.array(Finding).max(MAX_FINDINGS),
-    words: z.array(WordSuggestion).max(MAX_WORDS),
-  })
-  .superRefine((result, ctx) => {
-    if (result.language === null && result.status !== "too_little_speech") {
-      ctx.addIssue({
-        code: "custom",
-        path: ["language"],
-        message: "language is null only with too_little_speech",
-      });
-    }
-    if (result.status !== "ok") {
-      for (const list of ["findings", "words"] as const) {
-        if (result[list].length > 0) {
-          ctx.addIssue({ code: "custom", path: [list], message: "lists are empty when status is not ok" });
-        }
-      }
-    }
+type ResultFields = {
+  status: string;
+  language: string | null;
+  findings: Finding[];
+  words: WordSuggestion[];
+};
 
-    const patternKeys = new Set<string>();
-    result.findings.forEach((finding, i) => {
-      if (patternKeys.has(finding.patternKey)) {
-        ctx.addIssue({ code: "custom", path: ["findings", i, "patternKey"], message: "pattern key repeats" });
-      }
-      patternKeys.add(finding.patternKey);
+function checkResult(result: ResultFields, ctx: z.RefinementCtx) {
+  if (result.language === null && result.status !== "too_little_speech") {
+    ctx.addIssue({
+      code: "custom",
+      path: ["language"],
+      message: "language is null only with too_little_speech",
     });
+  }
+  if (result.status !== "ok") {
+    for (const list of ["findings", "words"] as const) {
+      if (result[list].length > 0) {
+        ctx.addIssue({ code: "custom", path: [list], message: "lists are empty when status is not ok" });
+      }
+    }
+  }
 
-    const wordKeys = new Set<string>();
-    result.words.forEach((word, i) => {
-      const key = normalizeText(word.term);
-      if (key === "") {
-        ctx.addIssue({ code: "custom", path: ["words", i, "term"], message: "word key is empty" });
-      } else if (wordKeys.has(key)) {
-        ctx.addIssue({ code: "custom", path: ["words", i, "term"], message: "word key repeats" });
-      }
-      wordKeys.add(key);
-    });
+  const patternKeys = new Set<string>();
+  result.findings.forEach((finding, i) => {
+    if (patternKeys.has(finding.patternKey)) {
+      ctx.addIssue({ code: "custom", path: ["findings", i, "patternKey"], message: "pattern key repeats" });
+    }
+    patternKeys.add(finding.patternKey);
   });
+
+  const wordKeys = new Set<string>();
+  result.words.forEach((word, i) => {
+    const key = normalizeText(word.term);
+    if (key === "") {
+      ctx.addIssue({ code: "custom", path: ["words", i, "term"], message: "word key is empty" });
+    } else if (wordKeys.has(key)) {
+      ctx.addIssue({ code: "custom", path: ["words", i, "term"], message: "word key repeats" });
+    }
+    wordKeys.add(key);
+  });
+}
+
+const resultFields = {
+  language: LanguageCode.nullable(),
+  findings: z.array(Finding).max(MAX_FINDINGS),
+  words: z.array(WordSuggestion).max(MAX_WORDS),
+};
+
+// A stored result. native_language comes only from analyses made before prompt analysis-v4.
+export const AnalysisResult = z
+  .strictObject({ status: AnalysisStatus, ...resultFields })
+  .superRefine(checkResult);
 export type AnalysisResult = z.infer<typeof AnalysisResult>;
+
+// What the model may answer: a transcript in the native language is analyzed like any other.
+export const ModelAnalysisResult = z
+  .strictObject({ status: AnalysisStatus.exclude(["native_language"]), ...resultFields })
+  .superRefine(checkResult);

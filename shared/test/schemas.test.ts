@@ -9,6 +9,7 @@ import {
   ClaimResponse,
   CreateConnectionBody,
   ErrorBody,
+  ModelAnalysisResult,
   PageQuery,
   PatchMeBody,
   PutDeviceBody,
@@ -161,6 +162,12 @@ describe("analysis result rules", () => {
     expect(issuesOf(AnalysisResult, bad)).toEqual(["language: custom", "findings: custom", "words: custom"]);
     const tooLittle = { status: "too_little_speech", language: null, findings: [], words: [] };
     expect(issuesOf(AnalysisResult, tooLittle)).toEqual([]);
+  });
+
+  test("the model cannot answer native_language; a stored native_language result still parses", () => {
+    const native = { status: "native_language", language: "en", findings: [], words: [] };
+    expect(issuesOf(ModelAnalysisResult, native)).toEqual(["status: invalid_value"]);
+    expect(issuesOf(AnalysisResult, native)).toEqual([]);
   });
 
   test("refuses an unknown key in the result", () => {
