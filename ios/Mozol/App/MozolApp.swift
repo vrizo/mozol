@@ -16,7 +16,7 @@ struct MozolApp: App {
             }
                 .environment(environment.session)
                 .environment(environment.sync)
-                .environment(environment.push)
+                .environment(environment.devices)
                 .environment(environment.notifications)
                 .environment(environment.reminders)
                 .environment(environment.events)

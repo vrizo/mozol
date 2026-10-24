@@ -52,13 +52,16 @@ Health check: `curl -fsS http://localhost:8790/api/health` must print `{"ok":tru
 
 Never pass CODE_SIGNING_ALLOWED=NO. When the app behaves unlike the source, rm -rf ios/.build-dd and build clean.
 
-## 3a. Messages and pushes without a worker
+## 3a. Deliveries and pushes without a worker
 
-    curl -fsS -X POST localhost:8790/stub/messages -d '{"text":"hi"}'   # queue a message
-    curl -fsS localhost:8790/stub/state                                # queued messages, devices
-    scripts/sim-push.sh '{"word":"hola"}'                              # silent push payload into the running app
+Sign in through the stub page in the app first (any email).
 
-The app fetches within 60 s (or on Refresh). `xcrun simctl push` does not work for silent pushes on the simulator: the payload is lost. Rules: docs/ios/testing.md.
+    curl -fsS -X POST localhost:8790/stub/deliveries -H 'content-type: application/json' -d '{}'   # queue the fixture recommendations
+    curl -fsS localhost:8790/stub/state                                # users, devices, deliveries and outcomes
+    scripts/sim-push.sh                                                # deliveries push into the running app
+    scripts/sim-push.sh '{"mozol":{"v":1,"type":"test"}}'              # test push
+
+The app claims at once on a push, or within 60 s (or on Refresh). `xcrun simctl push` does not work for silent pushes on the simulator: the payload is lost. Rules: docs/ios/testing.md.
 
 ## 4. Logs
 
@@ -73,7 +76,12 @@ Local D1:
 App store on the simulator (SwiftData, Z-prefixed tables):
 
     DATA=$(xcrun simctl get_app_container "$UDID" net.vrizo.mozol data)
-    sqlite3 -readonly "$DATA/Library/Application Support/default.store" ".tables"
+    sqlite3 -readonly "$DATA/Library/Application Support/mozol.store" "SELECT ZTITLE, ZOUTCOMERAW, ZERRORCODE FROM ZDELIVERYRECORD"
+
+Reminders on the simulator (the system store; find the file once, it holds ZREMCDREMINDER):
+
+    STORES=$(find ~/Library/Developer/CoreSimulator/Devices/$UDID/data/Containers/Shared/AppGroup -path '*Container_v1/Stores' -type d)
+    for DB in "$STORES"/Data-*.sqlite; do sqlite3 -readonly "$DB" "SELECT ZTITLE, ZPRIORITY, ZTIMEZONE, instr(ZNOTES, char(8291,8203,8291)) AS tagAt, length(ZNOTES) FROM ZREMCDREMINDER WHERE ZMARKEDFORDELETION = 0" 2>/dev/null; done
 
 ## Notes
 

@@ -18,6 +18,15 @@ Claiming deliveries
 - A failed request is not retried. The next trigger tries again.
 - In the background the app schedules a BGAppRefreshTask (`net.vrizo.mozol.refresh`) no earlier than 15 minutes ahead. iOS decides when it runs. Each run schedules the next one.
 
-The app today (2026-10-24)
+- A 401 unauthorized answer to the device registration or the claim means the app session ended on the server: the app signs out on this device only.
 
-The app still fetches the old placeholder route GET /api/messages, sends the token with POST /api/devices, and shows raw payloads in the Inbox tab (entries in SwiftData, model InboxEntry, deleted at sign-out). It moves to the routes above (../product/pending.md).
+Placed screen
+
+- The first tab lists what the app did with each delivery: the recommendation title, its kind, the outcome in plain words (or the failure code), and the time. Newest first.
+- Records live in SwiftData (model DeliveryRecord, store Application Support/mozol.store). A delivery handed out again updates its record. Sign-out deletes them.
+- The screen shows the time of the last successful run or the failure with its HTTP status. Without full access to Reminders it says so and links to the iOS Settings app.
+
+Sign-in and sign-out
+
+- Sign-in: shared/CONTRACT.md, "Sign-in handoff". The web view keeps no cookies (non-persistent website data), so every sign-in starts on the page.
+- Sign-out: DELETE /api/devices/:installationId, then POST /api/auth/sign-out, then the session and the records are deleted on the phone. A failed server call is logged and does not stop the sign-out. The installation id stays.

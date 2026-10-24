@@ -2,10 +2,12 @@ import MozolCore
 import SwiftUI
 import WebKit
 
-/// A page of the MOZOL website in a sheet, for example /signup.
+/// A page of the MOZOL website in a sheet, for example /app/signin.
 struct WebPageSheet: View {
     let title: LocalizedStringKey
     let url: URL
+    var closeTitle: LocalizedStringKey = "Done"
+    var onAppURL: ((URL) -> Void)?
 
     @Environment(\.dismiss) private var dismiss
     @State private var state: WebView.LoadState = .loading
@@ -13,7 +15,7 @@ struct WebPageSheet: View {
     var body: some View {
         NavigationStack {
             ZStack {
-                WebView(url: url, state: $state)
+                WebView(url: url, state: $state, onAppURL: onAppURL)
                     .opacity(state == .failed ? 0 : 1)
                     .accessibilityHidden(state == .failed)
                 switch state {
@@ -40,7 +42,8 @@ struct WebPageSheet: View {
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .confirmationAction) {
-                    Button("Done") { dismiss() }
+                    Button(closeTitle) { dismiss() }
+                        .accessibilityIdentifier("webPage.close")
                         .tint(Color.ink)
                 }
             }
@@ -53,11 +56,15 @@ struct WebView: UIViewRepresentable {
 
     let url: URL
     @Binding var state: LoadState
+    /// Receives a navigation to a mozol:// address; the web view cancels it. Such a view keeps no cookies.
+    var onAppURL: ((URL) -> Void)?
 
-    func makeCoordinator() -> Coordinator { Coordinator(state: $state) }
+    func makeCoordinator() -> Coordinator { Coordinator(state: $state, onAppURL: onAppURL) }
 
     func makeUIView(context: Context) -> WKWebView {
-        let view = WKWebView()
+        let configuration = WKWebViewConfiguration()
+        if onAppURL != nil { configuration.websiteDataStore = .nonPersistent() }
+        let view = WKWebView(frame: .zero, configuration: configuration)
         view.navigationDelegate = context.coordinator
         Log.ui.info("web page open path=\(url.path(), privacy: .public)")
         view.load(URLRequest(url: url))
@@ -68,8 +75,19 @@ struct WebView: UIViewRepresentable {
 
     final class Coordinator: NSObject, WKNavigationDelegate {
         private let state: Binding<LoadState>
+        private let onAppURL: ((URL) -> Void)?
 
-        init(state: Binding<LoadState>) { self.state = state }
+        init(state: Binding<LoadState>, onAppURL: ((URL) -> Void)?) {
+            self.state = state
+            self.onAppURL = onAppURL
+        }
+
+        func webView(_ webView: WKWebView, decidePolicyFor navigationAction: WKNavigationAction) async -> WKNavigationActionPolicy {
+            guard let url = navigationAction.request.url, url.scheme == "mozol" else { return .allow }
+            Log.ui.info("web page handed over host=\(url.host() ?? "", privacy: .public)")
+            onAppURL?(url)
+            return .cancel
+        }
 
         func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) {
             state.wrappedValue = .loaded

@@ -33,6 +33,15 @@ How the app reads them:
 
 Failed deliveries
 
-A delivery that cannot be applied is reported as failed with one of these codes: `reminders_access` (no full access while applying), `no_default_list` (the Reminders app has no default list), `eventkit_save` (EventKit refused the save; the EventKit error code goes to the log).
+A delivery that cannot be applied is reported as failed with one of these codes:
+
+- `reminders_access`: no full access while applying.
+- `eventkit_fetch`: EventKit did not return the reminders.
+- `reminder_not_found`: the reminder chosen a moment before is gone.
+- `no_default_list`: the Reminders app has no default list.
+- `eventkit_save`: EventKit refused the save; the EventKit error code goes to the log.
+- `bad_marker`, `bad_schedule`, `bad_match_term`: the delivery breaks the contract (a marker that is not 8 lowercase hex characters, a dueAt or time zone that does not parse, a match term that breaks its mode rules).
+
+Code: the tag and the planner are in ios/MozolCore (HiddenTag, DeliveryPlanner, TextMatching), tested with shared/fixtures/; the EventKit side is RemindersStore.
 
 Open check on a device: that the tag characters survive iCloud sync to another device and edits of the reminder in the Reminders app (../product/pending.md).

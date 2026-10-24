@@ -11,8 +11,8 @@ Steps
 
 1. Install the build from TestFlight, sign in, finish the Permissions screen.
 2. Settings, Push: copy the device token.
-3. Send a push: `scripts/apns-push.mjs <device token> '{"word":"hola"}'`. TestFlight builds use production APNs, the default. A Debug build installed from Xcode uses `--sandbox`.
-4. The push appears in the Inbox as a "Silent push" entry with the full payload.
+3. Keep the app open. Send the test push: `scripts/apns-push.mjs <device token> '{"mozol":{"v":1,"type":"test"}}'`. TestFlight builds use production APNs, the default. A Debug build installed from Xcode uses `--sandbox`.
+4. Settings, Push: "Last Test Push" shows the time. A deliveries push (`'{"mozol":{"v":1,"type":"deliveries","pending":1}}'`) makes the app claim at once; the Placed screen shows the result.
 
 How iOS delivers silent pushes
 

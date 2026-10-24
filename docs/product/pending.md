@@ -14,5 +14,5 @@ Questions waiting on Vitalii and Petr. Each answer moves into the matching spec 
 - Jamie's docs do not say whether a retried delivery is signed again. The signature check accepts a timestamp up to 2 hours old so that the 1-hour retry passes. When Jamie re-signs retries, the window can go down to Jamie's 300 seconds.
 - What the Shortcuts action does (../ios/shortcuts.md).
 - Repetition schedule: how often an item comes back, and when it counts as learned.
-- The iOS app still calls the old placeholder routes (GET /api/messages, POST /api/devices) and signs in on a native screen. It moves to shared/CONTRACT.md and the sign-in handoff (accounts.md).
+- The iOS app follows shared/CONTRACT.md and is checked against scripts/stub-api.mjs only. It is checked again against the worker after B04 (sign-in), B05 (devices) and B09 (deliveries), and against the real /app/signin page after W02.
 - Analytics: whether to use PostHog, as nobardak does.

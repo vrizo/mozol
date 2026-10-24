@@ -20,9 +20,9 @@ struct PermissionsView: View {
                 .font(.sans(18, relativeTo: .title3))
                 .foregroundStyle(Color.ink2)
             VStack(spacing: 0) {
-                row(systemImage: "bell.badge", text: "Notifications: MOZOL uses them to show your messages.")
+                row(systemImage: "bell.badge", text: "Notifications: MOZOL will use them for short hints in a later version.")
                 CardDivider()
-                row(systemImage: "checklist", text: "Reminders: MOZOL uses them to add short language tips and to update reminders that match a tip.")
+                row(systemImage: "checklist", text: "Reminders: MOZOL adds what to learn, as a line in a reminder that mentions the same word, or as a new reminder.")
             }
             .card()
             Spacer()

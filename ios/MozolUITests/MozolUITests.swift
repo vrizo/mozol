@@ -1,6 +1,6 @@
 import XCTest
 
-/// Sign-in and Inbox flows against the in-process stub server.
+/// Sign-in, sign-out and the Placed screen against the in-process stub server.
 final class MozolUITests: XCTestCase {
     private var server: StubServer!
 
@@ -52,68 +52,84 @@ final class MozolUITests: XCTestCase {
         try! shot.pngRepresentation.write(to: Self.screenshotDir.appending(path: "\(name).png"))
     }
 
+    private static let user = #"{"id":"usr_1","email":"learner@example.com","displayName":"Learner","nativeLanguage":"ru","speakerNames":["Learner"],"timezone":"Europe/Berlin","reminderSettings":{"embedInMyReminders":true,"intensity":"normal","activeFrom":"09:00","activeTo":"21:00"},"createdAt":"2026-10-24T12:00:00.000Z"}"#
+    private static let device = #"{"device":{"id":"dev_1","installationId":"x","platform":"ios","appVersion":null,"osVersion":null,"pushEnabled":false,"remindersAccess":"denied","notificationsAccess":"denied","lastSeenAt":"2026-10-24T12:00:00.000Z"}}"#
+    /// Stands in for /app/signin: its button hands the code to the app the way the real page does.
+    private static let signInPage = """
+    <!doctype html><meta name=viewport content="width=device-width"><title>MOZOL</title>
+    <h1>Stub sign-in</h1>
+    <button onclick="location.href='mozol://auth?code=code-1'">Continue to MOZOL</button>
+    """
+
+    private func routeSignedInBasics() {
+        server.route("PUT /api/devices/*", body: Self.device)
+        server.route("POST /api/deliveries/claim", body: #"{"deliveries":[],"leaseSeconds":120,"embedInMyReminders":true}"#)
+    }
+
     @MainActor
-    func testSignInWithEmailAndPasswordOpensTheTabs() {
-        server.route("GET /api/messages", body: #"{"messages":[],"cursor":null}"#)
+    func testSignInThroughTheWebPageOpensTheTabs() {
+        server.route("GET /app/signin", body: Self.signInPage, contentType: "text/html")
+        server.route("POST /api/auth/app-token", status: 201, body: #"{"token":"tok_1","user":\#(Self.user)}"#)
+        server.route("DELETE /api/devices/*", status: 204, body: "")
+        server.route("POST /api/auth/sign-out", status: 204, body: "")
+        routeSignedInBasics()
         let app = launch(["-uitest.skipPermissions"])
 
-        let submit = app.buttons["signin.submit"]
-        XCTAssertTrue(submit.waitForExistence(timeout: 10))
-        XCTAssertFalse(submit.isEnabled)
+        let start = app.buttons["signin.start"]
+        XCTAssertTrue(start.waitForExistence(timeout: 10))
+        screenshot("signin")
+        start.tap()
 
-        let email = app.textFields["signin.email"]
-        email.tap()
-        email.typeText("learner@example.com")
-        let password = app.secureTextFields["signin.password"]
-        password.tap()
-        password.typeText("secret")
-        XCTAssertTrue(submit.isEnabled)
-        screenshot("signin-filled")
-        submit.tap()
+        let pageButton = app.webViews.buttons["Continue to MOZOL"]
+        XCTAssertTrue(pageButton.waitForExistence(timeout: 10))
+        screenshot("signin-page")
+        pageButton.tap()
 
-        XCTAssertTrue(app.tabBars.buttons["Inbox"].waitForExistence(timeout: 10))
+        XCTAssertTrue(app.tabBars.buttons["Placed"].waitForExistence(timeout: 10))
         screenshot("after-signin")
-        // iOS offers to save the password when the sign-in form disappears.
-        let savePassword = app.sheets["Save Password?"]
-        if savePassword.waitForExistence(timeout: 3) {
-            savePassword.buttons["Not Now"].tap()
-            XCTAssertTrue(savePassword.waitForNonExistence(timeout: 5))
-        }
+        XCTAssertTrue(server.requestLines.contains { $0.hasPrefix("GET /app/signin?return=mozol://auth") })
+        XCTAssertTrue(server.requestLines.contains { $0.hasPrefix("PUT /api/devices/") })
+
         app.tabBars.buttons["Settings"].tap()
         XCTAssertTrue(app.staticTexts["Signed in as learner@example.com"].waitForExistence(timeout: 5))
         screenshot("settings")
 
         app.buttons["settings.signOut"].tap()
-        let remembered = app.textFields["signin.email"]
-        XCTAssertTrue(remembered.waitForExistence(timeout: 5))
-        XCTAssertEqual(remembered.value as? String, "learner@example.com")
-        app.buttons["signin.email.clear"].tap()
-        XCTAssertEqual(remembered.value as? String, "Email")
-        XCTAssertFalse(app.buttons["signin.email.clear"].exists)
+        XCTAssertTrue(app.buttons["signin.start"].waitForExistence(timeout: 10))
+        let lines = server.requestLines
+        let delete = lines.firstIndex { $0.hasPrefix("DELETE /api/devices/") }
+        let signOut = lines.firstIndex(of: "POST /api/auth/sign-out")
+        XCTAssertNotNil(delete)
+        XCTAssertNotNil(signOut)
+        XCTAssertLessThan(delete ?? .max, signOut ?? .min)
     }
 
     @MainActor
-    func testInboxShowsAFetchedMessage() {
-        server.route("GET /api/messages", body: #"{"messages":[{"id":"m1","word":"hola"}],"cursor":"m1"}"#)
-        server.route("POST /api/devices", body: #"{"ok":true}"#)
-        let app = launch(["-uitest.signedIn", "-uitest.skipPermissions"])
+    func testARefusedCodeSaysWhatToDo() {
+        server.route("GET /app/signin", body: Self.signInPage, contentType: "text/html")
+        server.route("POST /api/auth/app-token", status: 400, body: #"{"error":"code_invalid"}"#)
+        let app = launch(["-uitest.skipPermissions"])
 
-        let row = app.buttons.matching(identifier: "inbox.row").firstMatch
-        XCTAssertTrue(row.waitForExistence(timeout: 10))
-        screenshot("inbox")
-        row.tap()
-        let body = app.staticTexts["inboxEntry.body"]
-        XCTAssertTrue(body.waitForExistence(timeout: 5))
-        XCTAssertTrue(body.label.contains("\"word\" : \"hola\""))
-        XCTAssertTrue(server.requestLines.contains("GET /api/messages"))
+        app.buttons["signin.start"].tap()
+        let pageButton = app.webViews.buttons["Continue to MOZOL"]
+        XCTAssertTrue(pageButton.waitForExistence(timeout: 10))
+        pageButton.tap()
+
+        let failure = app.staticTexts["signin.failure"]
+        XCTAssertTrue(failure.waitForExistence(timeout: 10))
+        XCTAssertTrue(failure.label.contains("did not work"))
+        screenshot("signin-code-refused")
     }
 
     @MainActor
-    func testServerFailureIsShownWithItsCode() {
-        server.route("GET /api/messages", status: 500, body: #"{"error":"boom"}"#)
+    func testWithoutRemindersAccessTheScreenSaysSo() {
+        routeSignedInBasics()
+        XCUIApplication().resetAuthorizationStatus(for: .reminders)
         let app = launch(["-uitest.signedIn", "-uitest.skipPermissions"])
 
-        let status = app.staticTexts["Couldn't check for messages: error 500"]
-        XCTAssertTrue(status.waitForExistence(timeout: 10))
+        XCTAssertTrue(app.staticTexts["placed.noAccess"].waitForExistence(timeout: 10))
+        XCTAssertTrue(app.buttons["Check Now"].exists)
+        screenshot("placed-no-access")
+        XCTAssertFalse(server.requestLines.contains("POST /api/deliveries/claim"))
     }
 }

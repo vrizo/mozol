@@ -34,12 +34,12 @@ UI and accessibility
 - Copy rules: ../rules/ui-copy.md.
 - Launch splash (ios/Mozol/UI/LaunchSplash.swift): the final frame of the landing intro, the word MOZOL drawn with characters, floats for 1.4 s; then the characters scatter to the screen edges in about 1.1 s while the app fades in. With Reduce Motion on, the word stands still and only fades. The splash is decorative: hidden from VoiceOver, it never takes touches.
 
-Features: messages.md (silent push, fetching, Inbox), reminders.md (writing to Apple Reminders), permissions.md, shortcuts.md. Sign-in: ../product/accounts.md. TestFlight: ../deployment/testflight.md.
+Features: messages.md (silent push, claiming deliveries, the Placed screen), reminders.md (writing to Apple Reminders), permissions.md, shortcuts.md. Sign-in: ../product/accounts.md. TestFlight: ../deployment/testflight.md.
 
 DEBUG launch arguments, for tests and local runs only:
 
-- `-uitest.reset` deletes the session, the Inbox, the cursor and the onboarding flag at launch.
-- `-uitest.signedIn` starts signed in as uitest@example.com with the placeholder token.
+- `-uitest.reset` deletes the session, the installation id, the delivery records, the sync times and the onboarding flag at launch.
+- `-uitest.signedIn` starts signed in as uitest@example.com with the token "uitest-token".
 - `-uitest.skipPermissions` marks the Permissions screen as shown.
 
 A Debug build also takes silent push payloads from scripts/sim-push.sh (testing.md).

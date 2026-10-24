@@ -1,12 +1,12 @@
 import Foundation
 import Network
 
-/// In-process HTTP server for UI tests: canned answers by "METHOD /path", no real worker.
+/// In-process HTTP server for UI tests: canned answers by "METHOD /path" (a key ending in "*" matches a path prefix), no real worker.
 nonisolated final class StubServer: @unchecked Sendable {
     private let listener: NWListener
     private let queue = DispatchQueue(label: "mozol.uitest.stub")
     private let lock = NSLock()
-    private var routes: [String: (status: Int, body: String)] = [:]
+    private var routes: [String: (status: Int, body: String, contentType: String)] = [:]
     private var hits: [String] = []
 
     init() throws {
@@ -17,8 +17,8 @@ nonisolated final class StubServer: @unchecked Sendable {
 
     var requestLines: [String] { lock.withLock { hits } }
 
-    func route(_ key: String, status: Int = 200, body: String) {
-        lock.withLock { routes[key] = (status, body) }
+    func route(_ key: String, status: Int = 200, body: String, contentType: String = "application/json") {
+        lock.withLock { routes[key] = (status, body, contentType) }
     }
 
     func start() throws {
@@ -51,12 +51,14 @@ nonisolated final class StubServer: @unchecked Sendable {
             let method = parts.first.map(String.init) ?? ""
             let target = parts.count > 1 ? String(parts[1]) : ""
             let path = target.split(separator: "?").first.map(String.init) ?? target
-            let answer = lock.withLock { () -> (Int, String) in
+            let answer = lock.withLock { () -> (status: Int, body: String, contentType: String) in
                 hits.append("\(method) \(target)")
-                return routes["\(method) \(path)"].map { ($0.status, $0.body) } ?? (404, #"{"error":"not_found"}"#)
+                let key = "\(method) \(path)"
+                let prefixed = routes.first { $0.key.hasSuffix("*") && key.hasPrefix($0.key.dropLast()) }?.value
+                return routes[key] ?? prefixed ?? (404, #"{"error":"not_found"}"#, "application/json")
             }
-            let body = Data(answer.1.utf8)
-            let head = "HTTP/1.1 \(answer.0) Stub\r\nContent-Type: application/json\r\nContent-Length: \(body.count)\r\nConnection: close\r\n\r\n"
+            let body = Data(answer.body.utf8)
+            let head = "HTTP/1.1 \(answer.status) Stub\r\nContent-Type: \(answer.contentType)\r\nContent-Length: \(body.count)\r\nConnection: close\r\n\r\n"
             connection.send(content: Data(head.utf8) + body, completion: .contentProcessed { _ in connection.cancel() })
         }
     }

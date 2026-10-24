@@ -1,6 +1,7 @@
 /// Everything that can make the app talk to the server. All of them go through one handler.
 public enum AppEvent: Equatable, Sendable {
-    case silentPush(raw: String)
+    /// A silent push of type "deliveries".
+    case silentPush
     case becameActive
     case foregroundTimer
     case manualRefresh

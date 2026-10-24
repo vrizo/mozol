@@ -10,14 +10,17 @@ final class AppEnvironment {
         return AppEnvironment(config: .load(), defaults: .standard, keychainService: Keychain.appService, inMemory: false)
     }()
 
+    /// The SwiftData store name: Application Support/mozol.store.
+    static let storeName = "mozol"
+
     let config: Config
     let modelContainer: ModelContainer
     let session: SessionStore
     let api: APIClient
-    let sync: MessageSync
-    let push: PushRegistration
     let notifications: NotificationPermission
     let reminders: RemindersStore
+    let devices: DeviceRegistration
+    let sync: DeliverySync
     let events: AppEventHandler
 
     init(config: Config, defaults: UserDefaults, keychainService: String, inMemory: Bool, urlSession: URLSession = .shared) {
@@ -27,18 +30,21 @@ final class AppEnvironment {
                 try FileManager.default.createDirectory(at: .applicationSupportDirectory, withIntermediateDirectories: true)
             }
             modelContainer = try ModelContainer(
-                for: InboxEntry.self,
-                configurations: ModelConfiguration(isStoredInMemoryOnly: inMemory)
+                for: DeliveryRecord.self,
+                configurations: ModelConfiguration(Self.storeName, isStoredInMemoryOnly: inMemory)
             )
         } catch {
             fatalError("SwiftData container failed: \(error)")
         }
-        session = SessionStore(keychain: Keychain(service: keychainService), defaults: defaults, auth: PlaceholderAuthService())
+        session = SessionStore(keychain: Keychain(service: keychainService), defaults: defaults)
         api = APIClient(baseURL: config.baseURL, urlSession: urlSession, token: { [session] in session.token })
-        sync = MessageSync(api: api, context: modelContainer.mainContext, defaults: defaults)
-        push = PushRegistration(api: api, session: session, defaults: defaults, environment: config.apnsEnvironment)
         notifications = NotificationPermission()
         reminders = RemindersStore()
-        events = AppEventHandler(session: session, sync: sync, push: push)
+        devices = DeviceRegistration(
+            api: api, session: session, defaults: defaults, environment: config.apnsEnvironment,
+            notifications: notifications, reminders: reminders
+        )
+        sync = DeliverySync(api: api, session: session, reminders: reminders, context: modelContainer.mainContext, defaults: defaults)
+        events = AppEventHandler(api: api, session: session, sync: sync, devices: devices)
     }
 }

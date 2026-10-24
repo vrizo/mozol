@@ -8,6 +8,8 @@ enum APIError: Error, Equatable {
     case unreachable
     /// The server answered, but the body is not what the contract says.
     case unreadable
+
+    var isUnauthorized: Bool { self == .http(status: 401, code: "unauthorized") }
 }
 
 /// HTTP to the worker. Every request carries X-Request-Id and is logged on the way out and back.
@@ -29,15 +31,46 @@ final class APIClient {
     }
 
     func post(_ path: String, json body: some Encodable) async throws(APIError) -> Data {
+        try await send(request("POST", path, json: body), path: path)
+    }
+
+    /// A POST without a body, for example sign-out.
+    func post(_ path: String) async throws(APIError) -> Data {
         var request = URLRequest(url: baseURL.appending(path: path))
         request.httpMethod = "POST"
+        return try await send(request, path: path)
+    }
+
+    func put(_ path: String, json body: some Encodable) async throws(APIError) -> Data {
+        try await send(request("PUT", path, json: body), path: path)
+    }
+
+    func delete(_ path: String) async throws(APIError) -> Data {
+        var request = URLRequest(url: baseURL.appending(path: path))
+        request.httpMethod = "DELETE"
+        return try await send(request, path: path)
+    }
+
+    /// The answer as a contract type. A body that does not fit is `unreadable`.
+    func decode<T: Decodable>(_ type: T.Type, from data: Data, path: String) throws(APIError) -> T {
+        do {
+            return try Contract.decoder.decode(type, from: data)
+        } catch {
+            Log.api.error("answer of \(path, privacy: .public) unreadable: \(String(describing: error), privacy: .public)")
+            throw .unreadable
+        }
+    }
+
+    private func request(_ method: String, _ path: String, json body: some Encodable) -> URLRequest {
+        var request = URLRequest(url: baseURL.appending(path: path))
+        request.httpMethod = method
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
         do {
-            request.httpBody = try JSONEncoder().encode(body)
+            request.httpBody = try Contract.encoder.encode(body)
         } catch {
             fatalError("request body for \(path) does not encode: \(error)")
         }
-        return try await send(request, path: path)
+        return request
     }
 
     private func send(_ request: URLRequest, path: String) async throws(APIError) -> Data {
@@ -69,7 +102,7 @@ final class APIClient {
         }
         Log.api.info("<- \(http.statusCode) \(method, privacy: .public) \(path, privacy: .public) rid=\(rid, privacy: .public) ms=\(ms) bytes=\(data.count)")
         guard (200..<300).contains(http.statusCode) else {
-            let code = (try? JSONSerialization.jsonObject(with: data) as? [String: Any])?["error"] as? String
+            let code = try? Contract.decoder.decode(ErrorBody.self, from: data).error
             throw .http(status: http.statusCode, code: code)
         }
         return data

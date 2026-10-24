@@ -1,4 +1,5 @@
 import Foundation
+import MozolCore
 
 /// Where the app talks to. The base URL can be overridden with the UserDefaults key
 /// `mozol.apiBaseURL` (launch argument `-mozol.apiBaseURL <url>`): docs/ios/app-rules.md.
@@ -8,14 +9,28 @@ struct Config {
 
     let baseURL: URL
 
-    var signUpURL: URL { baseURL.appending(path: "signup") }
+    /// The sign-in page for the in-app web view: shared/CONTRACT.md, "Sign-in handoff".
+    var appSignInURL: URL {
+        baseURL.appending(path: "app/signin").appending(queryItems: [URLQueryItem(name: "return", value: Self.signInReturn)])
+    }
+
+    static let signInReturn = "mozol://auth"
+
+    /// The code of mozol://auth?code=<code>, or nil for any other address.
+    static func signInCode(from url: URL) -> String? {
+        guard url.scheme == "mozol", url.host() == "auth",
+              let code = URLComponents(url: url, resolvingAgainstBaseURL: false)?.queryItems?.first(where: { $0.name == "code" })?.value,
+              !code.isEmpty
+        else { return nil }
+        return code
+    }
 
     /// The APNs environment the build is signed for.
-    var apnsEnvironment: String {
+    var apnsEnvironment: APNsEnvironment {
         #if DEBUG
-        "development"
+        .sandbox
         #else
-        "production"
+        .production
         #endif
     }
 

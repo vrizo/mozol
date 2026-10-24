@@ -6,8 +6,19 @@ enum RemindersError: Error, Equatable {
     case noAccess
     case fetchFailed
     case notFound
-    case listNotFound
+    case noDefaultList
     case eventKit(code: Int)
+
+    /// The errorCode of a failed delivery result: docs/ios/reminders.md.
+    var deliveryCode: String {
+        switch self {
+        case .noAccess: "reminders_access"
+        case .fetchFailed: "eventkit_fetch"
+        case .notFound: "reminder_not_found"
+        case .noDefaultList: "no_default_list"
+        case .eventKit: "eventkit_save"
+        }
+    }
 }
 
 /// The user's Apple Reminders through EventKit, with no screen of its own: docs/ios/reminders.md.
@@ -33,91 +44,92 @@ final class RemindersStore {
         refreshAuthorization()
     }
 
-    func lists() throws -> [ReminderList] {
-        guard hasFullAccess else { throw RemindersError.noAccess }
-        return store.calendars(for: .reminder).map { ReminderList(id: $0.calendarIdentifier, title: $0.title) }
-    }
-
-    /// The default list for new reminders, as the user set it in the Reminders app.
-    func defaultListID() throws -> String {
-        guard hasFullAccess else { throw RemindersError.noAccess }
-        guard let calendar = store.defaultCalendarForNewReminders() else { throw RemindersError.listNotFound }
-        return calendar.calendarIdentifier
-    }
-
-    /// Reminders that are not completed, from all lists.
-    func openReminders() async throws -> [ReminderItem] {
-        guard hasFullAccess else { throw RemindersError.noAccess }
-        guard let items = await Self.fetchIncomplete(store, calendars: store.calendars(for: .reminder)) else {
+    /// Every reminder of every list, completed or not.
+    func allReminders() async throws(RemindersError) -> [ReminderSnapshot] {
+        guard hasFullAccess else { throw .noAccess }
+        guard let items = await Self.fetchAll(store) else {
             Log.store.error("reminders fetch returned nil")
-            throw RemindersError.fetchFailed
+            throw .fetchFailed
         }
-        Log.store.info("reminders loaded open=\(items.count)")
+        Log.store.info("reminders loaded count=\(items.count)")
         return items
     }
 
-    /// Saves a draft: a new reminder when `id` is nil, otherwise the reminder with that id. Returns the id.
-    @discardableResult
-    func save(_ draft: ReminderDraft, id: String?) throws -> String {
-        guard hasFullAccess else { throw RemindersError.noAccess }
-        let reminder: EKReminder
-        if let id {
-            guard let existing = store.calendarItem(withIdentifier: id) as? EKReminder else { throw RemindersError.notFound }
-            reminder = existing
-        } else {
-            reminder = EKReminder(eventStore: store)
+    /// Writes one delivery plan. Returns the reminders it changed or created, as they are now.
+    func apply(_ plan: DeliveryPlan) throws(RemindersError) -> [ReminderSnapshot] {
+        guard hasFullAccess else { throw .noAccess }
+        switch plan {
+        case let .embedUpdate(changes):
+            return try changes.map { change throws(RemindersError) in try write(notes: change) }
+        case let .embed(change):
+            return [try write(notes: change)]
+        case let .reminderUpdate(id, content):
+            let reminder = try find(id)
+            fill(reminder, with: content)
+            reminder.isCompleted = false
+            try save(reminder)
+            return [Self.snapshot(reminder)]
+        case let .create(content):
+            guard let calendar = store.defaultCalendarForNewReminders() else { throw .noDefaultList }
+            let reminder = EKReminder(eventStore: store)
+            reminder.calendar = calendar
+            fill(reminder, with: content)
+            try save(reminder)
+            return [Self.snapshot(reminder)]
         }
-        guard let listID = draft.listID, let calendar = store.calendar(withIdentifier: listID) else {
-            throw RemindersError.listNotFound
-        }
-        reminder.title = draft.trimmedTitle
-        reminder.notes = draft.storedNotes
-        reminder.calendar = calendar
-        reminder.isCompleted = draft.isCompleted
-        if let due = draft.dueDate {
-            reminder.dueDateComponents = Calendar.current.dateComponents([.year, .month, .day, .hour, .minute], from: due)
-            reminder.alarms = [EKAlarm(absoluteDate: due)]
-        } else {
-            reminder.dueDateComponents = nil
-            reminder.alarms = nil
-        }
-        try commit { try store.save(reminder, commit: true) }
-        Log.store.info("reminder saved id=\(reminder.calendarItemIdentifier, privacy: .public) new=\(id == nil)")
-        return reminder.calendarItemIdentifier
     }
 
-    func delete(_ id: String) throws {
-        guard hasFullAccess else { throw RemindersError.noAccess }
-        guard let reminder = store.calendarItem(withIdentifier: id) as? EKReminder else { throw RemindersError.notFound }
-        try commit { try store.remove(reminder, commit: true) }
-        Log.store.info("reminder deleted id=\(id, privacy: .public)")
+    private func write(notes change: NotesChange) throws(RemindersError) -> ReminderSnapshot {
+        let reminder = try find(change.reminderID)
+        reminder.notes = change.notes
+        try save(reminder)
+        return Self.snapshot(reminder)
     }
 
-    private func commit(_ work: () throws -> Void) throws {
+    private func find(_ id: String) throws(RemindersError) -> EKReminder {
+        guard let reminder = store.calendarItem(withIdentifier: id) as? EKReminder else { throw .notFound }
+        return reminder
+    }
+
+    /// Title, notes, URL, priority and the schedule: due date, one alarm, the repeat rule.
+    private func fill(_ reminder: EKReminder, with content: ReminderContent) {
+        reminder.title = content.title
+        reminder.notes = content.notes
+        reminder.url = content.url
+        reminder.priority = content.priority
+        reminder.dueDateComponents = content.schedule.dueComponents
+        reminder.alarms = [EKAlarm(absoluteDate: content.schedule.dueDate)]
+        reminder.recurrenceRules = content.schedule.repeatRule.map { rule in
+            [EKRecurrenceRule(recurrenceWith: .daily, interval: rule.interval, end: EKRecurrenceEnd(occurrenceCount: rule.count))]
+        }
+    }
+
+    private func save(_ reminder: EKReminder) throws(RemindersError) {
         do {
-            try work()
+            try store.save(reminder, commit: true)
         } catch {
             let code = (error as NSError).code
             Log.store.error("eventkit write failed code=\(code)")
-            throw RemindersError.eventKit(code: code)
+            throw .eventKit(code: code)
         }
+        Log.store.info("reminder saved id=\(reminder.calendarItemIdentifier, privacy: .public)")
     }
 
-    private nonisolated static func fetchIncomplete(_ store: EKEventStore, calendars: [EKCalendar]) async -> [ReminderItem]? {
-        let predicate = store.predicateForIncompleteReminders(withDueDateStarting: nil, ending: nil, calendars: calendars)
+    private nonisolated static func snapshot(_ reminder: EKReminder) -> ReminderSnapshot {
+        ReminderSnapshot(
+            id: reminder.calendarItemIdentifier,
+            title: reminder.title ?? "",
+            notes: reminder.notes ?? "",
+            isCompleted: reminder.isCompleted,
+            lastModified: reminder.lastModifiedDate
+        )
+    }
+
+    private nonisolated static func fetchAll(_ store: EKEventStore) async -> [ReminderSnapshot]? {
+        let predicate = store.predicateForReminders(in: nil)
         return await withCheckedContinuation { continuation in
             store.fetchReminders(matching: predicate) { reminders in
-                let items = reminders?.map { reminder in
-                    ReminderItem(
-                        id: reminder.calendarItemIdentifier,
-                        title: reminder.title ?? "",
-                        notes: reminder.notes,
-                        dueDate: reminder.dueDateComponents.flatMap { Calendar.current.date(from: $0) },
-                        listID: reminder.calendar.calendarIdentifier,
-                        isCompleted: reminder.isCompleted
-                    )
-                }
-                continuation.resume(returning: items)
+                continuation.resume(returning: reminders?.map(snapshot))
             }
         }
     }

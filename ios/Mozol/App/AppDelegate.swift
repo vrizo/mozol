@@ -16,11 +16,11 @@ final class AppDelegate: NSObject, UIApplicationDelegate {
     }
 
     func application(_ application: UIApplication, didRegisterForRemoteNotificationsWithDeviceToken deviceToken: Data) {
-        AppEnvironment.shared.push.didRegister(deviceToken: deviceToken)
+        AppEnvironment.shared.devices.didRegister(deviceToken: deviceToken)
     }
 
     func application(_ application: UIApplication, didFailToRegisterForRemoteNotificationsWithError error: Error) {
-        AppEnvironment.shared.push.didFailToRegister(error)
+        AppEnvironment.shared.devices.didFailToRegister(error)
     }
 
     func application(
@@ -29,17 +29,8 @@ final class AppDelegate: NSObject, UIApplicationDelegate {
         fetchCompletionHandler completionHandler: @escaping (UIBackgroundFetchResult) -> Void
     ) {
         let payload = Dictionary(uniqueKeysWithValues: userInfo.map { ("\($0.key)", $0.value) })
-        let raw: String
-        do {
-            raw = try RawJSON.text(from: payload)
-        } catch {
-            Log.notify.error("silent push payload is not JSON: \(String(describing: error), privacy: .public)")
-            completionHandler(.failed)
-            return
-        }
-        Log.notify.info("silent push received bytes=\(raw.utf8.count)")
         Task {
-            let outcome = await AppEnvironment.shared.events.handle(.silentPush(raw: raw))
+            let outcome = await AppEnvironment.shared.events.handlePush(payload)
             completionHandler(outcome.fetchResult)
         }
     }

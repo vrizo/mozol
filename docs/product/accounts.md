@@ -34,6 +34,4 @@ Deleting an account
 
 The user deletes the account from the profile page by typing the password again. This deletes the user and every row that belongs to the user: sessions, devices, connections, events, transcripts, analyses, patterns, words, recommendations and deliveries. Everything already placed on the phone stays in the Reminders app.
 
-The iOS app today (2026-10-24)
-
-The app still has its own native sign-in screen, built before the sign-in handoff above was specified. It starts with the email of the last sign-in, marks the fields for Password AutoFill (associated domain webcredentials:mozol.vrizo.net), and its "Create Account" button opens /signup in an in-app web view. The server has no sign-in yet, and the website has no sign-up page. The iOS app uses a local placeholder: it accepts any email that has the shape name@domain and any non-empty password, and stores the token "placeholder" in the Keychain. The sign-in screen says that sign-in is not connected to the server. The web view sign-in replaces this screen and the placeholder; the separate "Create Account" sheet goes too, because /app/signin offers sign-up.
+In the iOS app the sign-in screen has one button that opens /app/signin in a web view; sign-up is on the same page. Password AutoFill works there through the associated domain webcredentials:mozol.vrizo.net. Until the worker and the web app have these routes, local runs use scripts/stub-api.mjs (../ios/testing.md).

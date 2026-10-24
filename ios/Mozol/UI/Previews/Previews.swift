@@ -8,7 +8,7 @@ private struct PreviewEnvironment: ViewModifier {
         content
             .environment(environment.session)
             .environment(environment.sync)
-            .environment(environment.push)
+            .environment(environment.devices)
             .environment(environment.notifications)
             .environment(environment.reminders)
             .environment(environment.events)
@@ -25,19 +25,14 @@ private struct PreviewEnvironment: ViewModifier {
     PermissionsView().modifier(PreviewEnvironment())
 }
 
-#Preview("Inbox") {
+#Preview("Placed") {
     InboxView().modifier(PreviewEnvironment())
-}
-
-#Preview("Inbox entry") {
-    NavigationStack {
-        InboxEntryView(entry: InboxEntry(key: "push:1", source: .push, receivedAt: .now, body: PreviewData.pushBody))
-    }
 }
 
 #Preview("Status line failures") {
     List {
         SyncStatusLine(status: .failed(.http(status: 404, code: nil)), lastSuccess: nil)
+        SyncStatusLine(status: .needsRemindersAccess, lastSuccess: nil)
         SyncStatusLine(status: .failed(.unreachable), lastSuccess: nil)
         SyncStatusLine(status: .checking, lastSuccess: nil)
         SyncStatusLine(status: .idle, lastSuccess: .now)

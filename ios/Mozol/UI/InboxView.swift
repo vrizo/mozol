@@ -2,28 +2,29 @@ import MozolCore
 import SwiftData
 import SwiftUI
 
-/// Raw silent pushes and server messages, newest first: docs/ios/messages.md.
+/// What MOZOL placed in Reminders, newest first: docs/ios/messages.md.
 struct InboxView: View {
-    @Environment(MessageSync.self) private var sync
+    @Environment(DeliverySync.self) private var sync
     @Environment(AppEventHandler.self) private var events
-    @Query(sort: \InboxEntry.receivedAt, order: .reverse) private var entries: [InboxEntry]
+    @Environment(\.openURL) private var openURL
+    @Query(sort: \DeliveryRecord.at, order: .reverse) private var records: [DeliveryRecord]
 
     var body: some View {
         NavigationStack {
             ScrollView {
                 VStack(alignment: .leading, spacing: Space.s6) {
                     SyncStatusLine(status: sync.status, lastSuccess: sync.lastSuccess)
-                    if entries.isEmpty {
+                    if sync.status == .needsRemindersAccess {
+                        accessNotice
+                    }
+                    if records.isEmpty {
                         emptyState
                     } else {
-                        SectionLabel(text: "Messages")
+                        SectionLabel(text: "Recent")
                         LazyVStack(spacing: Space.s4) {
-                            ForEach(entries) { entry in
-                                NavigationLink(value: entry.key) {
-                                    InboxRow(entry: entry)
-                                }
-                                .buttonStyle(.plain)
-                                .accessibilityIdentifier("inbox.row")
+                            ForEach(records) { record in
+                                PlacedRow(record: record)
+                                    .accessibilityIdentifier("placed.row")
                             }
                         }
                         .padding(.trailing, Outline.shadow)
@@ -33,12 +34,7 @@ struct InboxView: View {
                 .padding(.vertical, Space.s4)
             }
             .paperBackground()
-            .navigationTitle("Inbox")
-            .navigationDestination(for: String.self) { key in
-                if let entry = entries.first(where: { $0.key == key }) {
-                    InboxEntryView(entry: entry)
-                }
-            }
+            .navigationTitle("Placed in Reminders")
             .refreshable { await events.handle(.manualRefresh) }
             .tint(Color.ink)
             .toolbar {
@@ -50,7 +46,7 @@ struct InboxView: View {
                     }
                     .tint(Color.ink)
                     .disabled(sync.status == .checking)
-                    .accessibilityIdentifier("inbox.refresh")
+                    .accessibilityIdentifier("placed.refresh")
                 }
             }
         }
@@ -58,9 +54,30 @@ struct InboxView: View {
 }
 
 extension InboxView {
+    private var accessNotice: some View {
+        VStack(alignment: .leading, spacing: Space.s3) {
+            Text("MOZOL needs full access to Reminders to place items.")
+                .font(.bodyText)
+                .foregroundStyle(Color.ink)
+                .accessibilityIdentifier("placed.noAccess")
+            Button("Open Settings") { openURL(URL(string: UIApplication.openSettingsURLString)!) }
+                .buttonStyle(.secondary)
+        }
+        .padding(Space.s4)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .card()
+    }
+
     private var emptyState: some View {
         VStack(alignment: .leading, spacing: Space.s4) {
-            Text("No messages yet. Messages and silent pushes from the MOZOL server appear here.")
+            Image("InboxEmpty")
+                .resizable()
+                .scaledToFit()
+                .frame(width: 128)
+                .foregroundStyle(Color.muted)
+                .accessibilityHidden(true)
+                .accessibilityIdentifier("inbox.emptyIcon")
+            Text("Nothing placed yet. Items from your calls appear here, as lines in your reminders or as new reminders.")
                 .font(.bodyText)
                 .foregroundStyle(Color.ink2)
             Button {
@@ -76,7 +93,7 @@ extension InboxView {
 }
 
 struct SyncStatusLine: View {
-    let status: MessageSync.Status
+    let status: DeliverySync.Status
     let lastSuccess: Date?
 
     var body: some View {
@@ -90,7 +107,7 @@ struct SyncStatusLine: View {
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .accessibilityElement(children: .combine)
-        .accessibilityIdentifier("inbox.status")
+        .accessibilityIdentifier("placed.status")
     }
 
     private var isFailure: Bool {
@@ -102,12 +119,12 @@ struct SyncStatusLine: View {
         case .checking:
             Text("Checking now")
         case .failed(.http(let code, _)):
-            Text("Couldn't check for messages: error \(code)")
+            Text("Couldn't check for new items: error \(code)")
         case .failed(.unreachable):
             Text("Couldn't reach the server")
         case .failed(.unreadable):
             Text("Couldn't read the server answer")
-        case .idle:
+        case .idle, .needsRemindersAccess:
             if let lastSuccess {
                 Text("Last checked at \(lastSuccess.formatted(date: .omitted, time: .shortened))")
             } else {
@@ -117,36 +134,56 @@ struct SyncStatusLine: View {
     }
 }
 
-struct InboxRow: View {
-    let entry: InboxEntry
+struct PlacedRow: View {
+    let record: DeliveryRecord
 
     var body: some View {
         VStack(alignment: .leading, spacing: Space.s2) {
             HStack(alignment: .firstTextBaseline) {
-                Tag(text: entry.source.label)
+                Tag(text: record.kind.label)
                 Spacer()
-                Text(entry.receivedAt, format: .dateTime.hour().minute().second())
+                Text(record.at, format: .dateTime.month().day().hour().minute())
                     .font(.mono(.caption))
                     .foregroundStyle(Color.ink2)
             }
-            Text(RawJSON.preview(entry.body))
-                .font(.mono(.footnote))
+            Text(record.title)
+                .font(.bodyText)
                 .foregroundStyle(Color.ink)
-                .lineLimit(1)
+                .lineLimit(2)
+            outcome
+                .font(.secondaryText)
+                .foregroundStyle(record.outcome == nil ? Color.danger : Color.ink2)
         }
         .padding(Space.s4)
         .frame(maxWidth: .infinity, alignment: .leading)
         .card(raised: true)
-        .contentShape(Rectangle())
         .accessibilityElement(children: .combine)
+    }
+
+    private var outcome: Text {
+        switch record.outcome {
+        case .embedUpdated: Text("Updated a line in your reminder")
+        case .reminderUpdated: Text("Updated a MOZOL reminder")
+        case .embedded: Text("Added a line to your reminder")
+        case .created: Text("Created a reminder")
+        case nil:
+            switch record.errorCode {
+            case "reminders_access": Text("Failed: no full access to Reminders")
+            case "no_default_list": Text("Failed: no default list in Reminders")
+            case "eventkit_save": Text("Failed: Reminders refused the save")
+            default: Text("Failed: \(record.errorCode ?? "")")
+            }
+        }
     }
 }
 
-extension InboxSource {
+extension RecommendationKind {
     var label: LocalizedStringKey {
         switch self {
-        case .push: "Silent push"
-        case .server: "Server"
+        case .mistake: "Mistake"
+        case .word: "Word"
+        case .phrase: "Phrase"
+        case .rewrite: "Rewrite"
         }
     }
 }

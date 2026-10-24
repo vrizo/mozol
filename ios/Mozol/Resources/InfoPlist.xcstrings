@@ -5,7 +5,7 @@
       "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "MOZOL" } } }
     },
     "NSRemindersFullAccessUsageDescription" : {
-      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "MOZOL looks through your reminders for ones that match a language tip, then adds the tip to a reminder or creates a new one." } } }
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "MOZOL reads your reminders to find ones about the same word as a language tip. It adds the tip as a line to that reminder, or creates a new reminder." } } }
     }
   },
   "version" : "1.0"

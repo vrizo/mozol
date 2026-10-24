@@ -6,10 +6,10 @@ import UserNotifications
 struct SettingsView: View {
     @Environment(SessionStore.self) private var session
     @Environment(AppEventHandler.self) private var events
-    @Environment(PushRegistration.self) private var push
+    @Environment(DeviceRegistration.self) private var push
     @Environment(NotificationPermission.self) private var notifications
     @Environment(RemindersStore.self) private var reminders
-    @Environment(MessageSync.self) private var sync
+    @Environment(DeliverySync.self) private var sync
     @Environment(\.appConfig) private var config
     @Environment(\.openURL) private var openURL
     @Environment(\.scenePhase) private var scenePhase
@@ -27,7 +27,7 @@ struct SettingsView: View {
                                 .frame(maxWidth: .infinity, alignment: .leading)
                         }
                     } footer: {
-                        Button("Sign Out", role: .destructive) { events.signOut() }
+                        Button("Sign Out", role: .destructive) { Task { await events.signOut() } }
                             .buttonStyle(.secondary)
                             .accessibilityIdentifier("settings.signOut")
                     }
@@ -55,6 +55,15 @@ struct SettingsView: View {
                         }
                         CardDivider()
                         CardRow(label: "Server Registration") { Text(serverStatus) }
+                        CardDivider()
+                        CardRow(label: "Last Test Push") {
+                            if let date = push.lastTestPush {
+                                Text(date, format: .dateTime.month().day().hour().minute().second())
+                                    .accessibilityIdentifier("settings.lastTestPush")
+                            } else {
+                                Text("None yet")
+                            }
+                        }
                     } footer: {
                         if let hex = push.tokenHex {
                             Button("Copy Token") { UIPasteboard.general.string = hex }

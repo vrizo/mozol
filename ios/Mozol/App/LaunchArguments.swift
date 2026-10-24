@@ -9,22 +9,23 @@ enum LaunchArguments {
     static let skipPermissions = "-uitest.skipPermissions"
 
     static let testEmail = "uitest@example.com"
+    static let testToken = "uitest-token"
 
     static func applyBeforeLaunch(arguments: [String] = ProcessInfo.processInfo.arguments) {
         let defaults = UserDefaults.standard
         let keychain = Keychain(service: Keychain.appService)
         if arguments.contains(reset) {
             Log.store.info("launch argument: reset")
-            SessionStore.clear(keychain: keychain, defaults: defaults)
-            MessageSync.clearDefaults(defaults)
-            PushRegistration.clearDefaults(defaults)
+            SessionStore.clear(keychain: keychain)
+            SessionStore.clearInstallation(keychain: keychain)
+            DeliverySync.clearDefaults(defaults)
+            DeviceRegistration.clearDefaults(defaults)
             defaults.removeObject(forKey: SessionStore.permissionsShownKey)
-            defaults.removeObject(forKey: SessionStore.lastEmailKey)
             resetStoreFiles()
         }
         if arguments.contains(signedIn) {
             Log.store.info("launch argument: signedIn")
-            SessionStore.write(email: testEmail, token: PlaceholderAuthService.token, keychain: keychain)
+            SessionStore.write(email: testEmail, token: testToken, keychain: keychain)
         }
         if arguments.contains(skipPermissions) {
             defaults.set(true, forKey: SessionStore.permissionsShownKey)
@@ -50,22 +51,27 @@ enum LaunchArguments {
 
     private static func deliverDebugPush() {
         let url = URL.temporaryDirectory.appending(path: debugPushFile)
-        let raw: String
+        let payload: [String: Any]
         do {
             let data = try Data(contentsOf: url)
             try FileManager.default.removeItem(at: url)
-            raw = try RawJSON.text(from: JSONSerialization.jsonObject(with: data))
+            guard let object = try JSONSerialization.jsonObject(with: data) as? [String: Any] else {
+                Log.notify.error("debug push is not a JSON object")
+                return
+            }
+            payload = object
         } catch {
             Log.notify.error("debug push failed: \(String(describing: error), privacy: .public)")
             return
         }
-        Log.notify.info("debug push received bytes=\(raw.utf8.count)")
-        Task { await AppEnvironment.shared.events.handle(.silentPush(raw: raw)) }
+        Log.notify.info("debug push received")
+        Task { await AppEnvironment.shared.events.handlePush(payload) }
     }
 
     private static func resetStoreFiles() {
         let support = URL.applicationSupportDirectory
-        for name in ["default.store", "default.store-shm", "default.store-wal"] {
+        let store = AppEnvironment.storeName
+        for name in ["\(store).store", "\(store).store-shm", "\(store).store-wal"] {
             let url = support.appending(path: name)
             guard FileManager.default.fileExists(atPath: url.path) else { continue }
             do {
