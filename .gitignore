@@ -1,0 +1,30 @@
+# macOS
+.DS_Store
+._*
+
+# Node / pnpm / TypeScript
+node_modules/
+dist/
+*.tsbuildinfo
+
+# Cloudflare Wrangler
+.wrangler/
+.dev.vars
+
+# Secrets
+.env
+*.xcconfig.local
+
+# Per-run logs (docs/logs/layout.md). Anchored, so docs/logs/ stays tracked.
+/logs/
+
+# Xcode and Swift Package Manager
+xcuserdata/
+*.xcuserstate
+.build/
+.swiftpm/
+ios/.build-dd/
+ios/*.xcodeproj/
+
+# UI test screenshots (7-day local retention)
+tests/screenshots/
