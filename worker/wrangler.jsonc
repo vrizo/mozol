@@ -1,0 +1,32 @@
+// The MOZOL worker: the API under /api/ and the web build on every other path.
+// Infrastructure: docs/deployment/infrastructure.md.
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "mozol-api",
+  "main": "src/index.ts",
+  "compatibility_date": "2026-10-19",
+  "compatibility_flags": ["nodejs_compat"],
+  "observability": { "enabled": true },
+  "routes": [{ "pattern": "mozol.vrizo.net", "custom_domain": true }],
+  "assets": {
+    "directory": "../web/dist",
+    "binding": "ASSETS",
+    "not_found_handling": "single-page-application",
+    "run_worker_first": ["/api/*"]
+  },
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "mozol",
+      "database_id": "3f66c999-eb9f-487b-bb2e-a744e06386ed",
+      "migrations_dir": "migrations"
+    }
+  ],
+  "vars": {
+    "APP_ORIGIN": "https://mozol.vrizo.net",
+    "ANALYSIS_MODE": "claude",
+    "ANALYSIS_MODEL": "claude-opus-5-5",
+    "ANALYSIS_EFFORT": "high",
+    "PUSH_MODE": "apns"
+  }
+}

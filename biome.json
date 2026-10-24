@@ -1,6 +1,17 @@
 {
   "$schema": "./node_modules/@biomejs/biome/configuration_schema.json",
-  "files": { "includes": ["web/**", "!**/dist", "!**/node_modules"] },
+  "files": {
+    "includes": [
+      "web/**",
+      "worker/**",
+      "shared/**",
+      "!web/public",
+      "!**/dist",
+      "!**/node_modules",
+      "!**/.wrangler",
+      "!worker/worker-configuration.d.ts"
+    ]
+  },
   "formatter": { "indentStyle": "space", "indentWidth": 2, "lineWidth": 110 },
   "linter": { "enabled": true, "rules": { "preset": "recommended" } }
 }
