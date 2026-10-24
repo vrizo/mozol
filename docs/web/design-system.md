@@ -94,8 +94,13 @@ Components
 
 - Primary button: ink fill, --on-ink text, sans 16 px bold, padding 12 x 20 px, hard shadow. On hover it moves up-left by 2 px and the shadow grows to 6 px. A forward action ends with " ->".
 - Secondary button: transparent, 2 px ink border, ink text, no shadow. On hover the fill turns ink.
+- Tabs (pick one of several): one control with a 2 px ink border around all options and a 2 px ink line between them, 44 px high, sans 14 px bold. The selected option has an ink fill and --on-ink text; the others are transparent and turn --surface on hover.
 - Text link: ink, underlined, offset 3 px.
-- Input: --surface fill, 2 px ink border, 16 px text, 44 px high, mono label above. Error: --danger border and a --danger message below.
+- Link button: looks like a text link. On hover the underline grows to 2 px. A destructive one (Delete) also turns --danger on hover.
+- Input: --surface fill, 2 px ink border, 16 px text, 44 px high, mono label above. Error: --danger border and a --danger message below. A select has no native arrow: a 14 x 9 px ink chevron with a 2 px square-cap stroke sits 12 px from the right edge.
+- Input, select and textarea: on hover they get the 4 px hard shadow.
+- Searchable dropdown (long lists, such as languages): looks like a select, with the chevron. A click opens a panel under it with the same border, --surface fill and hard shadow. The panel has no top border of its own: it continues the dropdown's border. At the top is a search field with the same text padding as the dropdown, a 2 px ink line under it and no other border, then the options. While the panel is open, the dropdown keeps the focus outline; typing goes into the search field. Typing filters the options. Order: names that start with the typed text, then names with a word that starts with it, then a matching language code, then names that contain it. The highlighted option has an ink fill and --on-ink text; the selected one is bold. Arrows move, Enter picks, Escape closes. Short lists (up to about five options) keep the native select.
+- Wordmark in the header: on hover a 2 px ink line grows under it from the left.
 - Card: --surface fill, 2 px ink border, hard shadow when it is clickable.
 - Tag or count: mono 12 px uppercase, 2 px ink border, no fill.
 - Empty state: the icon for that screen in --muted (Icons), one line of text, one primary action.
@@ -105,5 +110,6 @@ Components
 Motion
 
 - Hover and press: 0.15 s.
+- Hover applies only to an element that is not focused and not active. Active means pressed, open (a dropdown with its panel shown) or current (the current page in the navigation, the selected tab). In CSS every hover selector ends with :hover:not(:focus):not(:active).
 - Text and blocks appear with a 0.45 s reveal: from 10 px lower, transparent and blurred to in place. Items in a list follow 0.1 s apart.
 - With prefers-reduced-motion, everything appears at once.

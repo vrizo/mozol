@@ -15,7 +15,7 @@
     box-shadow var(--fast);
 }
 
-.connection-card:hover {
+.connection-card:hover:not(:focus):not(:active) {
   transform: translate(-2px, -2px);
   box-shadow: var(--shadow-raised);
 }

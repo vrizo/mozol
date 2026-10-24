@@ -40,6 +40,8 @@ export const copy = {
     refresh: "Refresh",
     loadMore: "Load more",
     back: "Back",
+    search: "Search",
+    noMatches: "No matches",
   },
   states: {
     loading: "Loading",

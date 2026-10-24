@@ -8,7 +8,8 @@ import { browserLanguage, languageOptions } from "../languages";
 import { fieldErrors, isAppReturn, withCode } from "../lib/auth";
 import { Link, navigate, safeNext, useRoute } from "../router";
 import { useSession } from "../session";
-import { Button, Select, TextField } from "../ui/controls";
+import { ComboBox } from "../ui/ComboBox";
+import { Button, TextField } from "../ui/controls";
 import { errorCode, Loading, Notice, PageHeader } from "../ui/states";
 import "./auth.css";
 
@@ -91,12 +92,12 @@ function SignUpForm({ onDone, switchLink }: FormProps) {
         onChange={set("displayName")}
         error={fieldText(errors.displayName)}
       />
-      <Select
+      <ComboBox
         label={t.nativeLanguage}
         hint={t.nativeLanguageHint}
         options={languageOptions(form.nativeLanguage)}
         value={form.nativeLanguage}
-        onChange={set("nativeLanguage")}
+        onChange={(nativeLanguage) => setForm({ ...form, nativeLanguage })}
         error={fieldText(errors.nativeLanguage)}
       />
       <div className="actions">

@@ -8,6 +8,7 @@ import { languageOptions } from "../languages";
 import { fieldErrors } from "../lib/auth";
 import { navigate } from "../router";
 import { useSession, useUser } from "../session";
+import { ComboBox } from "../ui/ComboBox";
 import { Button, Checkbox, ConfirmDialog, Select, TextField } from "../ui/controls";
 import { errorCode, Notice, PageHeader } from "../ui/states";
 import "./auth.css";
@@ -83,12 +84,12 @@ export function ProfilePage() {
             onChange={(e) => setForm({ ...form, displayName: e.target.value })}
             error={fieldText(errors.displayName)}
           />
-          <Select
+          <ComboBox
             label={copy.auth.nativeLanguage}
             hint={copy.auth.nativeLanguageHint}
             options={languageOptions(form.nativeLanguage)}
             value={form.nativeLanguage}
-            onChange={(e) => setForm({ ...form, nativeLanguage: e.target.value })}
+            onChange={(nativeLanguage) => setForm({ ...form, nativeLanguage })}
             error={fieldText(errors.nativeLanguage)}
           />
         </section>
@@ -105,6 +106,7 @@ export function ProfilePage() {
                   <span>{name}</span>
                   <Button
                     variant="link"
+                    className="button-link-danger"
                     aria-label={t.removeSpeaker(name)}
                     onClick={() =>
                       setForm({ ...form, speakerNames: form.speakerNames.filter((n) => n !== name) })

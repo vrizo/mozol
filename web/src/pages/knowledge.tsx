@@ -9,7 +9,8 @@ import { filterByLanguage, languagesOf, pickStatus } from "../lib/knowledge";
 import { languageName } from "../lib/languageName";
 import { useLoad } from "../lib/useLoad";
 import { setQuery, useRoute } from "../router";
-import { Button, Select } from "../ui/controls";
+import { ComboBox } from "../ui/ComboBox";
+import { Button } from "../ui/controls";
 import { Empty, ErrorState, Loading, PageHeader } from "../ui/states";
 import { Tabs } from "../ui/Tabs";
 import "./knowledge.css";
@@ -33,11 +34,11 @@ function LanguageFilter({
   if (current && !languages.includes(current)) options.push({ value: current, label: languageName(current) });
   return (
     <div className="language-filter">
-      <Select
+      <ComboBox
         label={label}
         value={current ?? ""}
         options={options}
-        onChange={(e) => setQuery({ language: e.target.value || undefined })}
+        onChange={(language) => setQuery({ language: language || undefined })}
       />
     </div>
   );
