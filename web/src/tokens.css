@@ -1,0 +1,52 @@
+/* Design tokens of the MOZOL web app. Specification: docs/web/design-system.md. */
+:root {
+  /* Color: warm paper, black ink, one red for errors. */
+  --bg: #f3f2ee;
+  --surface: #fbfaf7;
+  --ink: #111111;
+  --ink-2: #55554f;
+  --muted: #8a8a86;
+  --line: #d9d7cf;
+  --danger: #a3241b;
+  --on-ink: #f3f2ee;
+
+  /* Type */
+  --sans: "Helvetica Neue", Arial, sans-serif;
+  --mono: ui-monospace, "SF Mono", Menlo, monospace;
+  --text-xs: 12px;
+  --text-sm: 14px;
+  --text-md: 16px;
+  --text-lg: 18px;
+  --text-xl: 24px;
+  --text-2xl: 32px;
+  --text-3xl: 48px;
+  --tracking-label: 0.12em;
+
+  /* Space: 4 px steps */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-8: 32px;
+  --space-10: 40px;
+  --space-12: 48px;
+
+  /* Shape: square corners, hard offset shadows, dotted rules. */
+  --radius: 0;
+  --border: 2px solid var(--ink);
+  --rule: 2px dotted var(--ink);
+  --shadow: 4px 4px 0 var(--muted);
+  --shadow-raised: 6px 6px 0 var(--muted);
+
+  /* Motion */
+  --fast: 0.15s;
+  --reveal: 0.45s;
+  --ease-out: cubic-bezier(0.2, 0.7, 0.2, 1);
+
+  /* Layout */
+  --content: 760px;
+  --gutter: 16px;
+  --touch: 44px;
+}

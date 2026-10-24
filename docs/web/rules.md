@@ -24,4 +24,6 @@ Accessibility
 - Color contrast meets WCAG 2.1 AA.
 - The layout works at phone width (360 px) without horizontal scroll.
 
+Look: colors, type, marks and components follow design-system.md.
+
 Copy: all strings in web/src/copy/en.ts, rules in ../rules/ui-copy.md.
