@@ -266,6 +266,37 @@ describe("interpretFinalMessage", () => {
     expect(error).toMatchObject({ code: "analysis_invalid", retryable: false });
   });
 
+  it("turns a hyphenated word or prefix term into a phrase term", () => {
+    const answer = withFirstFinding((f) => [
+      {
+        ...f,
+        matchTerms: [
+          { text: "wi-fi", lang: "en", mode: "word" },
+          { text: "end-to-end", lang: "en", mode: "prefix" },
+          { text: "venue", lang: "en", mode: "word" },
+        ],
+      },
+    ]);
+    const [finding] = interpretFinalMessage(message([text(answer)])).findings;
+    expect(finding?.matchTerms.map((t) => t.mode)).toEqual(["phrase", "phrase", "word"]);
+  });
+
+  it("names the failed path and problem in the error", () => {
+    const answer = withFirstFinding((f) => [
+      { ...f, matchTerms: [{ text: "x", lang: "en", mode: "phrase" }] },
+    ]);
+    const error = thrown(() => interpretFinalMessage(message([text(answer)])));
+    expect(String((error as Error).message)).toContain(
+      "findings.0.matchTerms.0.text:custom (match term phrase_too_short)",
+    );
+  });
+
+  it("refuses a native_language answer", () => {
+    const answer = JSON.stringify({ status: "native_language", language: "en", findings: [], words: [] });
+    const error = thrown(() => interpretFinalMessage(message([text(answer)])));
+    expect(error).toMatchObject({ code: "analysis_invalid", retryable: false });
+  });
+
   it("keeps the error free of the answer text", () => {
     const error = thrown(() => interpretFinalMessage(message([text("Ich kann nicht {")])));
     expect(String((error as Error).message)).not.toContain("Ich kann");

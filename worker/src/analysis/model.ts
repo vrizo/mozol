@@ -7,7 +7,7 @@ import type {
   BetaMessageStreamParams,
   BetaTextBlock,
 } from "@anthropic-ai/sdk/resources/beta/messages/messages";
-import { type AnalysisResult, ModelAnalysisResult, normalizeText } from "shared";
+import { type AnalysisResult, ModelAnalysisResult, normalizeText, tokens } from "shared";
 import resultOk from "shared/fixtures/analysis/result-ok.json";
 import type { Env } from "../env";
 import { log, logError } from "../log";
@@ -124,12 +124,36 @@ export function interpretFinalMessage(message: BetaMessage): AnalysisResult {
     // The parser's message quotes the text, so it stays out of the error.
     throw new AnalysisError("analysis_invalid", false, "the answer is not JSON");
   }
-  const parsed = ModelAnalysisResult.safeParse(json);
+  const parsed = ModelAnalysisResult.safeParse(hyphenatedTermsAsPhrases(json));
   if (!parsed.success) {
-    const issues = parsed.error.issues.slice(0, 5).map((i) => `${i.path.join(".")}:${i.code}`);
+    const issues = parsed.error.issues
+      .slice(0, 5)
+      .map((i) => `${i.path.join(".")}:${i.code}${i.code === "custom" ? ` (${i.message})` : ""}`);
     throw new AnalysisError("analysis_invalid", false, issues.join(", "));
   }
   return parsed.data;
+}
+
+// A word or prefix term that normalizes to several tokens, such as "wi-fi" or "end-to-end", becomes a phrase term
+// (docs/backend/ai-analysis.md, "Match terms from the model").
+export function hyphenatedTermsAsPhrases(json: unknown): unknown {
+  if (typeof json !== "object" || json === null) return json;
+  const result = json as Record<string, unknown>;
+  for (const list of ["findings", "words"]) {
+    const items = result[list];
+    if (!Array.isArray(items)) continue;
+    for (const item of items) {
+      const terms = (item as { matchTerms?: unknown } | null)?.matchTerms;
+      if (!Array.isArray(terms)) continue;
+      for (const term of terms as { text?: unknown; mode?: unknown }[]) {
+        if (term === null || typeof term.text !== "string") continue;
+        if ((term.mode === "word" || term.mode === "prefix") && tokens(normalizeText(term.text)).length > 1) {
+          term.mode = "phrase";
+        }
+      }
+    }
+  }
+  return json;
 }
 
 export class FixtureModel implements AnalysisModel {

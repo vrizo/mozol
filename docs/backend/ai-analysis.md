@@ -7,7 +7,13 @@ Model and request
 - Anthropic Claude API through the official TypeScript SDK, @anthropic-ai/sdk, in worker/src/analysis/. The API key is the worker secret ANTHROPIC_API_KEY.
 - ANALYSIS_MODE, a worker variable: claude calls the model; fixture returns shared/fixtures/analysis/result-ok.json without any call. Production uses claude. Local development uses fixture unless the developer asks for claude.
 - Model: the worker variable ANALYSIS_MODEL, default claude-opus-5-5. Effort: the worker variable ANALYSIS_EFFORT, default medium, sent as output_config.effort. The request sends no thinking setting and no temperature.
-- Structured output: output_config.format with the AnalysisResult zod schema from shared/ (zodOutputFormat from the SDK). The parsed result is checked with the same zod schema again before it is stored.
+- Structured output: output_config.format with the ModelAnalysisResult zod schema from shared/ (zodOutputFormat from the SDK; AnalysisResult without the native_language status). The parsed result is checked with the same zod schema again before it is stored.
+
+Match terms from the model
+
+- Text normalization (shared/CONTRACT.md) turns hyphens and apostrophes into spaces. A word or prefix term from the model that normalizes to several tokens, such as "wi-fi" or "end-to-end", becomes a phrase term before the zod check. The prompt asks for phrase mode for such words too.
+- Any other term that breaks the mode rules fails the analysis with analysis_invalid.
+- The error detail names each failed path with its problem, for example "findings.0.matchTerms.1.text:custom (match term has_space)".
 - Streaming with the SDK stream helper and its final message, max_tokens 64000.
 - Server-side refusal fallback: fallbacks "default" with the beta header server-side-fallback-2026-07-01.
 - The system prompt is one fixed text per prompt version and source group, marked for prompt caching: one text for call, one for chat and text. Everything else that changes per request goes into the user message.

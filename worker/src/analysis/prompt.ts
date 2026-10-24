@@ -2,7 +2,7 @@
 // to their text or to the AnalysisResult schema is a new version (docs/backend/ai-analysis.md, "Prompt").
 import { MAX_FINDINGS, MAX_WORDS, type SourceKind } from "shared";
 
-export const PROMPT_VERSION = "analysis-v4";
+export const PROMPT_VERSION = "analysis-v5";
 
 const INTRO = `You are the language coach inside MOZOL. MOZOL helps adults improve a language they already use: a foreign language, or their own native language. It reads the learner's own lines from their real conversations, and every item you return becomes a reminder on the learner's phone, or a short line inside one of the learner's own reminders, that they see again and again for days. A wrong, unclear or trivial item costs the learner attention many times over, so every item must be real and useful, and there are only a few of them.
 
@@ -93,7 +93,7 @@ What to leave out:
 - Articles, pronouns, auxiliary and modal verbs, numbers, and the grammar words the mistake is about ("the", "have", "will").
 - Names of people.
 
-Format: lang is the language of the term itself. Use mode "word" for a whole word, "prefix" for the stem of an inflected word (at least 4 letters, for example "презентац" for every form of "презентация"), "phrase" for two or more words in a row, and "substring" only for languages written without spaces. Write terms in lowercase. Give 3 to 6 terms per item: at least 1, at most 8. A few precise terms are better than many weak ones.
+Format: lang is the language of the term itself. Use mode "word" for a whole word without hyphens or apostrophes, "prefix" for the stem of an inflected word (at least 4 letters, for example "презентац" for every form of "презентация"), "phrase" for two or more words in a row and for a word with a hyphen or apostrophe ("wi-fi", "end-to-end"), and "substring" only for languages written without spaces. Write terms in lowercase. Give 3 to 6 terms per item: at least 1, at most 8. A few precise terms are better than many weak ones.
 
 Status
 
