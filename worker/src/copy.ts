@@ -33,4 +33,13 @@ export const copy = {
       ],
     },
   },
+  reminders: {
+    embedPrefix: "MOZOL:",
+    embedWrong: (quote: string) => `(not "${quote}")`,
+    sayLabel: "Say:",
+    notLabel: "Not:",
+    youSaidLabel: "You said:",
+    seenIn: (count: number) => `Seen in ${count} conversations.`,
+    termWithTranslation: (term: string, translation: string) => `${term} — ${translation}`,
+  },
 } as const;

@@ -12,7 +12,8 @@ const MAX_IDS_PER_STATEMENT = 50;
 const KEYWORD_COLUMNS = 7;
 const KEYWORD_ROWS_PER_STATEMENT = Math.floor(100 / KEYWORD_COLUMNS);
 
-export type StoreOutcome = "stale" | "analyzed" | "skipped";
+// stored: an ok result; the recommend step then sets the transcript to analyzed.
+export type StoreOutcome = "stale" | "stored" | "skipped";
 
 export type StoreResult = { outcome: StoreOutcome; statements: number };
 
@@ -196,17 +197,8 @@ export async function storeResult(env: Env, transcriptId: string, run: number): 
     );
   }
 
-  statements.push(
-    db
-      .prepare(
-        `UPDATE transcripts SET status = 'analyzed', analyzed_at = ?, skip_reason = NULL, error_code = NULL,
-           updated_at = ?
-         WHERE id = ? AND run = ?`,
-      )
-      .bind(now, now, transcriptId, run),
-  );
   await db.batch(statements);
-  return { outcome: "analyzed", statements: statements.length };
+  return { outcome: "stored", statements: statements.length };
 }
 
 async function clearStatements(db: D1Database, transcriptId: string): Promise<D1PreparedStatement[]> {

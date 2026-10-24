@@ -4,7 +4,7 @@ Track: backend. Depends on: B05, B08. Next: B10. W06 and the iOS work on reminde
 
 Goal
 
-After each analysis the worker turns every item into a recommendation with its item key, marker, normalized match terms and ready texts, sends them to the phone as deliveries, and pushes the user's devices. The iOS app claims deliveries and reports outcomes exactly as shared/CONTRACT.md says. The user can send any recommendation to the phone again from the web app.
+After each analysis the worker turns every item into a recommendation with its item key, marker, normalized match terms and ready texts, sends them to the phone as deliveries, and pushes the user's devices. The iOS app claims deliveries and reports outcomes exactly as shared/CONTRACT.md says.
 
 Read first
 
@@ -23,7 +23,7 @@ Do
    - embed line: one line, at most 200 characters; a longer line drops its optional parts in a fixed order written in the code and covered by tests;
    - priority: 1 for a high-severity mistake or a mistake of a recurring pattern, else 5;
    - all fixed wording from worker/src/copy.ts, written by the copy subagent (labels such as the ones before a wrong and a correct form). Learning content comes from the analysis as it is.
-3. worker/src/recommendations/schedule.ts: the schedule given at claim time: earliestAt = now + 2 hours (UTC), activeFrom and activeTo from the user's reminder settings, and the repeat rule by intensity (light: interval 3, count 3; normal: interval 1, count 5; intense: interval 1, count 10). The worker knows no time zone: the app computes the due time in the phone's time zone.
+3. No schedule: a delivery carries no due time, active hours or repeat rule, and reminder settings hold only embedInMyReminders.
 4. worker/src/recommendations/apply.ts: recommend(env, transcriptId), one D1 batch:
    - on a later run, delete the transcript's recommendations that have no delivery;
    - insert a recommendation for every ranked item whose item key has none in this transcript (marker and match terms through shared/src/matching.ts; content = the item as the model returned it);
@@ -33,8 +33,7 @@ Do
 5. Workflow: add step "recommend" (recommend(); retries { limit: 3, delay: "5 seconds" }) and step "notify" (notifyUser from B05 with the pending count; retries { limit: 3, delay: "1 minute" }; when it still fails, log it and finish without failing the transcript) after "store", both only for a result with status ok and notify only when new deliveries exist.
 6. Routes (shared schemas validate bodies and, in tests, responses):
    - GET /api/recommendations (paged, newest first, filter delivered=true|false), GET /api/recommendations/:id (with its newest delivery).
-   - POST /api/recommendations/:id/deliver: a new pending delivery (same supersede rule), notifyUser; 202 { recommendation }.
-   - POST /api/deliveries/claim: one UPDATE ... RETURNING statement as docs/backend/pipeline.md says; each claimed delivery gets its schedule (stored on the delivery) and is returned as a DeliveryItem; the response carries the user's embedInMyReminders. installationId must be a device of the current user (404 not_found).
+   - POST /api/deliveries/claim: one UPDATE ... RETURNING statement as docs/backend/pipeline.md says; each claimed delivery is returned as a DeliveryItem, in delivery order; the response carries the user's embedInMyReminders. installationId must be a device of the current user (404 not_found).
    - POST /api/deliveries/results: the result rules of docs/backend/pipeline.md.
    - GET /api/transcripts/:id: recommendations of the transcript in rank order, each with its newest delivery.
 7. Logs: recommendation and delivery counts, outcomes and error codes. Never titles, notes, lines or terms.
@@ -43,12 +42,11 @@ Checks
 
 - rankItems tests: the order of docs/product/reminders.md with a mix of severities, a recurring pattern and words; dismissed patterns and known or dismissed words are ranked but not sent.
 - render tests: title, notes and embed line for each kind; no trailing spaces; an embed line that would pass 200 characters drops parts in the documented order; Russian explanations and English examples stay as given; priority rules.
-- schedule tests: inside and outside active hours, a positive and a negative UTC offset, each intensity.
 - recommend tests: the fixture result gives 6 recommendations (3 findings + 3 words) and 6 pending deliveries; a dismissed pattern and a known word get recommendations without deliveries; a second transcript with the same result gives recommendations with the same markers, and its new delivery supersedes a still-pending one with the same marker; a re-run keeps delivered recommendations, replaces undelivered ones and gives deliveries only to new ones.
-- Delivery tests: claim gives a delivery to one installation only; a second installation gets nothing while the lease is live and gets it after the lease ends; at most one delivery per marker in one claim; an unknown installation gets 404; outcomes set applied; a late result after the lease is accepted when nobody claimed since and ignored when another installation did; three failed results end in failed; deliver adds a delivery and records pushes in push_log.
+- Delivery tests: claim gives a delivery to one installation only; a second installation gets nothing while the lease is live and gets it after the lease ends; at most one delivery per marker in one claim; an unknown installation gets 404; outcomes set applied; a late result after the lease is accepted when nobody claimed since and ignored when another installation did; three failed results end in failed.
 - Workflow test in fixture and log modes: a transcript ends analyzed with recommendations, a pending delivery for each, and one push_log row per device.
 - `pnpm --filter worker test`, `pnpm -r typecheck`, `pnpm lint`
-- Local flow with curl: sign up, get an app token (app-code and app-token), PUT a device, post the Jamie fixture, claim (the deliveries with schedules and the embedInMyReminders flag), post outcomes (created, embedded), post the fixture again with a new metadata.id, claim again (the same markers for the same items), deliver one more recommendation from the first transcript, claim it. Show `SELECT kind, marker, rank FROM recommendations LIMIT 20` and `SELECT status, outcome, failures FROM deliveries`.
+- Local flow with curl: sign up, get an app token (app-code and app-token), PUT a device, post the Jamie fixture, claim (the deliveries and the embedInMyReminders flag), post outcomes (created, embedded), post the fixture again with a new metadata.id, claim again (the same markers for the same items). Show `SELECT kind, marker, rank FROM recommendations LIMIT 20` and `SELECT status, outcome, failures FROM deliveries`.
 
 Out of scope
 

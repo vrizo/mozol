@@ -6,6 +6,8 @@ import { TranscriptErrorCode } from "shared";
 import { AnalysisError } from "../analysis/errors";
 import type { Env } from "../env";
 import { log, logError } from "../log";
+import { notifyUser } from "../push/notify";
+import { recommend } from "../recommendations/apply";
 import { nowIso } from "../time";
 import { runAnalysis } from "./analyze";
 import { prepareRun } from "./prepare";
@@ -15,6 +17,7 @@ import { storeResult } from "./store";
 export type AnalyzeParams = { transcriptId: string; run: number };
 
 const SPEAKER_RETRIES = 2;
+const NOTIFY_RETRIES = 3;
 
 export class AnalyzeTranscript extends WorkflowEntrypoint<Env, AnalyzeParams> {
   async run(event: WorkflowEvent<AnalyzeParams>, step: WorkflowStep): Promise<void> {
@@ -64,13 +67,27 @@ export class AnalyzeTranscript extends WorkflowEntrypoint<Env, AnalyzeParams> {
       );
       if (analysis.outcome === "stale") return;
 
-      await step.do("store", () =>
+      const stored = await step.do("store", () =>
         logged(
           "store",
           () => storeResult(this.env, transcriptId, run),
           (o) => `${o.outcome}:${o.statements}`,
         ),
       );
+      if (stored.outcome !== "stored") return;
+
+      const recommended = await step.do("recommend", { retries: { limit: 3, delay: "5 seconds" } }, () =>
+        logged(
+          "recommend",
+          () => recommend(this.env, transcriptId, run),
+          (o) =>
+            o.outcome === "stale"
+              ? "stale"
+              : `recommendations:${o.recommendations}:deliveries:${o.deliveries}`,
+        ),
+      );
+      if (recommended.outcome === "stale" || recommended.deliveries === 0) return;
+      await notifyStep(this.env, step, rid, { transcriptId, run }, recommended.userId, recommended.pending);
     } catch (error) {
       const code = errorCode(error);
       await step.do("fail", () =>
@@ -82,6 +99,34 @@ export class AnalyzeTranscript extends WorkflowEntrypoint<Env, AnalyzeParams> {
       );
       throw error;
     }
+  }
+}
+
+// A push that still fails after its retries is logged; the transcript stays analyzed and the app claims the
+// deliveries on its next launch.
+async function notifyStep(
+  env: Env,
+  step: WorkflowStep,
+  rid: string,
+  where: { transcriptId: string; run: number },
+  userId: string,
+  pending: number,
+): Promise<void> {
+  try {
+    await step.do("notify", { retries: { limit: NOTIFY_RETRIES, delay: "1 minute" } }, () =>
+      timed(
+        rid,
+        { ...where, step: "notify" },
+        () => notifyUser(env, userId, { pending }, { rid }),
+        (o) => `sent:${o.sent}:skipped:${o.skipped}:failed:${o.failed}`,
+      ),
+    );
+  } catch (error) {
+    logError(rid, "notify_gave_up", {
+      transcript: where.transcriptId,
+      run: where.run,
+      error: error instanceof Error ? error.name : typeof error,
+    });
   }
 }
 

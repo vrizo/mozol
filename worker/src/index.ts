@@ -8,10 +8,12 @@ import { onError } from "./errors";
 import { requestId } from "./request-id";
 import { authRoutes } from "./routes/auth";
 import { connectionRoutes, sourceRoutes } from "./routes/connections";
+import { deliveryRoutes } from "./routes/deliveries";
 import { deviceRoutes } from "./routes/devices";
 import { hookRoutes } from "./routes/hooks";
 import { patternRoutes, wordRoutes } from "./routes/knowledge";
 import { meRoutes } from "./routes/me";
+import { recommendationRoutes } from "./routes/recommendations";
 import { transcriptRoutes } from "./routes/transcripts";
 
 export { AnalyzeTranscript } from "./pipeline/workflow";
@@ -32,6 +34,8 @@ app.route("/api/hooks", hookRoutes);
 app.route("/api/transcripts", transcriptRoutes);
 app.route("/api/patterns", patternRoutes);
 app.route("/api/words", wordRoutes);
+app.route("/api/recommendations", recommendationRoutes);
+app.route("/api/deliveries", deliveryRoutes);
 
 app.all("/api/*", (c) => c.json({ error: "not_found" }, 404));
 

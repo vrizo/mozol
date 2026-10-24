@@ -207,9 +207,9 @@ describe("storeResult", () => {
     const { user } = await signUp();
     const id = await transcript(user.id);
     const first = await store(id, user.id, OK);
-    expect(first.outcome).toBe("analyzed");
+    expect(first.outcome).toBe("stored");
     // The largest batch with the fixture result: reported in the step report.
-    expect(first.statements).toBe(24);
+    expect(first.statements).toBe(23);
 
     const after = await snapshot(user.id);
     expect(after.findings).toHaveLength(3);
@@ -243,11 +243,11 @@ describe("storeResult", () => {
       "SELECT status, language, analyzed_at FROM transcripts WHERE id = ?",
       id,
     );
-    expect(row).toMatchObject({ status: "analyzed", language: "en" });
-    expect(row?.analyzed_at).not.toBeNull();
+    // The recommend step sets analyzed.
+    expect(row).toMatchObject({ status: "analyzing", language: "en", analyzed_at: null });
 
     const second = await storeResult(env, id, 1);
-    expect(second.statements).toBe(28);
+    expect(second.statements).toBe(27);
     expect(await snapshot(user.id)).toEqual(after);
   });
 

@@ -121,9 +121,17 @@ describe("GET /api/transcripts/:id", () => {
       status: "analyzed",
       language: "en",
       counts: { findings: 3, words: 3 },
-      recommendations: [],
       learnerSpeakerName: "Petr",
     });
+    // Delivery order: high-severity mistakes, words, then the medium one; each has a pending delivery.
+    expect(transcript.recommendations.map((r) => [r.itemKey, r.delivery?.status])).toEqual([
+      ["grammar.articles.missing_or_wrong", "pending"],
+      ["grammar.tenses.present_perfect_with_past_time", "pending"],
+      ["word:make a decision", "pending"],
+      ["word:crucial", "pending"],
+      ["word:people with disabilities", "pending"],
+      ["vocabulary.false_friend.actual", "pending"],
+    ]);
     expect(transcript.analysis).toMatchObject({ model: "fixture", promptVersion: PROMPT_VERSION });
     expect(transcript.analysis?.result).toEqual(AnalysisResult.parse(resultOk));
   });

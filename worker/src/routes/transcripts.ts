@@ -12,6 +12,7 @@ import {
 } from "shared";
 import { requireUser } from "../auth/session";
 import { readJson as readJsonColumn } from "../db/json";
+import { RECOMMENDATION_COLUMNS, type RecommendationRow, recommendationFromRow } from "../db/recommendations";
 import {
   findTranscript,
   readSegments,
@@ -83,7 +84,7 @@ type AnalysisColumns = {
 };
 
 // The analysis is the one of the current run: a run in progress, or one that ended skipped by too_short, shows
-// none. Recommendations come with step B09.
+// none. Recommendations come in delivery order, each with its newest delivery.
 transcriptRoutes.get("/:id", requireUser, async (c) => {
   const row = await c.env.DB.prepare(
     `SELECT ${TRANSCRIPT_COLUMNS}, t.segments, a.id AS analysis_id, a.model AS analysis_model,
@@ -94,11 +95,17 @@ transcriptRoutes.get("/:id", requireUser, async (c) => {
     .bind(c.req.param("id"), c.var.user.id)
     .first<TranscriptRow & AnalysisColumns & { segments: string }>();
   if (row === null) throw new ApiError(404, "not_found");
+  const { results: recs } = await c.env.DB.prepare(
+    `SELECT ${RECOMMENDATION_COLUMNS} FROM recommendations r WHERE r.transcript_id = ? AND r.user_id = ?
+     ORDER BY r.rank, r.created_at, r.id`,
+  )
+    .bind(row.id, c.var.user.id)
+    .all<RecommendationRow>();
   const transcript = {
     ...transcriptFromRow(row),
     segments: readSegments(row.segments),
     analysis: analysisFromRow(row),
-    recommendations: [],
+    recommendations: recs.map((rec) => recommendationFromRow(rec, c.env.APP_ORIGIN)),
   };
   return c.json(TranscriptDetailResponse.parse({ transcript }));
 });
