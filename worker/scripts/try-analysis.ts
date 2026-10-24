@@ -11,8 +11,12 @@ import { jamieAdapter } from "../src/sources/jamie";
 import { jsonAdapter } from "../src/sources/json";
 import { findLearner } from "../src/sources/learner";
 
-// A sample user: Russian native speaker, no known patterns.
-const USER = { email: "petr.ivanov@example.com", speakerNames: ["Petr Ivanov"], nativeLanguage: "ru" };
+// A sample user: Russian native speaker unless NATIVE_LANGUAGE says otherwise, no known patterns.
+const USER = {
+  email: "petr.ivanov@example.com",
+  speakerNames: ["Petr Ivanov"],
+  nativeLanguage: process.env.NATIVE_LANGUAGE ?? "ru",
+};
 
 const [fixturePath, runDir] = process.argv.slice(2);
 if (fixturePath === undefined || runDir === undefined) {

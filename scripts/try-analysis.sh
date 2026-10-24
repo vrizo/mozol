@@ -10,7 +10,8 @@
 #   scripts/try-analysis.sh shared/fixtures/json/transcript.json
 #
 # ANALYSIS_MODEL and ANALYSIS_EFFORT override the defaults (claude-opus-5-5,
-# medium). ANALYSIS_MODE=fixture checks the script without a model call.
+# medium). NATIVE_LANGUAGE overrides the sample user's native language (ru).
+# ANALYSIS_MODE=fixture checks the script without a model call.
 # Reads ANTHROPIC_API_KEY from .env, never echoing it.
 
 set -euo pipefail
@@ -24,7 +25,7 @@ ENV_FILE="$REPO_ROOT/.env"
 fail() { echo "[try-analysis] ERROR: $*" >&2; exit 1; }
 
 case "${1:-}" in
-  ""|-h|--help) sed -n '2,14p' "$0" | sed 's/^# \{0,1\}//'; exit 0 ;;
+  ""|-h|--help) sed -n '2,15p' "$0" | sed 's/^# \{0,1\}//'; exit 0 ;;
 esac
 [ $# -eq 1 ] || fail "takes one fixture path, got $#."
 FIXTURE="$(cd "$(dirname "$1")" && pwd)/$(basename "$1")"
