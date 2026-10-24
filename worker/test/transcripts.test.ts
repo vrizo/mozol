@@ -1,7 +1,16 @@
+import { introspectWorkflow } from "cloudflare:test";
 import { env } from "cloudflare:workers";
-import { type Transcript, TranscriptDetailResponse, TranscriptResponse, TranscriptsPage } from "shared";
+import {
+  AnalysisResult,
+  type Transcript,
+  TranscriptDetailResponse,
+  TranscriptResponse,
+  TranscriptsPage,
+} from "shared";
+import resultOk from "shared/fixtures/analysis/result-ok.json";
 import pasteText from "shared/fixtures/paste/transcript.txt?raw";
 import { describe, expect, it } from "vitest";
+import { PROMPT_VERSION } from "../src/analysis/prompt";
 import { call, expectError, signUp } from "./helpers";
 import { storedTranscript } from "./hooks-helpers";
 
@@ -93,9 +102,11 @@ describe("GET /api/transcripts", () => {
 });
 
 describe("GET /api/transcripts/:id", () => {
-  it("shows the segments", async () => {
+  it("shows the segments, and after the run the analysis, the language and the counts", async () => {
     const { cookie } = await signUp({ displayName: "Petr" });
+    await using introspector = await introspectWorkflow(env.ANALYZE);
     const { id } = await paste(cookie, { text: pasteText });
+    for (const instance of await introspector.get()) await instance.waitForStatus("complete");
     const res = await call(`/api/transcripts/${id}`, { cookie });
     expect(res.status).toBe(200);
     const { transcript } = TranscriptDetailResponse.parse(await res.json());
@@ -106,7 +117,15 @@ describe("GET /api/transcripts/:id", () => {
       speakerName: "Maria Lopez",
       text: "Good morning, Petr. Do you have the numbers for the quarterly review?",
     });
-    expect(transcript).toMatchObject({ analysis: null, recommendations: [], learnerSpeakerName: "Petr" });
+    expect(transcript).toMatchObject({
+      status: "analyzed",
+      language: "en",
+      counts: { findings: 3, words: 3 },
+      recommendations: [],
+      learnerSpeakerName: "Petr",
+    });
+    expect(transcript.analysis).toMatchObject({ model: "fixture", promptVersion: PROMPT_VERSION });
+    expect(transcript.analysis?.result).toEqual(AnalysisResult.parse(resultOk));
   });
 
   it("answers 404 for a transcript of another user", async () => {

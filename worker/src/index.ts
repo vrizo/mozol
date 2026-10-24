@@ -9,6 +9,7 @@ import { requestId } from "./request-id";
 import { authRoutes } from "./routes/auth";
 import { connectionRoutes, sourceRoutes } from "./routes/connections";
 import { hookRoutes } from "./routes/hooks";
+import { patternRoutes, wordRoutes } from "./routes/knowledge";
 import { meRoutes } from "./routes/me";
 import { transcriptRoutes } from "./routes/transcripts";
 
@@ -27,6 +28,8 @@ app.route("/api/sources", sourceRoutes);
 app.route("/api/connections", connectionRoutes);
 app.route("/api/hooks", hookRoutes);
 app.route("/api/transcripts", transcriptRoutes);
+app.route("/api/patterns", patternRoutes);
+app.route("/api/words", wordRoutes);
 
 app.all("/api/*", (c) => c.json({ error: "not_found" }, 404));
 

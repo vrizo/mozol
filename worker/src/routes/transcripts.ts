@@ -1,6 +1,8 @@
 // /api/transcripts: paste, list and read transcripts (shared/CONTRACT.md, "Endpoints: transcripts").
 import { Hono } from "hono";
 import {
+  type Analysis,
+  AnalysisResult,
   PageQuery,
   PasteTranscriptBody,
   Time,
@@ -9,6 +11,7 @@ import {
   TranscriptsPage,
 } from "shared";
 import { requireUser } from "../auth/session";
+import { readJson as readJsonColumn } from "../db/json";
 import {
   findTranscript,
   readSegments,
@@ -19,10 +22,15 @@ import {
 import type { AppEnv } from "../env";
 import { ApiError, parseInput, readJson } from "../errors";
 import { storeTranscript } from "../pipeline/intake";
+import { startAnalysis } from "../pipeline/start";
+import { clearResults } from "../pipeline/store";
 import { pasteAdapter, pasteTranscript } from "../sources/paste";
 import { nowIso } from "../time";
 
 const TRANSCRIPT_ID = /^trn_[0-9A-HJKMNP-TV-Z]{26}$/;
+
+// A queued or analyzing transcript that changed less than this long ago is busy (transcript_busy).
+const BUSY_MS = 30 * 60 * 1000;
 
 export const transcriptRoutes = new Hono<AppEnv>();
 
@@ -66,23 +74,76 @@ transcriptRoutes.get("/", requireUser, async (c) => {
   return c.json(TranscriptsPage.parse({ items: page.map(transcriptFromRow), nextCursor }));
 });
 
-// analysis and recommendations come with steps B08 and B09.
+type AnalysisColumns = {
+  analysis_id: string | null;
+  analysis_model: string | null;
+  analysis_prompt_version: string | null;
+  analysis_created_at: string | null;
+  analysis_result: string | null;
+};
+
+// The analysis is the one of the current run: a run in progress, or one that ended skipped by too_short, shows
+// none. Recommendations come with step B09.
 transcriptRoutes.get("/:id", requireUser, async (c) => {
   const row = await c.env.DB.prepare(
-    `SELECT ${TRANSCRIPT_COLUMNS}, t.segments FROM transcripts t WHERE t.id = ? AND t.user_id = ?`,
+    `SELECT ${TRANSCRIPT_COLUMNS}, t.segments, a.id AS analysis_id, a.model AS analysis_model,
+       a.prompt_version AS analysis_prompt_version, a.created_at AS analysis_created_at, a.result AS analysis_result
+     FROM transcripts t LEFT JOIN analyses a ON a.transcript_id = t.id AND a.run = t.run
+     WHERE t.id = ? AND t.user_id = ?`,
   )
     .bind(c.req.param("id"), c.var.user.id)
-    .first<TranscriptRow & { segments: string }>();
+    .first<TranscriptRow & AnalysisColumns & { segments: string }>();
   if (row === null) throw new ApiError(404, "not_found");
-  const segments = readSegments(row.segments);
   const transcript = {
     ...transcriptFromRow(row),
-    segments,
-    analysis: null,
+    segments: readSegments(row.segments),
+    analysis: analysisFromRow(row),
     recommendations: [],
   };
   return c.json(TranscriptDetailResponse.parse({ transcript }));
 });
+
+// Analyze again (docs/backend/pipeline.md, "Statuses").
+transcriptRoutes.post("/:id/analyze", requireUser, async (c) => {
+  const userId = c.var.user.id;
+  const id = c.req.param("id");
+  const row = await findTranscript(c.env.DB, userId, id);
+  if (row === null) throw new ApiError(404, "not_found");
+  const busy = row.status === "queued" || row.status === "analyzing";
+  if (busy && Date.now() - Date.parse(row.updated_at) < BUSY_MS) throw new ApiError(409, "transcript_busy");
+  await startAnalysis(c.env, id, c.get("rid"));
+  const started = await findTranscript(c.env.DB, userId, id);
+  if (started === null) throw new Error("POST /api/transcripts/:id/analyze: the transcript is gone");
+  return c.json(TranscriptResponse.parse({ transcript: transcriptFromRow(started) }), 202);
+});
+
+// Deletes the transcript and its analysis; pattern and word counts are recomputed first. Recommendations stay.
+transcriptRoutes.delete("/:id", requireUser, async (c) => {
+  const id = c.req.param("id");
+  const row = await findTranscript(c.env.DB, c.var.user.id, id);
+  if (row === null) throw new ApiError(404, "not_found");
+  await clearResults(c.env, id);
+  await c.env.DB.prepare("DELETE FROM transcripts WHERE id = ? AND user_id = ?")
+    .bind(id, c.var.user.id)
+    .run();
+  return c.body(null, 204);
+});
+
+function analysisFromRow(row: AnalysisColumns): Analysis | null {
+  const { analysis_id: id, analysis_model: model, analysis_prompt_version: promptVersion } = row;
+  const { analysis_created_at: createdAt, analysis_result: result } = row;
+  if (id === null) return null;
+  if (model === null || promptVersion === null || createdAt === null || result === null) {
+    throw new Error(`analysisFromRow: analysis ${id} has empty columns`);
+  }
+  return {
+    id,
+    model,
+    promptVersion,
+    createdAt,
+    result: readJsonColumn(result, AnalysisResult, "analyses.result"),
+  };
+}
 
 function parseCursor(cursor: string): { occurredAt: string; id: string } {
   const split = cursor.indexOf("_");

@@ -8,7 +8,10 @@ export default defineConfig(async () => {
     plugins: [
       cloudflareTest({
         wrangler: { configPath: "./wrangler.jsonc" },
-        miniflare: { bindings: { TEST_MIGRATIONS: migrations } },
+        // Tests never call the model or APNs, whatever worker/.dev.vars says.
+        miniflare: {
+          bindings: { TEST_MIGRATIONS: migrations, ANALYSIS_MODE: "fixture", PUSH_MODE: "log" },
+        },
       }),
     ],
     test: { setupFiles: ["./test/apply-migrations.ts"] },

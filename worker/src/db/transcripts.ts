@@ -20,14 +20,22 @@ export type TranscriptRow = {
   skip_reason: string | null;
   error_code: string | null;
   learner_speaker_name: string | null;
+  findings_count: number | null;
+  words_count: number | null;
+  updated_at: string;
   created_at: string;
 };
 
-// The columns of TranscriptRow from "transcripts t"; the learner's name is the name of their first turn.
+// The columns of TranscriptRow from "transcripts t"; the learner's name is the name of their first turn. Counts
+// exist only for an analyzed transcript.
 export const TRANSCRIPT_COLUMNS = `t.id, t.source, t.connection_id, t.kind, t.title, t.occurred_at, t.duration_sec,
-  t.language, t.status, t.skip_reason, t.error_code, t.created_at,
+  t.language, t.status, t.skip_reason, t.error_code, t.updated_at, t.created_at,
   (SELECT json_extract(s.value, '$.speaker_name') FROM json_each(t.segments) s
-   WHERE json_extract(s.value, '$.speaker_id') = t.learner_speaker_id LIMIT 1) AS learner_speaker_name`;
+   WHERE json_extract(s.value, '$.speaker_id') = t.learner_speaker_id LIMIT 1) AS learner_speaker_name,
+  CASE WHEN t.status = 'analyzed' THEN (SELECT COUNT(*) FROM findings f WHERE f.transcript_id = t.id) END
+    AS findings_count,
+  CASE WHEN t.status = 'analyzed' THEN (SELECT COUNT(*) FROM word_suggestions w WHERE w.transcript_id = t.id) END
+    AS words_count`;
 
 const SegmentsColumn = z.array(
   z.strictObject({
@@ -38,7 +46,6 @@ const SegmentsColumn = z.array(
   }),
 );
 
-// counts stay null until the analysis stores its results (step B08).
 export function transcriptFromRow(row: TranscriptRow): Transcript {
   return Transcript.parse({
     id: row.id,
@@ -53,7 +60,10 @@ export function transcriptFromRow(row: TranscriptRow): Transcript {
     skipReason: row.skip_reason,
     errorCode: row.error_code,
     learnerSpeakerName: row.learner_speaker_name,
-    counts: null,
+    counts:
+      row.findings_count === null || row.words_count === null
+        ? null
+        : { findings: row.findings_count, words: row.words_count },
     createdAt: row.created_at,
   });
 }

@@ -83,8 +83,8 @@ describe("POST /api/hooks/jamie/:token", () => {
       expect(instance.id).toBe(`${transcriptId}-1`);
       const [created, ...others] = await introspector.get();
       expect(others).toHaveLength(0);
-      // Until step B08 the workflow ends at once with a NonRetryableError.
-      await created?.waitForStatus("errored");
+      await created?.waitForStatus("complete");
+      expect((await storedTranscript(transcriptId)).status).toBe("analyzed");
     } finally {
       await introspector.dispose();
     }
