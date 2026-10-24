@@ -27,7 +27,10 @@ UI and accessibility
 - A row built from several text fragments is one accessibility element (.accessibilityElement(children: .combine)).
 - A state change is exposed to VoiceOver, not only drawn: .accessibilityValue for work in progress, .disabled() for disabled (never opacity alone).
 - Text scales with Dynamic Type. A fixed size is allowed only through @ScaledMetric(relativeTo:), so larger settings still scale.
-- Colors and the app icon follow ../web/design-system.md. The accent color is ink: #111111, and #f3f2ee in dark mode.
+- Colors, type, shape and components follow ../web/design-system.md. The SwiftUI tokens and components live in ios/Mozol/UI/DesignSystem/; screens use them, never raw values.
+- The app is light only (UIUserInterfaceStyle Light), like the web app. The accent color is ink, #111111.
+- Sans text is Helvetica Neue through Font.sans (custom font relative to a text style, so it scales with Dynamic Type). Mono text is the system monospaced font.
+- System navigation bars, the tab bar and toolbar buttons stay native; they are tinted ink and use Helvetica Neue titles. Everything inside a screen uses the design-system components: square corners, 2 px ink borders, hard shadows.
 - Copy rules: ../rules/ui-copy.md.
 
 Features: messages.md (silent push, fetching, Inbox), reminders.md (writing to Apple Reminders), permissions.md, shortcuts.md. Sign-in: ../product/accounts.md. TestFlight: ../deployment/testflight.md.

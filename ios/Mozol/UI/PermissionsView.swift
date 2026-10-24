@@ -10,36 +10,50 @@ struct PermissionsView: View {
     @ScaledMetric(relativeTo: .title) private var iconSize = 28
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 24) {
+        VStack(alignment: .leading, spacing: Space.s6) {
             Spacer()
+            SectionLabel(text: "Before you start")
             Text("Notifications and Reminders")
-                .font(.largeTitle.bold())
+                .font(.heading)
+                .foregroundStyle(Color.ink)
             Text("MOZOL uses two system features.")
-                .foregroundStyle(.secondary)
-            row(systemImage: "bell.badge", text: "Notifications: MOZOL uses them to show your messages.")
-            row(systemImage: "checklist", text: "Reminders: MOZOL uses them to add short language tips and to update reminders that match a tip.")
-            Spacer()
-            Button(action: ask) {
-                Text("Continue")
-                    .frame(maxWidth: .infinity)
+                .font(.sans(18, relativeTo: .title3))
+                .foregroundStyle(Color.ink2)
+            VStack(spacing: 0) {
+                row(systemImage: "bell.badge", text: "Notifications: MOZOL uses them to show your messages.")
+                CardDivider()
+                row(systemImage: "checklist", text: "Reminders: MOZOL uses them to add short language tips and to update reminders that match a tip.")
             }
-            .buttonStyle(.borderedProminent)
-            .controlSize(.large)
+            .card()
+            Spacer()
+            if isAsking {
+                PlusLoadingRow()
+            }
+            Button(action: ask) {
+                Text("Continue ->")
+            }
+            .buttonStyle(.primary)
+            .accessibilityLabel("Continue")
             .disabled(isAsking)
             .accessibilityIdentifier("permissions.continue")
         }
-        .padding(24)
+        .padding(Space.s6)
+        .paperBackground()
     }
 
     private func row(systemImage: String, text: LocalizedStringKey) -> some View {
-        HStack(alignment: .top, spacing: 16) {
+        HStack(alignment: .top, spacing: Space.s4) {
             Image(systemName: systemImage)
-                .font(.title2)
+                .font(.title3)
                 .frame(width: iconSize)
-                .foregroundStyle(.tint)
+                .foregroundStyle(Color.ink)
                 .accessibilityHidden(true)
             Text(text)
+                .font(.bodyText)
+                .foregroundStyle(Color.ink)
+                .frame(maxWidth: .infinity, alignment: .leading)
         }
+        .padding(Space.s4)
         .accessibilityElement(children: .combine)
     }
 

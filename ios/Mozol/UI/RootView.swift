@@ -27,6 +27,7 @@ struct MainTabView: View {
             SettingsView()
                 .tabItem { Label("Settings", systemImage: "gear") }
         }
+        .tint(Color.ink)
         .task(id: scenePhase) {
             guard scenePhase == .active else {
                 if scenePhase == .background { BackgroundRefresh.schedule() }

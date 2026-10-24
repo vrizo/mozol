@@ -20,18 +20,22 @@ struct SignInView: View {
 
     var body: some View {
         ScrollView {
-            VStack(spacing: 24) {
-                VStack(spacing: 8) {
-                    Text("MOZOL")
-                        .font(.largeTitle.bold())
+            VStack(alignment: .leading, spacing: Space.s8) {
+                VStack(alignment: .leading, spacing: Space.s3) {
+                    SectionLabel(text: "Sign in")
+                    Text(verbatim: "MOZOL")
+                        .font(.sans(48, weight: .bold, relativeTo: .largeTitle))
+                        .tracking(6)
+                        .foregroundStyle(Color.ink)
                     Text("Learn a language with small reminders.")
-                        .font(.subheadline)
-                        .foregroundStyle(.secondary)
+                        .font(.sans(18, relativeTo: .title3))
+                        .foregroundStyle(Color.ink2)
                 }
-                .multilineTextAlignment(.center)
-                .padding(.top, 48)
+                .padding(.top, Space.s12)
 
-                VStack(alignment: .leading, spacing: 12) {
+                VStack(alignment: .leading, spacing: Space.s4) {
+                    SectionLabel(text: "Email", plus: false)
+                        .accessibilityHidden(true)
                     TextField("Email", text: $email)
                         .textContentType(.username)
                         .keyboardType(.emailAddress)
@@ -41,27 +45,31 @@ struct SignInView: View {
                         .submitLabel(.next)
                         .onSubmit { focus = .password }
                         .accessibilityIdentifier("signin.email")
-                        .padding(.trailing, email.isEmpty ? 0 : 28)
+                        .padding(.trailing, email.isEmpty ? 0 : Space.s8)
                         .overlay(alignment: .trailing) {
                             if !email.isEmpty {
                                 Button {
                                     email = ""
                                     focus = .email
                                 } label: {
-                                    Image(systemName: "xmark.circle.fill")
-                                        .foregroundStyle(.secondary)
+                                    Image(systemName: "xmark")
+                                        .font(.system(.footnote, weight: .bold))
+                                        .foregroundStyle(Color.ink)
+                                        .frame(width: Outline.touch, height: Outline.touch)
+                                        .contentShape(Rectangle())
                                 }
-                                .buttonStyle(.borderless)
-                                .padding(.trailing, 8)
+                                .buttonStyle(.plain)
                                 .accessibilityLabel("Clear Email")
                                 .accessibilityIdentifier("signin.email.clear")
                             }
                         }
                     if showsEmailHint {
                         Text("Enter an email address, for example name@example.com.")
-                            .font(.footnote)
-                            .foregroundStyle(.red)
+                            .font(.secondaryText)
+                            .foregroundStyle(Color.danger)
                     }
+                    SectionLabel(text: "Password", plus: false)
+                        .accessibilityHidden(true)
                     SecureField("Password", text: $password)
                         .textContentType(.password)
                         .focused($focus, equals: .password)
@@ -69,37 +77,42 @@ struct SignInView: View {
                         .onSubmit(signIn)
                         .accessibilityIdentifier("signin.password")
                 }
-                .textFieldStyle(.roundedBorder)
+                .textFieldStyle(InkFieldStyle(isError: showsEmailHint))
 
-                VStack(spacing: 12) {
+                VStack(alignment: .leading, spacing: Space.s3) {
                     Button(action: signIn) {
-                        Text("Sign In")
-                            .frame(maxWidth: .infinity)
+                        Text("Sign In ->")
                     }
-                    .buttonStyle(.borderedProminent)
-                    .controlSize(.large)
+                    .buttonStyle(.primary)
+                    .accessibilityLabel("Sign In")
                     .disabled(!credentials.isComplete || isSigningIn)
                     .accessibilityIdentifier("signin.submit")
 
+                    if isSigningIn {
+                        PlusLoadingRow()
+                    }
                     Text("Sign-in is not connected to the server yet. Any email and password work.")
-                        .font(.footnote)
-                        .foregroundStyle(.secondary)
-                        .multilineTextAlignment(.center)
+                        .font(.secondaryText)
+                        .foregroundStyle(Color.ink2)
                 }
 
-                VStack(spacing: 4) {
+                DottedRule()
+
+                HStack(spacing: Space.s2) {
                     Text("No account yet?")
-                        .foregroundStyle(.secondary)
+                        .font(.bodyText)
+                        .foregroundStyle(Color.ink2)
                     Button("Create Account") { isShowingSignUp = true }
+                        .buttonStyle(.textLink)
                         .accessibilityIdentifier("signin.createAccount")
                 }
-                .font(.subheadline)
             }
-            .padding(.horizontal, 24)
+            .padding(.horizontal, Space.s6)
             .frame(maxWidth: 480)
             .frame(maxWidth: .infinity)
         }
         .scrollDismissesKeyboard(.interactively)
+        .paperBackground()
         .onAppear {
             guard email.isEmpty, let last = session.lastEmail else { return }
             email = last

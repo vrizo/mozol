@@ -5,6 +5,10 @@ struct MozolApp: App {
     @UIApplicationDelegateAdaptor(AppDelegate.self) private var appDelegate
     private let environment = AppEnvironment.shared
 
+    init() {
+        Appearance.apply()
+    }
+
     var body: some Scene {
         WindowGroup {
             RootView()

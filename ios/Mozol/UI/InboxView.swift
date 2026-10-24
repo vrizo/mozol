@@ -10,27 +10,29 @@ struct InboxView: View {
 
     var body: some View {
         NavigationStack {
-            List {
-                Section {
+            ScrollView {
+                VStack(alignment: .leading, spacing: Space.s6) {
                     SyncStatusLine(status: sync.status, lastSuccess: sync.lastSuccess)
-                }
-                Section {
-                    ForEach(entries) { entry in
-                        NavigationLink(value: entry.key) {
-                            InboxRow(entry: entry)
+                    if entries.isEmpty {
+                        emptyState
+                    } else {
+                        SectionLabel(text: "Messages")
+                        LazyVStack(spacing: Space.s4) {
+                            ForEach(entries) { entry in
+                                NavigationLink(value: entry.key) {
+                                    InboxRow(entry: entry)
+                                }
+                                .buttonStyle(.plain)
+                                .accessibilityIdentifier("inbox.row")
+                            }
                         }
+                        .padding(.trailing, Outline.shadow)
                     }
                 }
+                .padding(.horizontal, Space.s4)
+                .padding(.vertical, Space.s4)
             }
-            .overlay {
-                if entries.isEmpty {
-                    ContentUnavailableView(
-                        "No Messages Yet",
-                        systemImage: "tray",
-                        description: Text("Messages and silent pushes from the MOZOL server appear here.")
-                    )
-                }
-            }
+            .paperBackground()
             .navigationTitle("Inbox")
             .navigationDestination(for: String.self) { key in
                 if let entry = entries.first(where: { $0.key == key }) {
@@ -38,6 +40,7 @@ struct InboxView: View {
                 }
             }
             .refreshable { await events.handle(.manualRefresh) }
+            .tint(Color.ink)
             .toolbar {
                 ToolbarItem(placement: .primaryAction) {
                     Button {
@@ -45,6 +48,7 @@ struct InboxView: View {
                     } label: {
                         Label("Refresh", systemImage: "arrow.clockwise")
                     }
+                    .tint(Color.ink)
                     .disabled(sync.status == .checking)
                     .accessibilityIdentifier("inbox.refresh")
                 }
@@ -53,20 +57,38 @@ struct InboxView: View {
     }
 }
 
+extension InboxView {
+    private var emptyState: some View {
+        VStack(alignment: .leading, spacing: Space.s4) {
+            Text("No messages yet. Messages and silent pushes from the MOZOL server appear here.")
+                .font(.bodyText)
+                .foregroundStyle(Color.ink2)
+            Button {
+                Task { await events.handle(.manualRefresh) }
+            } label: {
+                Text("Check Now")
+            }
+            .buttonStyle(.primary)
+            .disabled(sync.status == .checking)
+        }
+        .padding(.top, Space.s8)
+    }
+}
+
 struct SyncStatusLine: View {
     let status: MessageSync.Status
     let lastSuccess: Date?
 
     var body: some View {
-        HStack(spacing: 8) {
+        HStack(spacing: Space.s2) {
             if status == .checking {
-                ProgressView()
-                    .accessibilityHidden(true)
+                PlusLoadingRow()
             }
             text
-                .font(.footnote)
-                .foregroundStyle(isFailure ? .red : .secondary)
+                .font(.mono(.footnote))
+                .foregroundStyle(isFailure ? Color.danger : Color.ink2)
         }
+        .frame(maxWidth: .infinity, alignment: .leading)
         .accessibilityElement(children: .combine)
         .accessibilityIdentifier("inbox.status")
     }
@@ -99,22 +121,24 @@ struct InboxRow: View {
     let entry: InboxEntry
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 4) {
-            HStack {
-                Text(entry.source.label)
-                    .font(.subheadline.weight(.semibold))
+        VStack(alignment: .leading, spacing: Space.s2) {
+            HStack(alignment: .firstTextBaseline) {
+                Tag(text: entry.source.label)
                 Spacer()
                 Text(entry.receivedAt, format: .dateTime.hour().minute().second())
-                    .font(.footnote)
-                    .foregroundStyle(.secondary)
+                    .font(.mono(.caption))
+                    .foregroundStyle(Color.ink2)
             }
             Text(RawJSON.preview(entry.body))
-                .font(.system(.footnote, design: .monospaced))
-                .foregroundStyle(.secondary)
+                .font(.mono(.footnote))
+                .foregroundStyle(Color.ink)
                 .lineLimit(1)
         }
+        .padding(Space.s4)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .card(raised: true)
+        .contentShape(Rectangle())
         .accessibilityElement(children: .combine)
-        .accessibilityIdentifier("inbox.row")
     }
 }
 

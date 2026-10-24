@@ -9,20 +9,33 @@ struct InboxEntryView: View {
     @State private var didCopy = false
 
     var body: some View {
-        List {
-            Section {
-                LabeledContent("Source") { Text(entry.source.label) }
-                LabeledContent("Received") {
-                    Text(entry.receivedAt, format: .dateTime.year().month().day().hour().minute().second())
+        ScrollView {
+            VStack(alignment: .leading, spacing: Space.s6) {
+                VStack(spacing: 0) {
+                    CardRow(label: "Source") { Text(entry.source.label) }
+                    CardDivider()
+                    CardRow(label: "Received") {
+                        Text(entry.receivedAt, format: .dateTime.year().month().day().hour().minute().second())
+                            .font(.mono(.footnote))
+                    }
+                }
+                .card()
+
+                VStack(alignment: .leading, spacing: Space.s3) {
+                    SectionLabel(text: "Body")
+                    Text(entry.body)
+                        .font(.mono(.footnote))
+                        .foregroundStyle(Color.ink)
+                        .textSelection(.enabled)
+                        .padding(Space.s4)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .card()
+                        .accessibilityIdentifier("inboxEntry.body")
                 }
             }
-            Section("Body") {
-                Text(entry.body)
-                    .font(.system(.footnote, design: .monospaced))
-                    .textSelection(.enabled)
-                    .accessibilityIdentifier("inboxEntry.body")
-            }
+            .padding(Space.s4)
         }
+        .paperBackground()
         .navigationTitle("Message")
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
@@ -34,6 +47,7 @@ struct InboxEntryView: View {
                         Text("Copy")
                     }
                 }
+                .tint(Color.ink)
             }
         }
         .sensoryFeedback(.success, trigger: didCopy) { _, new in new }

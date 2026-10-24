@@ -18,22 +18,30 @@ struct WebPageSheet: View {
                     .accessibilityHidden(state == .failed)
                 switch state {
                 case .loading:
-                    ProgressView()
+                    PlusLoadingRow()
                 case .failed:
-                    ContentUnavailableView {
-                        Label("Couldn't open the page", systemImage: "wifi.exclamationmark")
-                    } description: {
+                    VStack(alignment: .leading, spacing: Space.s2) {
+                        Text("Couldn't open the page")
+                            .font(.sans(18, weight: .bold, relativeTo: .title3))
+                            .foregroundStyle(Color.ink)
                         Text("Check your connection and try again.")
+                            .font(.bodyText)
+                            .foregroundStyle(Color.ink2)
                     }
+                    .padding(Space.s4)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .accessibilityElement(children: .combine)
                 case .loaded:
                     EmptyView()
                 }
             }
+            .paperBackground()
             .navigationTitle(title)
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .confirmationAction) {
                     Button("Done") { dismiss() }
+                        .tint(Color.ink)
                 }
             }
         }

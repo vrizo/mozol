@@ -16,64 +16,97 @@ struct SettingsView: View {
 
     var body: some View {
         NavigationStack {
-            Form {
-                Section("Account") {
-                    if let email = session.email {
-                        Text("Signed in as \(email)")
+            ScrollView {
+                VStack(alignment: .leading, spacing: Space.s8) {
+                    section("Account") {
+                        if let email = session.email {
+                            Text("Signed in as \(email)")
+                                .font(.bodyText)
+                                .foregroundStyle(Color.ink)
+                                .padding(Space.s4)
+                                .frame(maxWidth: .infinity, alignment: .leading)
+                        }
+                    } footer: {
+                        Button("Sign Out", role: .destructive) { events.signOut() }
+                            .buttonStyle(.secondary)
+                            .accessibilityIdentifier("settings.signOut")
                     }
-                    Button("Sign Out", role: .destructive) { events.signOut() }
-                        .accessibilityIdentifier("settings.signOut")
-                }
 
-                Section("Permissions") {
-                    LabeledContent("Notifications") { Text(notificationStatus) }
-                    LabeledContent("Reminders") { Text(remindersStatus) }
-                    Button("Open Settings") { openURL(URL(string: UIApplication.openSettingsURLString)!) }
-                }
+                    section("Permissions") {
+                        CardRow(label: "Notifications") { Text(notificationStatus) }
+                        CardDivider()
+                        CardRow(label: "Reminders") { Text(remindersStatus) }
+                    } footer: {
+                        Button("Open Settings") { openURL(URL(string: UIApplication.openSettingsURLString)!) }
+                            .buttonStyle(.secondary)
+                    }
 
-                Section("Push") {
-                    LabeledContent("Device Token") {
-                        switch push.token {
-                        case .none: Text("Not registered yet")
-                        case .failed: Text("Registration failed")
-                        case .registered(let hex):
-                            Text(hex)
-                                .font(.system(.caption, design: .monospaced))
-                                .textSelection(.enabled)
-                                .lineLimit(2)
+                    section("Push") {
+                        CardRow(label: "Device Token") {
+                            switch push.token {
+                            case .none: Text("Not registered yet")
+                            case .failed: Text("Registration failed")
+                            case .registered(let hex):
+                                Text(hex)
+                                    .font(.mono(.caption))
+                                    .textSelection(.enabled)
+                                    .lineLimit(2)
+                            }
+                        }
+                        CardDivider()
+                        CardRow(label: "Server Registration") { Text(serverStatus) }
+                    } footer: {
+                        if let hex = push.tokenHex {
+                            Button("Copy Token") { UIPasteboard.general.string = hex }
+                                .buttonStyle(.secondary)
                         }
                     }
-                    if let hex = push.tokenHex {
-                        Button("Copy Token") { UIPasteboard.general.string = hex }
-                    }
-                    LabeledContent("Server Registration") { Text(serverStatus) }
-                }
 
-                Section("Server") {
-                    LabeledContent("Server") { Text(verbatim: config.baseURL.absoluteString) }
-                }
-
-                Section("Background") {
-                    LabeledContent("Last Background Check") {
-                        if let date = sync.lastBackgroundRun {
-                            Text(date, format: .dateTime.month().day().hour().minute())
-                        } else {
-                            Text("Never")
+                    section("Server") {
+                        CardRow(label: "Server") {
+                            Text(verbatim: config.baseURL.absoluteString)
+                                .font(.mono(.footnote))
                         }
                     }
-                }
 
-                Section("About") {
+                    section("Background") {
+                        CardRow(label: "Last Background Check") {
+                            if let date = sync.lastBackgroundRun {
+                                Text(date, format: .dateTime.month().day().hour().minute())
+                            } else {
+                                Text("Never")
+                            }
+                        }
+                    }
+
+                    DottedRule()
+
                     Text("Version \(Self.version) (\(Self.build))")
-                        .foregroundStyle(.secondary)
+                        .font(.mono(.caption))
+                        .foregroundStyle(Color.ink2)
                 }
+                .padding(Space.s4)
             }
+            .paperBackground()
             .navigationTitle("Settings")
         }
         .task(id: scenePhase) {
             guard scenePhase == .active else { return }
             await notifications.refresh()
             reminders.refreshAuthorization()
+        }
+    }
+
+    private func section<Content: View, Footer: View>(
+        _ title: LocalizedStringKey,
+        @ViewBuilder content: () -> Content,
+        @ViewBuilder footer: () -> Footer = { EmptyView() }
+    ) -> some View {
+        VStack(alignment: .leading, spacing: Space.s3) {
+            SectionLabel(text: title)
+            VStack(spacing: 0) { content() }
+                .card()
+            footer()
         }
     }
 
