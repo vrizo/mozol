@@ -381,7 +381,8 @@ Endpoints: recommendations and deliveries
 type DeliveryItem = {
   deliveryId: Id;
   recommendation: Pick<Recommendation,
-    "id" | "language" | "kind" | "itemKey" | "marker" | "title" | "notes" | "embedLine" | "matchTerms" | "url">;
+    "id" | "language" | "kind" | "itemKey" | "marker" | "title" | "notes" | "embedLine" | "matchTerms" | "url">
+    & { priority: 0 };                 // always 0, EventKit "no priority"; iOS builds before the priority removal require it, newer builds ignore it
 };
 
 type DeliveryResult = {

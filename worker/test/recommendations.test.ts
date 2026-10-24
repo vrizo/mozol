@@ -280,6 +280,7 @@ describe("POST /api/deliveries/claim and /results", () => {
       kind: "mistake",
       title: "It is a good idea",
       url: expect.stringMatching(/\/r\/rec_/),
+      priority: 0,
     });
     expect(first.deliveries[0]).not.toHaveProperty("schedule");
     expect((await claim(b)).deliveries).toEqual([]);

@@ -87,7 +87,10 @@ export const DeliveryItem = z.strictObject({
     embedLine: true,
     matchTerms: true,
     url: true,
-  }).superRefine(checkItemKey),
+  })
+    // Always 0 (EventKit: no priority). iOS builds made before the priority removal require the field.
+    .extend({ priority: z.literal(0) })
+    .superRefine(checkItemKey),
 });
 export type DeliveryItem = z.infer<typeof DeliveryItem>;
 

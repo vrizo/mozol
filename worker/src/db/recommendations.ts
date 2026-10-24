@@ -72,6 +72,7 @@ export function deliveryItem(deliveryId: string, rec: Recommendation): DeliveryI
       embedLine: rec.embedLine,
       matchTerms: rec.matchTerms,
       url: rec.url,
+      priority: 0,
     },
   };
 }
