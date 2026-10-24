@@ -1,4 +1,15 @@
+<a href="https://www.meetjamie.ai/">
+    <img src="assets/hackathon/jamie-logo.svg" alt="Jamie" width="96" height="96" align="left">
+</a>
+<a href="https://techeurope.io/">
+    <img src="assets/hackathon/tech-europe-logo.svg" alt="{Tech: Europe}" width="96" height="96" align="left">
+</a>
+
+<br clear="all">
+
 # MOZOL
+
+Built at the Jamie × {Tech: Europe} hackathon.
 
 Learn a language with small reminders that stay in front of your eyes. A word or a short phrase shows up again and again during the day, until you know it.
 

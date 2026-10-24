@@ -1,6 +1,6 @@
 # MOZOL — guide for AI agents
 
-MOZOL helps people learn a language with small reminders that keep showing up in front of their eyes. Parts: an iOS app (ios/), a Cloudflare Worker API (worker/), a Cloudflare D1 database, and a React web app (web/). Read order: this file, then docs/ by topic (index: docs/README.md), then shared/CONTRACT.md once it exists — the pinned API contract, source of truth for every client and the worker.
+MOZOL helps people learn a language with small reminders that keep showing up in front of their eyes. It is built at a hackathon run by Jamie (first organizer) and {Tech: Europe}; their logos: assets/hackathon/. Parts: an iOS app (ios/), a Cloudflare Worker API (worker/), a Cloudflare D1 database, and a React web app (web/). Read order: this file, then docs/ by topic (index: docs/README.md), then shared/CONTRACT.md once it exists — the pinned API contract, source of truth for every client and the worker.
 
 The whole project is in English: code, docs, UI, commit messages. The UI has one language, English.
 

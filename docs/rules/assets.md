@@ -6,4 +6,5 @@ Assets
 - Web images live in web/public/images/. Use SVG where possible; raster images are compressed before commit.
 - Generated or local-only design input (background photos, App Store compositions, render outputs, videos) is never committed. Add its folder to .gitignore when it first appears, with a comment that says how to regenerate it.
 - The repository is public: commit only assets we own or may publish. Third-party assets need their license next to them in the same folder.
+- Hackathon organizer logos live in assets/hackathon/, with a README that says where each came from. Jamie is the first organizer and always comes first; {Tech: Europe} comes second. The README header shows both logos in that order.
 - File names: lowercase, words joined by "-", the product name first (mozol-icon-circle.svg).
