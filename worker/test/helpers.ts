@@ -1,7 +1,10 @@
 // Requests to the worker in tests, and sign-up and app sign-in shortcuts for tests that need a user.
+import { createExecutionContext, waitOnExecutionContext } from "cloudflare:test";
 import { env, exports } from "cloudflare:workers";
 import { AppCodeResponse, AppTokenResponse, ErrorBody, type User, UserResponse } from "shared";
 import { expect } from "vitest";
+import type { Env } from "../src/env";
+import app from "../src/index";
 
 export const PASSWORD = "correct horse battery";
 
@@ -16,6 +19,8 @@ export type CallOptions = {
   // CF-Connecting-IP; a new random address when missing, so the auth rate limit never mixes tests.
   ip?: string | null;
   headers?: Record<string, string>;
+  // Bindings that replace the test environment's ones for this request, such as a failing workflow binding.
+  bindings?: Partial<Env>;
 };
 
 export function randomIp(): string {
@@ -23,7 +28,7 @@ export function randomIp(): string {
   return `10.${a}.${b}.${c}`;
 }
 
-export function call(path: string, options: CallOptions = {}): Promise<Response> {
+export async function call(path: string, options: CallOptions = {}): Promise<Response> {
   const method =
     options.method ?? (options.body === undefined && options.rawBody === undefined ? "GET" : "POST");
   const headers = new Headers(options.headers);
@@ -38,7 +43,12 @@ export function call(path: string, options: CallOptions = {}): Promise<Response>
     headers.set("Content-Type", "application/json");
     body = JSON.stringify(options.body);
   }
-  return exports.default.fetch(new Request(`http://localhost${path}`, { method, headers, body }));
+  const request = new Request(`http://localhost${path}`, { method, headers, body });
+  if (options.bindings === undefined) return exports.default.fetch(request);
+  const ctx = createExecutionContext();
+  const res = await app.fetch(request, { ...env, ...options.bindings }, ctx);
+  await waitOnExecutionContext(ctx);
+  return res;
 }
 
 export async function expectError(res: Response, status: number, code: string): Promise<ErrorBody> {

@@ -1,4 +1,4 @@
-// Byte encodings for passwords, tokens and their stored hashes.
+// Byte encodings for passwords, tokens, their stored hashes and webhook signatures.
 export function randomBytes(length: number): Uint8Array<ArrayBuffer> {
   return crypto.getRandomValues(new Uint8Array(length));
 }
@@ -22,4 +22,12 @@ export function toBase64Url(bytes: Uint8Array): string {
 
 export function toHex(bytes: Uint8Array): string {
   return Array.from(bytes, (b) => b.toString(16).padStart(2, "0")).join("");
+}
+
+// The bytes of an even-length hex string, or null when the text is not hex.
+export function fromHex(text: string): Uint8Array<ArrayBuffer> | null {
+  if (text.length % 2 !== 0 || !/^[0-9a-fA-F]*$/.test(text)) return null;
+  const bytes = new Uint8Array(text.length / 2);
+  for (let i = 0; i < bytes.length; i++) bytes[i] = Number.parseInt(text.slice(i * 2, i * 2 + 2), 16);
+  return bytes;
 }

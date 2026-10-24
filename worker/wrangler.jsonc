@@ -23,7 +23,12 @@
     }
   ],
   // namespace_id is unique in the Cloudflare account; bindings that share one share their counters.
-  "ratelimits": [{ "name": "AUTH_LIMITER", "namespace_id": "4101", "simple": { "limit": 10, "period": 60 } }],
+  "ratelimits": [
+    { "name": "AUTH_LIMITER", "namespace_id": "4101", "simple": { "limit": 10, "period": 60 } },
+    { "name": "HOOK_LIMITER", "namespace_id": "4102", "simple": { "limit": 60, "period": 60 } }
+  ],
+  // AnalyzeTranscript analyzes one transcript run (docs/backend/pipeline.md).
+  "workflows": [{ "name": "analyze-transcript", "binding": "ANALYZE", "class_name": "AnalyzeTranscript" }],
   "vars": {
     "APP_ORIGIN": "https://mozol.vrizo.net",
     "ANALYSIS_MODE": "claude",

@@ -1,10 +1,13 @@
 // Bindings, variables and secrets of the worker (wrangler.jsonc, worker/.dev.vars, wrangler secret put).
 import type { Auth } from "./auth/session";
+import type { AnalyzeParams } from "./pipeline/workflow";
 
 export type Env = {
   DB: D1Database;
   ASSETS: Fetcher;
   AUTH_LIMITER: RateLimit;
+  HOOK_LIMITER: RateLimit;
+  ANALYZE: Workflow<AnalyzeParams>;
   APP_ORIGIN: string;
   ANALYSIS_MODE: string;
   ANALYSIS_MODEL: string;

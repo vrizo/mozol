@@ -266,7 +266,7 @@ describe("the Origin check", () => {
     expect(signOut.status).toBe(204);
 
     const hook = await call("/api/hooks/json/abc", { cookie, origin: null, body: {} });
-    await expectError(hook, 404, "not_found");
+    await expectError(hook, 404, "hook_not_found");
   });
 });
 
