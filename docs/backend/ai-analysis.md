@@ -32,7 +32,7 @@ Results and errors
 - With a refusal fallback the final message can hold several text blocks. The result is the last text block after the last fallback block.
 - Rate limits, overload and network errors are retried by the pipeline step (pipeline.md). When retries run out: analysis_failed.
 - The worker stores the model that answered, the token counts, cache reads and the duration. Logs show only ids, counts, timings and error codes.
-- The worker counts example quotes that do not appear in the learner's lines (ignoring case, punctuation and extra spaces) and stores that count in analyses.unmatched_quotes and in the log. The result is stored unchanged.
+- The worker counts example quotes and rewrite originals that do not appear in the learner's lines (ignoring case, punctuation and extra spaces) and stores that count in analyses.unmatched_quotes and in the log. The result is stored unchanged.
 
 Tests and trying the prompt
 
