@@ -10,7 +10,8 @@ Questions waiting on Vitalii and Petr. Each answer moves into the matching spec 
 - Match terms with the substring mode (languages written without spaces) and very short words can match too much. The rules may need tuning after real use.
 - APNs from the deployed worker: Cloudflare says production Workers reach APNs over HTTP/2 through its proxy, but does not document it. The first real push must be tested early. If it fails, the push sender moves to a Cloudflare Container or to AWS SNS.
 - Next sources after Jamie: a Telegram bot, Slack, or a personal email address per user through Cloudflare Email Routing (for written language).
-- Jamie sends no new event after the user renames speakers, and its webhook carries no meeting id for the Jamie API. Whether MOZOL needs a way to fetch a meeting again.
+- Jamie sends no new event after the user renames speakers. The webhook's metadata.id is the meeting id of the Jamie API, so a personal API key could fetch the meeting again (meetings.get). Its transcript there is one Markdown string, not a list. Whether MOZOL needs this.
+- Jamie's Speaker -1 (../backend/sources/jamie.md) has no participant, and its turns may hold several voices. Today the rule "the only speaker" picks it when it is the only speaker, and "Which speaker are you?" offers it. Whether Speaker -1 is only context, and what a transcript with nothing but Speaker -1 turns becomes.
 - Jamie's docs do not say whether a retried delivery is signed again. The signature check accepts a timestamp up to 2 hours old so that the 1-hour retry passes. When Jamie re-signs retries, the window can go down to Jamie's 300 seconds.
 - What the Shortcuts action does (../ios/shortcuts.md).
 - Repetition schedule: how often an item comes back, and when it counts as learned.

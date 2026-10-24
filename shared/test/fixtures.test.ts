@@ -7,6 +7,8 @@ import claimResponse from "../fixtures/deliveries/claim-response.json";
 import meeting from "../fixtures/jamie/meeting-completed.json";
 import meetingGerman from "../fixtures/jamie/meeting-completed-german.json";
 import meetingUnknown from "../fixtures/jamie/meeting-completed-unknown-speakers.json";
+import realKnown from "../fixtures/jamie/real/meeting-completed-known-speakers.json";
+import realUnknown from "../fixtures/jamie/real/meeting-completed-unknown-speakers.json";
 import jsonTranscript from "../fixtures/json/transcript.json";
 import pasteText from "../fixtures/paste/transcript.txt?raw";
 import deliveriesPush from "../fixtures/push/deliveries.json";
@@ -23,23 +25,47 @@ import {
   TestPush,
 } from "../src";
 
-// The fields of docs/backend/sources/jamie.md. The adapter itself is the worker's (B06).
-const JamieMeetingCompleted = z.object({
-  metadata: z.object({ id: z.string().min(1), event: z.literal("meeting.completed") }),
-  data: z.object({
+// The body of docs/backend/sources/jamie.md, as the real events in fixtures/jamie/real/ send it.
+// The adapter itself is the worker's (B06).
+const Email = z.email().nullable();
+const JamieMeetingCompleted = z.strictObject({
+  metadata: z.strictObject({
+    id: z.string().min(1),
+    event: z.literal("meeting.completed"),
+    created: z.number().int().positive(),
+  }),
+  data: z.strictObject({
     title: z.string().min(1),
     startTime: z.iso.datetime(),
     endTime: z.iso.datetime().nullable(),
-    user: z.object({ email: z.email() }),
-    participants: z.array(
-      z.object({ id: z.string().min(1), name: z.string().min(1), email: z.email().nullable() }),
-    ),
+    user: z.strictObject({ id: z.string().min(1), email: z.email() }),
+    summary: z.strictObject({ markdown: z.string(), html: z.string(), short: z.string() }),
     transcript: z.array(
-      z.object({ speakerId: z.string().min(1), speakerName: z.string().min(1), text: z.string() }),
+      z.strictObject({
+        speakerId: z.string().regex(/^-?\d+$/),
+        speakerName: z.string().min(1),
+        text: z.string(),
+      }),
     ),
-    summary: z.string(),
-    tasks: z.array(z.unknown()),
-    tags: z.array(z.string()),
+    participants: z.array(
+      z.strictObject({ id: z.string().regex(/^\d+$/), name: z.string().min(1), email: Email }),
+    ),
+    event: z.strictObject({
+      id: z.string().nullable(),
+      externalId: z.string().nullable(),
+      title: z.string(),
+      scheduledTime: z.iso.datetime(),
+      endTime: z.iso.datetime().nullable(),
+      attendees: z.array(z.unknown()),
+    }),
+    tasks: z.array(
+      z.strictObject({
+        content: z.string().min(1),
+        completed: z.boolean(),
+        assignee: z.strictObject({ name: z.string().min(1), email: Email }).nullable(),
+      }),
+    ),
+    tags: z.array(z.strictObject({ name: z.string().min(1), color: z.string() })),
   }),
 });
 type JamieMeetingCompleted = z.infer<typeof JamieMeetingCompleted>;
@@ -74,6 +100,40 @@ describe("Jamie fixtures", () => {
   test("meeting-completed-german: Petr is the recorder", () => {
     const body = JamieMeetingCompleted.parse(meetingGerman);
     expect(recorderLines(body).length).toBeGreaterThan(3);
+  });
+
+  test("the synthetic fixtures have the fields of the real events", () => {
+    const fields = (body: { metadata: object; data: object }) => [
+      Object.keys(body.metadata).sort(),
+      Object.keys(body.data).sort(),
+    ];
+    for (const synthetic of [meeting, meetingGerman, meetingUnknown]) {
+      expect(fields(synthetic)).toEqual(fields(realKnown));
+    }
+    expect(fields(realUnknown)).toEqual(fields(realKnown));
+  });
+});
+
+describe("real Jamie events", () => {
+  test("known speakers: the recorder is a participant with the user's email and has half the turns", () => {
+    const body = JamieMeetingCompleted.parse(realKnown);
+    expect(body.metadata.id).toBe("1l73xk5glpgw");
+    expect(body.data.participants.map((p) => [p.id, p.name, p.email === null])).toEqual([
+      ["1", "Speaker 1", true],
+      ["0", "Vitalii Rizo", false],
+    ]);
+    const ids = new Set(body.data.participants.map((p) => p.id));
+    expect(body.data.transcript.every((s) => ids.has(s.speakerId))).toBe(true);
+    expect(body.data.transcript).toHaveLength(10);
+    expect(recorderLines(body)).toHaveLength(5);
+  });
+
+  test("unknown speakers: no participants, one Speaker -1 turn with every voice in it", () => {
+    const body = JamieMeetingCompleted.parse(realUnknown);
+    expect(body.data.participants).toEqual([]);
+    expect(body.data.transcript.map((s) => [s.speakerId, s.speakerName])).toEqual([["-1", "Speaker -1"]]);
+    expect(body.data.event.id).toBeNull();
+    expect(recorderLines(body)).toEqual([]);
   });
 });
 

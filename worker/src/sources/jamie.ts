@@ -5,7 +5,7 @@ import { fromHex } from "../auth/bytes";
 import { copy } from "../copy";
 import { type NormalizedTranscript, parseJsonBody, type SourceAdapter } from "./types";
 
-const PLACEHOLDER_NAME = /^Speaker \d+$/i;
+const PLACEHOLDER_NAME = /^Speaker -?\d+$/i;
 const MAX_SIGNATURE_AGE_SECONDS = 2 * 3600;
 const MEETING_COMPLETED = "meeting.completed";
 

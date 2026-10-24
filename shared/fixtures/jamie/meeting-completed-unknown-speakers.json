@@ -1,61 +1,114 @@
 {
   "metadata": {
-    "id": "b3f09d6e-1c2a-4e7b-8d54-a0c6e9f21b77",
+    "id": "1l1m4n7b2v5c",
     "event": "meeting.completed",
-    "createdAt": "2026-10-23T15:32:48.000Z"
+    "created": 1792769568
   },
   "data": {
-    "id": "mtg-e81a4c3d-77b2-4f05-a9d6-3c0b5e2f1a64",
     "title": "Call with the agency",
     "startTime": "2026-10-23T15:00:00.000Z",
     "endTime": "2026-10-23T15:29:05.000Z",
-    "user": { "email": "petr.ivanov@example.com", "name": "Petr Ivanov" },
-    "participants": [
-      { "id": "s1", "name": "Speaker 1", "email": null },
-      { "id": "s2", "name": "Speaker 2", "email": null }
-    ],
+    "user": {
+      "id": "1bq7m3k9d2xf",
+      "email": "petr.ivanov@example.com"
+    },
+    "summary": {
+      "markdown": "## Executive Summary\n\n- The agency will lighten the screenshot background, increase the font size and use the new logo. The next version is due on Monday morning.",
+      "html": "<h2>Executive Summary</h2><ul><li>The agency will lighten the screenshot background, increase the font size and use the new logo. The next version is due on Monday morning.</li></ul>",
+      "short": "The agency will lighten the screenshot background, increase the font size and use the new logo."
+    },
     "transcript": [
       {
-        "speakerId": "s1",
+        "speakerId": "1",
         "speakerName": "Speaker 1",
         "text": "Hi, thanks for making time. I wanted to check where we are with the app store screenshots."
       },
       {
-        "speakerId": "s2",
+        "speakerId": "2",
         "speakerName": "Speaker 2",
         "text": "Hello. We have finished the first version yesterday, but I am not sure about colors."
       },
-      { "speakerId": "s1", "speakerName": "Speaker 1", "text": "What's bothering you about them?" },
       {
-        "speakerId": "s2",
+        "speakerId": "1",
+        "speakerName": "Speaker 1",
+        "text": "What's bothering you about them?"
+      },
+      {
+        "speakerId": "-1",
+        "speakerName": "Speaker -1",
+        "text": "Mm-hm."
+      },
+      {
+        "speakerId": "2",
         "speakerName": "Speaker 2",
         "text": "The background is very dark and the text is very small, so on the phone it is difficult to read."
       },
       {
-        "speakerId": "s1",
+        "speakerId": "1",
         "speakerName": "Speaker 1",
         "text": "Fair enough. We can try a lighter background and bump the font size. Anything else?"
       },
       {
-        "speakerId": "s2",
+        "speakerId": "2",
         "speakerName": "Speaker 2",
         "text": "Yes, please explain me why you use the old logo. We have sent you the new one last month."
       },
       {
-        "speakerId": "s1",
+        "speakerId": "1",
         "speakerName": "Speaker 1",
         "text": "That's on us, sorry. The new logo got lost in the handover. I'll fix it today."
       },
       {
-        "speakerId": "s2",
+        "speakerId": "2",
         "speakerName": "Speaker 2",
         "text": "Okay, no problem. When we can see the next version?"
       },
-      { "speakerId": "s1", "speakerName": "Speaker 1", "text": "By Monday morning, if that works for you." },
-      { "speakerId": "s2", "speakerName": "Speaker 2", "text": "It works. Thank you, have a nice weekend." }
+      {
+        "speakerId": "1",
+        "speakerName": "Speaker 1",
+        "text": "By Monday morning, if that works for you."
+      },
+      {
+        "speakerId": "2",
+        "speakerName": "Speaker 2",
+        "text": "It works. Thank you, have a nice weekend."
+      }
     ],
-    "summary": "The agency will lighten the screenshot background, increase the font size and use the new logo. The next version is due on Monday morning.",
-    "tasks": [{ "text": "Send the next version of the app store screenshots", "assignee": "Speaker 1" }],
-    "tags": ["design"]
+    "participants": [
+      {
+        "id": "1",
+        "name": "Speaker 1",
+        "email": null
+      },
+      {
+        "id": "2",
+        "name": "Speaker 2",
+        "email": null
+      }
+    ],
+    "event": {
+      "id": null,
+      "externalId": null,
+      "title": "Call with the agency",
+      "scheduledTime": "2026-10-23T15:00:00.000Z",
+      "endTime": "2026-10-23T15:29:05.000Z",
+      "attendees": []
+    },
+    "tasks": [
+      {
+        "content": "Send the next version of the app store screenshots",
+        "completed": false,
+        "assignee": {
+          "name": "Speaker 1",
+          "email": null
+        }
+      }
+    ],
+    "tags": [
+      {
+        "name": "design",
+        "color": "#4A90D9"
+      }
+    ]
   }
 }

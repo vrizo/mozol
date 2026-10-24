@@ -59,20 +59,20 @@ describe("POST /api/hooks/jamie/:token", () => {
         title: meeting.data.title,
         occurred_at: "2026-10-22T09:00:00.000Z",
         duration_sec: 2483,
-        learner_speaker_id: "s3",
+        learner_speaker_id: "2",
         status: "queued",
         run: 1,
         error_code: null,
       });
       expect(JSON.parse(row.segments)).toHaveLength(meeting.data.transcript.length);
       expect(JSON.parse(row.segments)[0]).toEqual({
-        speaker_id: "s1",
+        speaker_id: "0",
         speaker_name: "Laura Bennett",
         text: meeting.data.transcript[0]?.text,
         start_sec: null,
       });
       expect(JSON.parse(row.participants)).toContainEqual({
-        id: "s3",
+        id: "2",
         name: "Petr Ivanov",
         email: "Petr.Ivanov@example.com",
         is_recorder: true,
@@ -225,12 +225,12 @@ describe("POST /api/hooks/jamie/:token", () => {
 
     const chosen = await call(`/api/transcripts/${transcriptId}/speaker`, {
       cookie,
-      body: { speakerId: "s2" },
+      body: { speakerId: "2" },
     });
     expect(chosen.status).toBe(200);
     expect(await storedTranscript(transcriptId)).toMatchObject({
       status: "queued",
-      learner_speaker_id: "s2",
+      learner_speaker_id: "2",
       run: 1,
     });
     const me = UserResponse.parse(await (await call("/api/me", { cookie })).json());

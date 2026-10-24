@@ -1,4 +1,6 @@
 import meeting from "shared/fixtures/jamie/meeting-completed.json";
+import realKnown from "shared/fixtures/jamie/real/meeting-completed-known-speakers.json";
+import realUnknown from "shared/fixtures/jamie/real/meeting-completed-unknown-speakers.json";
 import jsonTranscript from "shared/fixtures/json/transcript.json";
 import pasteText from "shared/fixtures/paste/transcript.txt?raw";
 import { describe, expect, it } from "vitest";
@@ -35,11 +37,22 @@ describe("the Jamie adapter", () => {
     });
     expect(t.segments).toHaveLength(meeting.data.transcript.length);
     expect(t.segments[2]).toEqual({
-      speakerId: "s3",
+      speakerId: "2",
       speakerName: "Petr Ivanov",
       text: meeting.data.transcript[2]?.text,
     });
-    expect(t.participants.filter((p) => p.isRecorder).map((p) => p.id)).toEqual(["s3"]);
+    expect(t.participants.filter((p) => p.isRecorder).map((p) => p.id)).toEqual(["2"]);
+  });
+
+  it("maps the real events, with the recorder or with Speaker -1 and no participants", () => {
+    const known = transcriptOf(jamieAdapter.parse(JSON.stringify(realKnown), NO_HEADERS, CONTEXT));
+    expect(known.externalId).toBe("1l73xk5glpgw");
+    expect(known.participants.filter((p) => p.isRecorder).map((p) => p.name)).toEqual(["Vitalii Rizo"]);
+    expect(known.segments).toHaveLength(10);
+
+    const unknown = transcriptOf(jamieAdapter.parse(JSON.stringify(realUnknown), NO_HEADERS, CONTEXT));
+    expect(unknown.participants).toEqual([]);
+    expect(unknown.segments.map((s) => s.speakerId)).toEqual(["-1"]);
   });
 
   it("reads the event from the body when the header is missing, and ignores other events", () => {
@@ -56,13 +69,13 @@ describe("the Jamie adapter", () => {
     body.data.startTime = "2026-10-22T11:00:00+02:00";
     body.data.endTime = null as unknown as string;
     body.data.transcript = [
-      { speakerId: "s1", speakerName: "Laura Bennett", text: "  " },
-      { speakerId: "s3", speakerName: "Petr Ivanov", text: "Hi." },
+      { speakerId: "0", speakerName: "Laura Bennett", text: "  " },
+      { speakerId: "2", speakerName: "Petr Ivanov", text: "Hi." },
     ];
     const t = transcriptOf(jamieAdapter.parse(JSON.stringify(body), NO_HEADERS, CONTEXT));
     expect(t.occurredAt).toBe("2026-10-22T09:00:00.000Z");
     expect(t.durationSec).toBeNull();
-    expect(t.segments).toEqual([{ speakerId: "s3", speakerName: "Petr Ivanov", text: "Hi." }]);
+    expect(t.segments).toEqual([{ speakerId: "2", speakerName: "Petr Ivanov", text: "Hi." }]);
   });
 
   it("refuses broken JSON, a body without a transcript and a transcript without text", () => {
@@ -75,7 +88,7 @@ describe("the Jamie adapter", () => {
     });
     const empty = JSON.stringify({
       ...meeting,
-      data: { ...meeting.data, transcript: [{ speakerId: "s1", speakerName: "A", text: "" }] },
+      data: { ...meeting.data, transcript: [{ speakerId: "0", speakerName: "A", text: "" }] },
     });
     expect(jamieAdapter.parse(empty, NO_HEADERS, CONTEXT)).toEqual({
       outcome: "refused",
@@ -86,6 +99,7 @@ describe("the Jamie adapter", () => {
   it("knows its placeholder names", () => {
     expect(jamieAdapter.isPlaceholderName("Speaker 1")).toBe(true);
     expect(jamieAdapter.isPlaceholderName("speaker 12")).toBe(true);
+    expect(jamieAdapter.isPlaceholderName("Speaker -1")).toBe(true);
     expect(jamieAdapter.isPlaceholderName("Speaker")).toBe(false);
     expect(jamieAdapter.isPlaceholderName("Speaker One")).toBe(false);
   });

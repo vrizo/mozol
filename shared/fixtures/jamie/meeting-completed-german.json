@@ -1,84 +1,141 @@
 {
   "metadata": {
-    "id": "e5a2c7f1-4d08-4b3e-9f6a-81b0d3c2e4f9",
+    "id": "1k5z8x3c6v9b",
     "event": "meeting.completed",
-    "createdAt": "2026-10-21T08:24:31.000Z"
+    "created": 1792571071
   },
   "data": {
-    "id": "mtg-2b6d9f40-5e13-4a8c-b7d2-9e4f0a1c3b58",
     "title": "Sprint-Planung Checkout",
     "startTime": "2026-10-21T08:00:00.000Z",
     "endTime": "2026-10-21T08:21:47.000Z",
-    "user": { "email": "petr.ivanov@example.com", "name": "Petr Ivanov" },
-    "participants": [
-      { "id": "s1", "name": "Anna Schneider", "email": "anna.schneider@example.com" },
-      { "id": "s2", "name": "Jonas Weber", "email": "jonas.weber@example.com" },
-      { "id": "s3", "name": "Petr Ivanov", "email": "petr.ivanov@example.com" }
-    ],
+    "user": {
+      "id": "1bq7m3k9d2xf",
+      "email": "petr.ivanov@example.com"
+    },
+    "summary": {
+      "markdown": "## Executive Summary\n\n- Der Kunde möchte bis Ende November mit PayPal zahlen. Zuerst wird die Zahlungstabelle in der Datenbank erweitert, danach folgt der Bericht für das Team.",
+      "html": "<h2>Executive Summary</h2><ul><li>Der Kunde möchte bis Ende November mit PayPal zahlen. Zuerst wird die Zahlungstabelle in der Datenbank erweitert, danach folgt der Bericht für das Team.</li></ul>",
+      "short": "Der Kunde möchte bis Ende November mit PayPal zahlen."
+    },
     "transcript": [
       {
-        "speakerId": "s1",
+        "speakerId": "0",
         "speakerName": "Anna Schneider",
         "text": "Guten Morgen zusammen. Heute planen wir den nächsten Sprint für den Checkout."
       },
       {
-        "speakerId": "s2",
+        "speakerId": "1",
         "speakerName": "Jonas Weber",
         "text": "Morgen! Ich habe die offenen Tickets schon nach Priorität sortiert."
       },
       {
-        "speakerId": "s3",
+        "speakerId": "2",
         "speakerName": "Petr Ivanov",
         "text": "Guten Morgen. Ich habe gestern mit der Kunde gesprochen, er möchte die Zahlung mit PayPal."
       },
       {
-        "speakerId": "s1",
+        "speakerId": "0",
         "speakerName": "Anna Schneider",
         "text": "Hat er gesagt, bis wann er das braucht?"
       },
       {
-        "speakerId": "s3",
+        "speakerId": "2",
         "speakerName": "Petr Ivanov",
         "text": "Ja, bis Ende November. Ich denke, dass wir sollten zuerst die Datenbank ändern."
       },
-      { "speakerId": "s2", "speakerName": "Jonas Weber", "text": "Welche Änderung meinst du genau?" },
       {
-        "speakerId": "s3",
+        "speakerId": "1",
+        "speakerName": "Jonas Weber",
+        "text": "Welche Änderung meinst du genau?"
+      },
+      {
+        "speakerId": "2",
         "speakerName": "Petr Ivanov",
         "text": "Die Tabelle für Zahlungen ist zu klein. Das Problem ist der Datenbank, nicht der Code."
       },
       {
-        "speakerId": "s2",
+        "speakerId": "1",
         "speakerName": "Jonas Weber",
         "text": "Verstehe. Das schaffen wir in zwei Tagen, wenn niemand sonst daran arbeitet."
       },
       {
-        "speakerId": "s3",
+        "speakerId": "2",
         "speakerName": "Petr Ivanov",
         "text": "Gut. Morgen ich schreibe die Migration und dann wir testen sie zusammen."
       },
       {
-        "speakerId": "s1",
+        "speakerId": "0",
         "speakerName": "Anna Schneider",
         "text": "Klingt gut. Kannst du auch den Bericht für das Team schreiben?"
       },
       {
-        "speakerId": "s3",
+        "speakerId": "2",
         "speakerName": "Petr Ivanov",
         "text": "Ja, ich schicke dir die Bericht heute Abend. Danach helfe ich noch mit den Größe der Buttons."
       },
       {
-        "speakerId": "s2",
+        "speakerId": "1",
         "speakerName": "Jonas Weber",
         "text": "Super. Dann schließen wir die Planung für heute ab."
       },
-      { "speakerId": "s1", "speakerName": "Anna Schneider", "text": "Danke euch. Bis morgen!" }
+      {
+        "speakerId": "0",
+        "speakerName": "Anna Schneider",
+        "text": "Danke euch. Bis morgen!"
+      }
     ],
-    "summary": "Der Kunde möchte bis Ende November mit PayPal zahlen. Zuerst wird die Zahlungstabelle in der Datenbank erweitert, danach folgt der Bericht für das Team.",
+    "participants": [
+      {
+        "id": "0",
+        "name": "Anna Schneider",
+        "email": "anna.schneider@example.com"
+      },
+      {
+        "id": "1",
+        "name": "Jonas Weber",
+        "email": "jonas.weber@example.com"
+      },
+      {
+        "id": "2",
+        "name": "Petr Ivanov",
+        "email": "petr.ivanov@example.com"
+      }
+    ],
+    "event": {
+      "id": null,
+      "externalId": null,
+      "title": "Sprint-Planung Checkout",
+      "scheduledTime": "2026-10-21T08:00:00.000Z",
+      "endTime": "2026-10-21T08:21:47.000Z",
+      "attendees": []
+    },
     "tasks": [
-      { "text": "Migration für die Zahlungstabelle schreiben", "assignee": "Petr Ivanov" },
-      { "text": "Bericht an das Team schicken", "assignee": "Petr Ivanov" }
+      {
+        "content": "Migration für die Zahlungstabelle schreiben",
+        "completed": false,
+        "assignee": {
+          "name": "Petr Ivanov",
+          "email": "petr.ivanov@example.com"
+        }
+      },
+      {
+        "content": "Bericht an das Team schicken",
+        "completed": false,
+        "assignee": {
+          "name": "Petr Ivanov",
+          "email": "petr.ivanov@example.com"
+        }
+      }
     ],
-    "tags": ["sprint", "checkout"]
+    "tags": [
+      {
+        "name": "sprint",
+        "color": "#4A90D9"
+      },
+      {
+        "name": "checkout",
+        "color": "#50C878"
+      }
+    ]
   }
 }
