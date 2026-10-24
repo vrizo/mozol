@@ -22,10 +22,12 @@ struct SignInView: View {
             VStack(alignment: .leading, spacing: Space.s8) {
                 VStack(alignment: .leading, spacing: Space.s3) {
                     SectionLabel(text: "Get Started")
-                    Text(verbatim: "MOZOL")
-                        .font(.sans(48, weight: .bold, relativeTo: .largeTitle))
-                        .tracking(6)
+                    Image("Wordmark")
+                        .resizable()
+                        .scaledToFit()
+                        .frame(height: 36)
                         .foregroundStyle(Color.ink)
+                        .accessibilityLabel(Text(verbatim: "MOZOL"))
                     Text("Learn a language with small reminders.")
                         .font(.sans(18, relativeTo: .title3))
                         .foregroundStyle(Color.ink2)

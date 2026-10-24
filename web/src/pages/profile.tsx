@@ -1,15 +1,12 @@
-// Profile: details, your names in transcripts, reminder settings, sign out and account deletion.
+// Profile: your names in transcripts, sign out and account deletion.
 
 import { type FormEvent, useState } from "react";
-import type { ReminderSettings } from "shared";
 import { ApiError, deleteMe, patchMe } from "../api";
 import { copy } from "../copy/en";
-import { languageOptions } from "../languages";
 import { fieldErrors } from "../lib/auth";
 import { navigate } from "../router";
 import { useSession, useUser } from "../session";
-import { ComboBox } from "../ui/ComboBox";
-import { Button, Checkbox, ConfirmDialog, Select, TextField } from "../ui/controls";
+import { Button, ConfirmDialog, TextField } from "../ui/controls";
 import { errorCode, Notice, PageHeader } from "../ui/states";
 import "./auth.css";
 
@@ -25,18 +22,12 @@ export function ProfilePage() {
   const user = useUser();
   const session = useSession();
   const [form, setForm] = useState({
-    displayName: user.displayName,
-    nativeLanguage: user.nativeLanguage,
     speakerNames: user.speakerNames,
-    reminderSettings: user.reminderSettings,
   });
   const [newSpeaker, setNewSpeaker] = useState("");
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [status, setStatus] = useState<{ tone: "success" | "error"; text: string } | null>(null);
   const [busy, setBusy] = useState(false);
-
-  const setReminders = (changes: Partial<ReminderSettings>) =>
-    setForm({ ...form, reminderSettings: { ...form.reminderSettings, ...changes } });
 
   const addSpeaker = () => {
     const name = newSpeaker.trim();
@@ -45,13 +36,10 @@ export function ProfilePage() {
     setNewSpeaker("");
   };
 
-  const hoursInOrder = form.reminderSettings.activeTo > form.reminderSettings.activeFrom;
-
   const save = async (e: FormEvent) => {
     e.preventDefault();
     setStatus(null);
     setErrors({});
-    if (!hoursInOrder) return;
     setBusy(true);
     try {
       session.setUser(await patchMe(form));
@@ -74,26 +62,6 @@ export function ProfilePage() {
     <main id="main-content" className="page" tabIndex={-1}>
       <PageHeader title={copy.pages.profile} />
       <form className="profile-form" onSubmit={save} noValidate>
-        <section className="stack">
-          <h2 className="label label-section">{t.details}</h2>
-          <TextField
-            label={copy.auth.displayName}
-            required
-            maxLength={80}
-            value={form.displayName}
-            onChange={(e) => setForm({ ...form, displayName: e.target.value })}
-            error={fieldText(errors.displayName)}
-          />
-          <ComboBox
-            label={copy.auth.nativeLanguage}
-            hint={copy.auth.nativeLanguageHint}
-            options={languageOptions(form.nativeLanguage)}
-            value={form.nativeLanguage}
-            onChange={(nativeLanguage) => setForm({ ...form, nativeLanguage })}
-            error={fieldText(errors.nativeLanguage)}
-          />
-        </section>
-
         <section className="stack section">
           <h2 className="label label-section">{t.speakerNames}</h2>
           <p className="field-hint">{t.speakerNamesHint}</p>
@@ -142,42 +110,6 @@ export function ProfilePage() {
           )}
         </section>
 
-        <section className="stack section">
-          <h2 className="label label-section">{t.reminders}</h2>
-          <Checkbox
-            label={t.embed}
-            checked={form.reminderSettings.embedInMyReminders}
-            onChange={(e) => setReminders({ embedInMyReminders: e.target.checked })}
-          />
-          <Select
-            label={t.intensity}
-            options={(["light", "normal", "intense"] as const).map((v) => ({
-              value: v,
-              label: t.intensities[v],
-            }))}
-            value={form.reminderSettings.intensity}
-            onChange={(e) => setReminders({ intensity: e.target.value as ReminderSettings["intensity"] })}
-          />
-          <div className="hours">
-            <TextField
-              label={t.activeFrom}
-              type="time"
-              required
-              value={form.reminderSettings.activeFrom}
-              onChange={(e) => setReminders({ activeFrom: e.target.value })}
-            />
-            <TextField
-              label={t.activeTo}
-              type="time"
-              required
-              value={form.reminderSettings.activeTo}
-              onChange={(e) => setReminders({ activeTo: e.target.value })}
-              error={!hoursInOrder ? t.activeOrder : fieldText(errors.reminderSettings)}
-            />
-          </div>
-          <p className="field-hint">{t.activeHint}</p>
-        </section>
-
         <div className="profile-save">
           {status && <Notice tone={status.tone}>{status.text}</Notice>}
           <div className="actions">
@@ -189,7 +121,6 @@ export function ProfilePage() {
       </form>
 
       <section className="stack section">
-        <h2 className="label label-section">{t.account}</h2>
         <p>{t.signedInAs(user.email)}</p>
         <div className="actions">
           <Button onClick={signOut}>{t.signOut}</Button>

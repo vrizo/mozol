@@ -62,6 +62,7 @@ TestFlight uploads: docs/deployment/testflight.md.
 - scripts/sim-push.sh — feed a silent push payload to the app on the simulator.
 - scripts/testflight.sh — archive and upload the iOS app to TestFlight; writes a run folder.
 - scripts/apns-push.mjs — send a silent push to one device through APNs (docs/ios/push-testing.md).
+- scripts/jamie-export.mjs — fetch the newest Jamie meetings through the API and write them as webhook bodies into a folder under local/ (gitignored).
 - scripts/logs.sh — app + worker in one timeline (`--last 10m`, `--rid <id>`, `-c <category>`).
 - scripts/deploy-worker.sh — tests, migrations, deploy, health check; writes a run folder with deploy.log.
 - scripts/prod-logs.sh — production worker logs (wrangler tail) into a run folder.

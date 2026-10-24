@@ -52,11 +52,6 @@ export function TextField({
   return (
     <div className="field">
       <label htmlFor={id}>{label}</label>
-      {hint && (
-        <p id={`${id}-hint`} className="field-hint">
-          {hint}
-        </p>
-      )}
       {multiline ? (
         <textarea
           id={id}
@@ -66,6 +61,11 @@ export function TextField({
         />
       ) : (
         <input id={id} aria-invalid={error ? true : undefined} aria-describedby={describedBy} {...rest} />
+      )}
+      {hint && (
+        <p id={`${id}-hint`} className="field-hint">
+          {hint}
+        </p>
       )}
       {error && (
         <p id={`${id}-error`} className="field-error">
@@ -87,7 +87,6 @@ export function Select({
   return (
     <div className="field">
       <label htmlFor={id}>{label}</label>
-      {hint && <p className="field-hint">{hint}</p>}
       <select id={id} aria-invalid={error ? true : undefined} {...rest}>
         {options.map((o) => (
           <option key={o.value} value={o.value}>
@@ -95,6 +94,7 @@ export function Select({
           </option>
         ))}
       </select>
+      {hint && <p className="field-hint">{hint}</p>}
       {error && <p className="field-error">{error}</p>}
     </div>
   );

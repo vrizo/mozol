@@ -113,11 +113,6 @@ export function ComboBox({
       <label id={`${id}-label`} htmlFor={id}>
         {label}
       </label>
-      {hint && (
-        <p id={`${id}-hint`} className="field-hint">
-          {hint}
-        </p>
-      )}
       <div className="combobox" onBlur={onBlur}>
         <button
           ref={triggerRef}
@@ -179,6 +174,11 @@ export function ComboBox({
           </div>
         )}
       </div>
+      {hint && (
+        <p id={`${id}-hint`} className="field-hint">
+          {hint}
+        </p>
+      )}
       {error && (
         <p id={`${id}-error`} className="field-error">
           {error}

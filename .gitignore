@@ -31,3 +31,6 @@ ios/Mozol/Mozol.entitlements
 
 # UI test screenshots (7-day local retention)
 tests/screenshots/
+
+# Local data that must not be committed: real meetings, exports
+/local/

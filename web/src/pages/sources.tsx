@@ -71,8 +71,8 @@ export function SourcesPage() {
         <Button variant="primary" busy={connecting === "jamie"} onClick={() => connect("jamie")}>
           {t.connectJamie}
         </Button>
-        <Button busy={connecting === "json"} onClick={() => connect("json")}>
-          {t.connectJson}
+        <Button disabled>
+          {t.connectAny} <span className="tag">{t.soon}</span>
         </Button>
         <Link className="button button-secondary" href="/sources/paste">
           {t.paste}
