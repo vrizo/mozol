@@ -41,8 +41,10 @@ deviceRoutes.put("/:installationId", requireUser, async (c) => {
        user_id = excluded.user_id,
        platform = excluded.platform,
        bundle_id = excluded.bundle_id,
-       push_disabled_at = CASE WHEN devices.apns_token IS excluded.apns_token THEN devices.push_disabled_at END,
-       push_disabled_reason = CASE WHEN devices.apns_token IS excluded.apns_token THEN devices.push_disabled_reason END,
+       push_disabled_at = CASE WHEN devices.apns_token IS excluded.apns_token AND devices.apns_environment IS excluded.apns_environment
+         THEN devices.push_disabled_at END,
+       push_disabled_reason = CASE WHEN devices.apns_token IS excluded.apns_token AND devices.apns_environment IS excluded.apns_environment
+         THEN devices.push_disabled_reason END,
        apns_token = excluded.apns_token,
        apns_environment = excluded.apns_environment,
        app_version = excluded.app_version,

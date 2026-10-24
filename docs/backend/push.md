@@ -19,7 +19,7 @@ Sending
 - Host by the device's apnsEnvironment: https://api.sandbox.push.apple.com for sandbox, https://api.push.apple.com for production.
 - POST /3/device/<apns token> with authorization: bearer <JWT> and the headers from the contract.
 - Every request is written to push_log: device, push type, apns-id, HTTP status and APNs reason.
-- 410 (Unregistered, ExpiredToken) or 400 BadDeviceToken: the device gets push_disabled_at and push_disabled_reason, and gets no pushes until the app registers a new token.
+- 410 (Unregistered, ExpiredToken) or 400 BadDeviceToken: the device gets push_disabled_at and push_disabled_reason, and gets no pushes until the app registers a new token or a different APNs environment.
 - 403 ExpiredProviderToken or InvalidProviderToken: the worker makes a new provider token and sends once more.
 - 429 and 5xx: the notify step of the pipeline retries.
 - Other 4xx answers are logged with the reason and not retried.

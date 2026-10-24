@@ -136,14 +136,14 @@ async function writeLog(db: D1Database, device: PushDevice, type: string, answer
     .run();
 }
 
-// Only while the device still has the rejected token: a token registered in the meantime stays enabled.
+// Only while the device still has the rejected token and environment: a newer registration stays enabled.
 async function disableDevice(db: D1Database, device: PushDevice, reason: string): Promise<void> {
   const now = nowIso();
   await db
     .prepare(
       `UPDATE devices SET push_disabled_at = ?, push_disabled_reason = ?, updated_at = ?
-       WHERE id = ? AND apns_token = ?`,
+       WHERE id = ? AND apns_token = ? AND apns_environment = ?`,
     )
-    .bind(now, reason, now, device.id, device.apns_token)
+    .bind(now, reason, now, device.id, device.apns_token, device.apns_environment)
     .run();
 }

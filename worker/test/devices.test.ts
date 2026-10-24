@@ -73,6 +73,19 @@ describe("PUT /api/devices/:installationId", () => {
     expect(await deviceRow(id)).toMatchObject({ push_disabled_at: null, push_disabled_reason: null });
   });
 
+  it("clears the disabled state when only the APNs environment changes", async () => {
+    const { cookie } = await signUp();
+    const id = installationId();
+    const body = deviceBody();
+    await putDevice({ cookie }, id, body);
+    await disable(id);
+
+    expect((await putDevice({ cookie }, id, { ...body, apnsEnvironment: "production" })).pushEnabled).toBe(
+      true,
+    );
+    expect(await deviceRow(id)).toMatchObject({ push_disabled_at: null, push_disabled_reason: null });
+  });
+
   it("refuses a body that breaks the contract and a bad installation id", async () => {
     const { cookie } = await signUp();
     const id = installationId();

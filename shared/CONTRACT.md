@@ -371,7 +371,7 @@ type PutDeviceBody = {
 };
 ```
 
-- PUT /api/devices/:installationId PutDeviceBody → 200 `{ device: Device }`. Creates or updates the device of the current user. The app calls it after sign-in, on every launch, and whenever the APNs token or the Reminders access changes. A device registered by another user moves to the current user. A new or changed APNs token makes pushEnabled true again.
+- PUT /api/devices/:installationId PutDeviceBody → 200 `{ device: Device }`. Creates or updates the device of the current user. The app calls it after sign-in, on every launch, and whenever the APNs token or the Reminders access changes. A device registered by another user moves to the current user. A new or changed APNs token or APNs environment makes pushEnabled true again.
 - GET /api/devices → 200 `{ devices: Device[] }`.
 - DELETE /api/devices/:installationId → 204. The app calls it before signing out.
 - POST /api/devices/:installationId/test-push → 202 `{ ok: true }`. Sends the test push (silent) to that device. Errors: not_found, push_not_configured.
