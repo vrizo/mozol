@@ -1,6 +1,6 @@
 Assets
 
-- Brand sources of truth are SVG files in assets/icons/, drawn by hand. Each size and use has its own drawing; no script generates marks. Which mark to use at which size: ../web/design-system.md.
+- Brand sources of truth are SVG files in assets/icons/, drawn by hand. Each size and use of the logo mark has its own drawing; no script generates marks. Other icons are one SVG each and are scaled to every size. Which mark to use at which size: ../web/design-system.md.
 - Render SVG to PNG with scripts/render-svg.swift (system SVG renderer, keeps transparency). No rsvg or imagemagick on this Mac.
 - Every brand SVG in assets/icons/ has a PNG of the same name next to it, rendered with scripts/render-svg.swift and committed.
 - App icons cannot be SVG; asset-catalog imagesets can. App icon PNGs are rendered from their own SVG in assets/icons/ and checked in with the app, without an alpha channel.

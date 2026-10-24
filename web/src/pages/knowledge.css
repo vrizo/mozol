@@ -1,0 +1,127 @@
+/* Patterns, words, recommendations and devices. */
+.knowledge-card {
+  display: grid;
+  gap: var(--space-3);
+}
+
+.knowledge-card > * {
+  margin: 0;
+}
+
+.knowledge-card h2 {
+  font-size: var(--text-lg);
+  overflow-wrap: anywhere;
+}
+
+.knowledge-card h3 {
+  font-size: var(--text-md);
+}
+
+.knowledge-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.language-filter {
+  max-width: 280px;
+  margin-bottom: var(--space-6);
+}
+
+.example {
+  display: grid;
+  gap: var(--space-2);
+  margin: 0;
+}
+
+.example div {
+  display: grid;
+  grid-template-columns: 88px 1fr;
+  gap: var(--space-3);
+}
+
+.example dt {
+  font: 600 var(--text-xs) / 1.6 var(--mono);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.example dd {
+  margin: 0;
+}
+
+.example-quote dd {
+  text-decoration: line-through;
+  text-decoration-color: var(--muted);
+}
+
+.example-correction dd {
+  font-weight: 700;
+}
+
+.word-translation {
+  font-weight: 700;
+}
+
+.word-example {
+  display: grid;
+  gap: var(--space-1);
+  padding-left: var(--space-3);
+  border-left: var(--rule);
+}
+
+.word-example p {
+  margin: 0;
+}
+
+.embed-line {
+  font-family: var(--mono);
+  font-size: var(--text-sm);
+  overflow-wrap: anywhere;
+}
+
+.delivery-line {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2) var(--space-3);
+}
+
+.send-to-phone {
+  display: grid;
+  justify-items: start;
+  gap: var(--space-3);
+}
+
+.load-more {
+  margin-top: var(--space-6);
+}
+
+.reminder-notes {
+  margin: 0;
+  padding: var(--space-4);
+  border: var(--border);
+  background: var(--surface);
+  font: var(--text-md) / 1.45 var(--sans);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.match-terms {
+  display: grid;
+  gap: var(--space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+@media (max-width: 640px) {
+  .example div {
+    grid-template-columns: 1fr;
+    gap: 0;
+  }
+
+  .send-to-phone .button {
+    width: 100%;
+  }
+}

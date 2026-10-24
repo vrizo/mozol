@@ -1,5 +1,7 @@
 import { type CSSProperties, useLayoutEffect, useRef } from "react";
 import { copy } from "../copy/en";
+import { Link } from "../router";
+import { useSession } from "../session";
 import { fixedIntroTime, startIntro, T_TEXT } from "./intro";
 
 // Landing home page: the full-screen intro animation, then a short text about MOZOL.
@@ -8,6 +10,7 @@ export function Home() {
   const contentRef = useRef<HTMLDivElement>(null);
   const fixed = fixedIntroTime();
   const t = copy.home.about;
+  const { user } = useSession();
 
   useLayoutEffect(() => {
     const canvas = canvasRef.current;
@@ -34,13 +37,22 @@ export function Home() {
               {t.description}
             </p>
             <div className="about-actions reveal" style={{ "--i": 2 } as CSSProperties}>
-              <a className="about-button" href="/signup">
-                {t.signUp}
-                <span aria-hidden="true"> -&gt;</span>
-              </a>
-              <a className="about-link" href="/signin">
-                {t.signIn}
-              </a>
+              {user ? (
+                <Link className="about-button" href="/activity">
+                  {t.openActivity}
+                  <span aria-hidden="true"> -&gt;</span>
+                </Link>
+              ) : (
+                <>
+                  <Link className="about-button" href="/signup">
+                    {t.signUp}
+                    <span aria-hidden="true"> -&gt;</span>
+                  </Link>
+                  <Link className="about-link" href="/signin">
+                    {t.signIn}
+                  </Link>
+                </>
+              )}
             </div>
           </div>
           <div className="about-side reveal" style={{ "--i": 3 } as CSSProperties}>

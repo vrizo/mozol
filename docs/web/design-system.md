@@ -33,9 +33,22 @@ Marks still to draw, each for its own size:
 - Favicon: 16 px and 32 px drawn for their size, to replace the resized copies of mozol-favicon.png.
 - App icon: an iOS dark variant.
 - Lockup: mark plus wordmark for the site header, ink on paper and paper on ink.
-- Mark for empty states and loading screens, 64 to 256 px.
+- Mark for loading screens, 64 to 256 px.
 
 Clear space around the mark and the lockup is at least the height of one toe of the mark.
+
+Icons
+
+The footprint belongs to the logo only: the mark, the lockup, the favicon and the app icon. Other icons, such as empty-state icons, show their own subject (an inbox tray for an empty Inbox) and never a footprint.
+
+- Icons are drawn with monospace characters too: "+" for fills and surfaces, "|", "-" and "/" as dashed edges. The rules about mixed and uneven characters apply to the logo only; an icon may use equal "+" signs on an even grid.
+- Each icon is one SVG in assets/icons/ with a transparent background and a PNG of the same name next to it. One SVG serves every size; it is scaled, not redrawn per size.
+- Strokes use currentColor, so the icon takes the text color of its place (--muted in an empty state).
+- File names: mozol-icon-<subject>.svg.
+
+Icons that exist:
+
+- mozol-icon-inbox.svg: an empty inbox tray, for the empty Inbox. 64 to 256 px. iOS copy: ios/Mozol/Resources/Assets.xcassets/InboxEmpty.imageset, with currentColor replaced by black and rendered as a template image, so SwiftUI tints it.
 
 Color
 
@@ -85,7 +98,7 @@ Components
 - Input: --surface fill, 2 px ink border, 16 px text, 44 px high, mono label above. Error: --danger border and a --danger message below.
 - Card: --surface fill, 2 px ink border, hard shadow when it is clickable.
 - Tag or count: mono 12 px uppercase, 2 px ink border, no fill.
-- Empty state: the simple mark in --muted, one line of text, one primary action.
+- Empty state: the icon for that screen in --muted (Icons), one line of text, one primary action.
 - Loading: a row of "+" characters that appear one after another, in mono.
 - Focus: the global 2 px ink outline with 2 px offset (rules.md).
 

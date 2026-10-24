@@ -1,0 +1,123 @@
+/* Sources pages: connection cards, the webhook URL, setup steps and the events table. */
+.back-link {
+  margin: 0 0 var(--space-4);
+  font-size: var(--text-sm);
+}
+
+.connection-card {
+  display: grid;
+  gap: var(--space-2);
+  color: var(--ink);
+  text-decoration: none;
+  box-shadow: var(--shadow);
+  transition:
+    transform var(--fast),
+    box-shadow var(--fast);
+}
+
+.connection-card:hover {
+  transform: translate(-2px, -2px);
+  box-shadow: var(--shadow-raised);
+}
+
+.connection-card-title {
+  font-weight: 700;
+  font-size: var(--text-lg);
+  overflow-wrap: anywhere;
+}
+
+.connection-card-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.section .label-section {
+  margin-bottom: var(--space-3);
+}
+
+.section-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  margin-bottom: var(--space-3);
+}
+
+.section-head .label-section {
+  margin: 0;
+}
+
+.webhook-url {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-3);
+  margin: var(--space-3) 0;
+}
+
+.webhook-url code {
+  flex: 1 1 280px;
+  min-width: 0;
+  padding: var(--space-3);
+  border: var(--border);
+  background: var(--surface);
+  font-size: var(--text-sm);
+  overflow-wrap: anywhere;
+  user-select: all;
+}
+
+.setup-steps {
+  display: grid;
+  gap: var(--space-2);
+  margin: 0;
+  padding-left: var(--space-6);
+}
+
+.code-block {
+  margin: var(--space-3) 0 0;
+  padding: var(--space-3);
+  border: var(--border);
+  background: var(--surface);
+  font: var(--text-xs) / 1.5 var(--mono);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.table-wrap {
+  overflow-x: auto;
+}
+
+.events {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--text-sm);
+}
+
+.events th {
+  padding: var(--space-2);
+  border-bottom: var(--border);
+  text-align: left;
+  font: 600 var(--text-xs) / 1.3 var(--mono);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.events td {
+  padding: var(--space-2);
+  border-bottom: 1px solid var(--line);
+  vertical-align: top;
+}
+
+.rename-form {
+  margin-bottom: var(--space-5);
+}
+
+.manage-actions {
+  margin-top: var(--space-4);
+}
+
+.paste-form {
+  max-width: none;
+}

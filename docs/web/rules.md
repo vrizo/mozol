@@ -9,6 +9,7 @@ Stack
 - No global state library. State lives in the component that owns it; shared state goes in a React context.
 - The view state lives in the URL (route, filters, open item), so a reload shows the same screen.
 - Lint and format with biome. Tests with vitest.
+- Dev mock: `pnpm --filter web dev:mock` serves the whole API of shared/CONTRACT.md from memory (web/mock/api.ts) instead of proxying to the worker, with a seeded demo account. It exists only in dev and is used until the worker has the endpoints; every answer passes the shared schemas.
 
 Errors
 
