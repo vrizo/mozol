@@ -6,18 +6,16 @@ import { ApiError, getDevices, getRecommendation, getRecommendations, testPush }
 import { copy } from "../copy/en";
 import { deliveryText } from "../lib/deliveries";
 import { formatDate, formatDateTime } from "../lib/format";
-import { matchModeLabel, pickStatus } from "../lib/knowledge";
+import { matchModeLabel } from "../lib/knowledge";
 import { languageName } from "../lib/languageName";
 import { useLoad } from "../lib/useLoad";
 import { Link, useRoute } from "../router";
 import { Button } from "../ui/controls";
 import { Empty, ErrorState, Loading, Notice, PageHeader } from "../ui/states";
-import { Tabs } from "../ui/Tabs";
 import { NotFoundState } from "./NotFound";
 import "./knowledge.css";
 
 const t = copy.recommendations;
-const deliveredValues = ["true", "false"] as const;
 
 export function DeliveryLine({ recommendation }: { recommendation: Recommendation }) {
   const { delivery } = recommendation;
@@ -32,15 +30,13 @@ export function DeliveryLine({ recommendation }: { recommendation: Recommendatio
 }
 
 export function RecommendationsPage() {
-  const route = useRoute();
-  const delivered = pickStatus(route.query.get("delivered"), deliveredValues);
   const [more, setMore] = useState<{ busy: boolean; error: unknown }>({ busy: false, error: null });
-  const { state, retry, set } = useLoad(() => getRecommendations(delivered === "true"), delivered);
+  const { state, retry, set } = useLoad(() => getRecommendations(undefined), "all");
 
   const loadMore = async (cursor: string) => {
     setMore({ busy: true, error: null });
     try {
-      const page = await getRecommendations(delivered === "true", cursor);
+      const page = await getRecommendations(undefined, cursor);
       set((data) => ({ items: [...data.items, ...page.items], nextCursor: page.nextCursor }));
       setMore({ busy: false, error: null });
     } catch (error) {
@@ -50,21 +46,14 @@ export function RecommendationsPage() {
 
   return (
     <main id="main-content" className="page" tabIndex={-1}>
-      <PageHeader title={copy.pages.recommendations} />
-      <Tabs
-        label={t.tabsLabel}
-        param="delivered"
-        values={deliveredValues}
-        current={delivered}
-        names={{ true: t.tabs.delivered, false: t.tabs.notSent }}
-      />
+      <PageHeader title={copy.pages.activity} />
       {state.status === "loading" && <Loading />}
       {state.status === "error" && <ErrorState what={t.load} error={state.error} onRetry={retry} />}
       {state.status === "ready" &&
         (state.data.items.length === 0 ? (
           <Empty
-            text={delivered === "true" ? t.empty.delivered : t.empty.notSent}
-            action={delivered === "true" ? { href: "/sources", label: t.connectSource } : undefined}
+            text={t.empty.delivered}
+            action={{ href: "/sources", label: t.connectSource }}
           />
         ) : (
           <>

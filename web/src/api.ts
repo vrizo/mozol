@@ -169,7 +169,7 @@ export const testPush = (installationId: string) =>
   });
 
 // Recommendations
-export const getRecommendations = (delivered: boolean, cursor?: string) =>
+export const getRecommendations = (delivered: boolean | undefined, cursor?: string) =>
   request("GET", "/api/recommendations", { query: { delivered, cursor }, schema: RecommendationsPage });
 export const getRecommendation = (id: string) =>
   request("GET", `/api/recommendations/${id}`, { schema: RecommendationResponse }).then(

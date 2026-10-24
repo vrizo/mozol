@@ -2,7 +2,7 @@ import type { ReactNode } from "react";
 import { copy } from "./copy/en";
 import { Home } from "./home/Home";
 import { Layout } from "./Layout";
-import { ActivityPage, TranscriptPage } from "./pages/activity";
+import { TranscriptPage } from "./pages/activity";
 import { AppSignInPage, SignInPage, SignUpPage } from "./pages/auth";
 import { PatternsPage, WordsPage } from "./pages/knowledge";
 import { NotFoundPage } from "./pages/NotFound";
@@ -17,7 +17,7 @@ const pages: Record<RouteName, { page: () => ReactNode; user?: boolean }> = {
   signup: { page: SignUpPage },
   signin: { page: SignInPage },
   appSignin: { page: AppSignInPage },
-  activity: { page: ActivityPage, user: true },
+  activity: { page: RecommendationsPage, user: true },
   transcript: { page: TranscriptPage, user: true },
   patterns: { page: PatternsPage, user: true },
   words: { page: WordsPage, user: true },
