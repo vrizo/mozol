@@ -13,6 +13,7 @@ One environment: production. There is no staging.
 Worker configuration
 
 - Variables in worker/wrangler.jsonc: APP_ORIGIN (https://mozol.vrizo.net), ANALYSIS_MODE (claude), ANALYSIS_MODEL (claude-opus-5-5), ANALYSIS_EFFORT (high), PUSH_MODE (apns).
+- Rate limit binding AUTH_LIMITER (namespace_id 4101): 10 requests per 60 seconds per client IP (CF-Connecting-IP), shared by sign-up, sign-in and app-token. A namespace_id is unique in the Cloudflare account: two bindings with the same id share their counters. Local development and tests run the limiter in Miniflare, so the limit applies there too.
 - Secrets: ANTHROPIC_API_KEY, APNS_KEY_ID, APNS_TEAM_ID, APNS_PRIVATE_KEY. Their values live in .env (keys listed in .env.example).
 - Local development: scripts/dev-worker.sh writes worker/.dev.vars (mode 600, gitignored) from .env before it starts wrangler: APP_ORIGIN http://localhost:5190, ANALYSIS_MODE fixture (claude when MOZOL_ANALYSIS=claude is set), PUSH_MODE log, and ANTHROPIC_API_KEY when .env has it.
 

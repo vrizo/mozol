@@ -40,7 +40,7 @@ export function parseInput<T extends z.ZodType>(schema: T, value: unknown): z.ou
   return result.data;
 }
 
-export async function readJson<T extends z.ZodType>(c: Context<AppEnv>, schema: T): Promise<z.output<T>> {
+export async function readJson<T extends z.ZodType>(c: Context, schema: T): Promise<z.output<T>> {
   const text = await c.req.text();
   let value: unknown;
   try {

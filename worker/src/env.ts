@@ -1,7 +1,10 @@
 // Bindings, variables and secrets of the worker (wrangler.jsonc, worker/.dev.vars, wrangler secret put).
+import type { Auth } from "./auth/session";
+
 export type Env = {
   DB: D1Database;
   ASSETS: Fetcher;
+  AUTH_LIMITER: RateLimit;
   APP_ORIGIN: string;
   ANALYSIS_MODE: string;
   ANALYSIS_MODEL: string;
@@ -15,5 +18,5 @@ export type Env = {
 
 export type AppEnv = {
   Bindings: Env;
-  Variables: { rid: string };
+  Variables: { rid: string; auth: Auth | null };
 };
