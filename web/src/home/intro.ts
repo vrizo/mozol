@@ -8,10 +8,14 @@ const BG = "#f3f2ee";
 const MUTED = "#8a8a86";
 const FONT = 'ui-monospace, "SF Mono", Menlo, monospace';
 const LETTER_FONT = '"Arial Black", "Helvetica Neue", Arial, sans-serif';
-const T_MORPH = 3.4;
-const DUR_IN = 1.5;
-const DUR_MORPH = 1.7;
-const T_DONE = 6.4;
+const T_MORPH = 1.7;
+const DUR_IN = 0.75;
+const DUR_MORPH = 0.85;
+const T_DONE = 3.2;
+const WORD_MAX_H = 0.3;
+const NARROW = 640;
+// Second at which the page text starts to appear, while the characters form MOZOL.
+export const T_TEXT = 2.2;
 const ASCII = ["+", "|", "/", "\\", "-", "'"] as const;
 
 type Glyph = (typeof ASCII)[number] | "J";
@@ -42,6 +46,7 @@ type Scene = {
   sprites: Record<Glyph, Sprite>;
   particles: Particle[];
   labels: Label[];
+  wordBottom: number;
 };
 
 function rng(seed: number) {
@@ -140,15 +145,19 @@ function buildScene(canvas: HTMLCanvasElement, labelTexts: readonly string[]): S
     o.fill(jPath);
   });
 
-  // Stage 2 target: the word MOZOL, centered.
+  // Stage 2 target: the word MOZOL, in the upper part, above the page text. Phones get a wider, higher word.
+  const narrow = W < NARROW;
+  const wordY = H * (narrow ? 0.22 : 0.3);
+  let wordBottom = 0;
   const mPts = sampleShape(W, H, cw, ch, (o) => {
     o.font = `900 100px ${LETTER_FONT}`;
-    const size = Math.min((100 * W * 0.86) / o.measureText("MOZOL").width, H * 0.55);
+    const size = Math.min((100 * W * (narrow ? 0.92 : 0.86)) / o.measureText("MOZOL").width, H * WORD_MAX_H);
     o.font = `900 ${size}px ${LETTER_FONT}`;
     o.textAlign = "center";
     o.textBaseline = "alphabetic";
     const m = o.measureText("MOZOL");
-    o.fillText("MOZOL", W / 2, H / 2 + (m.actualBoundingBoxAscent - m.actualBoundingBoxDescent) / 2);
+    o.fillText("MOZOL", W / 2, wordY + (m.actualBoundingBoxAscent - m.actualBoundingBoxDescent) / 2);
+    wordBottom = wordY + (m.actualBoundingBoxAscent + m.actualBoundingBoxDescent) / 2 + ch;
   });
 
   // Pad both lists to one size with scattered background ticks, then pair by x.
@@ -178,8 +187,8 @@ function buildScene(canvas: HTMLCanvasElement, labelTexts: readonly string[]): S
       bShape: b.shape,
       sx: W / 2 + Math.cos(ang) * rad,
       sy: H / 2 + Math.sin(ang) * rad,
-      d1: 0.15 + rand() * 0.45 + (Math.hypot(a.x - W / 2, a.y - H / 2) / maxD) * 0.6,
-      d2: T_MORPH + (b.x / W) * 0.9 + rand() * 0.35,
+      d1: 0.08 + rand() * 0.22 + (Math.hypot(a.x - W / 2, a.y - H / 2) / maxD) * 0.3,
+      d2: T_MORPH + (b.x / W) * 0.45 + rand() * 0.18,
       arc: (rand() - 0.5) * H * 0.35,
       tick: rand() < 0.7 ? "'" : "/",
       jitter: rand() * 0.8,
@@ -194,7 +203,7 @@ function buildScene(canvas: HTMLCanvasElement, labelTexts: readonly string[]): S
     vy: (rand() - 0.5) * 3,
   }));
 
-  return { W, H, DPR, cw, ch, sprites: buildSprites(DPR, cw, ch), particles, labels };
+  return { W, H, DPR, cw, ch, sprites: buildSprites(DPR, cw, ch), particles, labels, wordBottom };
 }
 
 function slash(dx: number, dy: number): Glyph {
@@ -228,7 +237,7 @@ function draw(ctx: CanvasRenderingContext2D, s: Scene, t: number) {
   // Drifting labels, as on the hackathon poster.
   ctx.font = `${Math.max(10, cw * 1.2)}px ${FONT}`;
   ctx.fillStyle = MUTED;
-  ctx.globalAlpha = 0.55 * clamp((t - 0.4) / 1.2);
+  ctx.globalAlpha = 0.55 * clamp((t - 0.2) / 0.6);
   for (const l of s.labels) {
     const x = ((l.x + l.vx * t) % (W + 160)) - 80;
     const y = (((l.y + l.vy * t) % H) + H) % H;
@@ -260,21 +269,36 @@ function draw(ctx: CanvasRenderingContext2D, s: Scene, t: number) {
   ctx.globalAlpha = 1;
 }
 
-// Starts the loop on the canvas; returns the cleanup. `?t=4.5` freezes it at that second, for still frames.
-export function startIntro(canvas: HTMLCanvasElement, labelTexts: readonly string[]): () => void {
-  const ctx = context2d(canvas);
+// `?t=4.5` freezes the intro at that second, for still frames; null when the intro runs.
+export function fixedIntroTime(): number | null {
   const fixed = new URLSearchParams(window.location.search).get("t");
+  if (fixed === null) return null;
+  const t = Number(fixed);
+  if (!Number.isFinite(t)) throw new Error(`?t must be a number of seconds, got "${fixed}"`);
+  return t;
+}
+
+// Starts the loop on the canvas; returns the cleanup. `onLayout` gets the bottom of the word MOZOL, in CSS pixels.
+export function startIntro(
+  canvas: HTMLCanvasElement,
+  labelTexts: readonly string[],
+  onLayout: (wordBottom: number) => void,
+): () => void {
+  const ctx = context2d(canvas);
+  const fixed = fixedIntroTime();
   const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
   const t0 = performance.now() - (reduceMotion ? T_DONE * 1000 : 0);
   let scene = buildScene(canvas, labelTexts);
+  onLayout(scene.wordBottom);
   let frameId = 0;
 
   const frame = (now: number) => {
-    draw(ctx, scene, fixed !== null ? Number(fixed) : (now - t0) / 1000);
+    draw(ctx, scene, fixed !== null ? fixed : (now - t0) / 1000);
     frameId = requestAnimationFrame(frame);
   };
   const onResize = () => {
     scene = buildScene(canvas, labelTexts);
+    onLayout(scene.wordBottom);
   };
 
   window.addEventListener("resize", onResize);
