@@ -15,6 +15,7 @@ Do everything from the repo root.
 
     scripts/start-all.sh            # worker + web + iOS app + sim-logs
     scripts/start-all.sh --no-app   # worker + web only
+    scripts/start-web.sh            # the same: worker + web app (landing page at /)
     scripts/start-all.sh --no-web --no-app
     scripts/start-all.sh --stub --no-web   # stub API instead of the worker (while worker/ does not exist)
     scripts/stop-all.sh             # stops worker, web, sim-logs; leaves the simulator

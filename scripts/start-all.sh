@@ -6,12 +6,14 @@
 #      for GET /api/health. The worker opens a fresh run folder (logs/current).
 #      --stub starts scripts/dev-stub-api.sh instead (stub-api.log), while the
 #      worker does not exist yet.
-#   2. the web app (Vite dev server) — web.log in the same run folder (--no-web skips)
+#   2. the web app with the landing page at "/" (Vite dev server) — web.log in
+#      the same run folder (--no-web skips)
 #   3. the iOS app: xcodegen, build, install and launch on the simulator pointed
 #      at the local worker, plus scripts/sim-logs.sh into app.log (--no-app skips)
 #
 # A part that is already running (its port is listening) is reused, and the
 # script says so. Every failure stops the script with an error.
+# scripts/start-web.sh runs steps 1 and 2 only.
 # Stop everything with scripts/stop-all.sh.
 
 set -euo pipefail
@@ -148,7 +150,7 @@ echo
 echo "======================================================================"
 echo "[start-all] stack is up"
 echo "  $SERVER_LABEL: http://localhost:$WORKER_PORT"
-echo "  web:       $WEB_STATUS"
+echo "  web:       $WEB_STATUS (landing at /)"
 echo "  app:       $APP_STATUS"
 echo "  logs:      $RUN_DIR"
 echo "  stop with: scripts/stop-all.sh"

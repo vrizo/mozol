@@ -57,7 +57,8 @@ TestFlight uploads: docs/deployment/testflight.md.
 
 ## Commands
 
-- scripts/start-all.sh — worker + web app + simulator app in one go; `--stub` uses scripts/stub-api.mjs instead of the worker. scripts/stop-all.sh reverses it. One run folder per start.
+- scripts/start-all.sh — worker + web app (landing page at /) + simulator app in one go; `--stub` uses scripts/stub-api.mjs instead of the worker. scripts/stop-all.sh reverses it. One run folder per start.
+- scripts/start-web.sh — worker + web app only (start-all.sh --no-app).
 - scripts/sim-push.sh — feed a silent push payload to the app on the simulator.
 - scripts/testflight.sh — archive and upload the iOS app to TestFlight; writes a run folder.
 - scripts/apns-push.mjs — send a silent push to one device through APNs (docs/ios/push-testing.md).
