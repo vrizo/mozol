@@ -8,7 +8,6 @@ Project
 - Pure logic lives in the MozolCore Swift package (ios/MozolCore). It imports no UIKit and no framework with side effects, so `swift test` runs it on any Mac. The app target holds adapters (network, notifications, storage) and UI.
 - Persistence on the phone: SwiftData. Secrets and identity: Keychain.
 - SwiftUI previews live in ios/Mozol/UI/Previews/, all inside #if DEBUG. Sample data goes in PreviewData.swift, not inline. Previews never touch the network.
-- Use the swiftui-specialist skill for every SwiftUI write or review.
 
 Network
 

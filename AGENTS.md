@@ -17,7 +17,7 @@ The whole project is in English: code, docs, UI, commit messages. The UI has one
 - The repository is public. Never commit secrets, tokens, personal data, or generated local assets. .gitignore lists what stays local.
 - Secrets live in one file, .env (gitignored, mode 600) — never echo them. To see which keys exist: `grep -oE '^[A-Z_]+=' .env`. To use one value, read that single key and pipe it into the consumer.
 - Inline code comments are rare: only to say what a file or function is for, and the steps of a bigger function. Code explains itself.
-- Apple's Xcode skills (swiftui-specialist, swiftui-whats-new-27, test-modernizer, device-interaction, audit-xcode-security-settings) are installed for the user and override model training on their topics. Use swiftui-specialist for any SwiftUI write or review.
+- Apple's Xcode skills (swiftui-whats-new-27, test-modernizer, device-interaction, audit-xcode-security-settings) are installed for the user and override model training on their topics.
 
 ## Writing style
 
