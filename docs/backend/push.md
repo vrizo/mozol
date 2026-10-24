@@ -26,4 +26,4 @@ Sending
 
 Test push
 
-POST /api/devices/:installationId/test-push sends a test alert to one device. With PUSH_MODE log it writes push_log and answers 202. Without APNs configuration in apns mode it answers 503 push_not_configured.
+POST /api/devices/:installationId/test-push sends the test push (silent, shared/CONTRACT.md) to one device. With PUSH_MODE log it writes push_log and answers 202. Without APNs configuration in apns mode it answers 503 push_not_configured.

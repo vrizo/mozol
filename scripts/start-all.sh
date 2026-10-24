@@ -133,7 +133,10 @@ if [ "$SKIP_APP" = false ]; then
   [ -d "$APP_PATH" ] || fail "built app not found at $APP_PATH."
   xcrun simctl install "$UDID" "$APP_PATH" || fail "simctl install failed."
   xcrun simctl terminate "$UDID" "$BUNDLE_ID" 2>/dev/null || true
-  launch_out="$(xcrun simctl launch "$UDID" "$BUNDLE_ID" -mozol.apiBaseURL "http://localhost:$WORKER_PORT")" \
+  # Base URL rules: docs/ios/testing.md. The web dev server passes /api to the worker; the stub serves its own pages.
+  APP_PORT="$WEB_PORT"
+  if [ "$USE_STUB" = true ] || [ "$SKIP_WEB" = true ]; then APP_PORT="$WORKER_PORT"; fi
+  launch_out="$(xcrun simctl launch "$UDID" "$BUNDLE_ID" -mozol.apiBaseURL "http://localhost:$APP_PORT")" \
     || fail "simctl launch failed."
 
   nohup "$SCRIPT_DIR/sim-logs.sh" --udid "$UDID" > /dev/null 2>&1 &

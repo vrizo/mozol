@@ -21,9 +21,9 @@ Do
    - transcripts.ts: TranscriptStatus, Transcript, TranscriptDetail, Analysis, the paste body, the speaker body.
    - analysis.ts: Category, MatchTerm, Finding, WordSuggestion, Phrase, Rewrite, AnalysisResult, PATTERN_KEY (the regular expression from the contract) and the per-item limits (1 to 3 examples, 0 to 8 match terms, 1 to 8 for words, title at most 60 characters). The lists have no maximum length. Refinements: a finding's category equals the first part of its patternKey; patternKey values are unique in one result; word keys are unique in one result; the match term rules of the contract.
    - knowledge.ts: Pattern, Word, their PATCH bodies, the list queries (status, language).
-   - devices.ts: RemindersAccess, NotificationsAccess, PushType, Device, PutDeviceBody (apnsEnvironment is null exactly when apnsToken is null; pushTypes has 1 or 2 different values).
+   - devices.ts: RemindersAccess, NotificationsAccess, Device, PutDeviceBody (apnsEnvironment is null exactly when apnsToken is null).
    - recommendations.ts: RecommendationKind, Recommendation, Delivery, DeliveryOutcome, Repeat, DeliveryItem, DeliveryResult, the claim and results bodies (with their size limits) and responses.
-   - push.ts: the alert push, background push and test push payloads.
+   - push.ts: the deliveries push and the test push payloads (both silent).
    Schemas follow the contract exactly: same field names, nullability, enums and limits. Request bodies are strict objects (unknown keys fail). Response schemas are strict too, so a worker that sends a wrong field fails its tests.
 2. shared/src/matching.ts, used by the worker (and by the web app for display), the reference for the iOS app:
    - normalizeText(text): the five steps of "Text normalization" in the contract.
@@ -41,7 +41,7 @@ Do
    - analysis/result-native-language.json: status native_language with empty lists.
    - matching/cases.json: at least 25 cases { text, terms, expectedScore, note } covering each mode, Russian inflections with prefix terms, German umlauts and ß, accents, punctuation, a phrase across a line break, "ё", and Chinese text with substring terms. The iOS app runs the same cases.
    - deliveries/claim-response.json: a claim response with two DeliveryItems (a word and a mistake), markers computed with marker().
-   - push/deliveries-alert.json, push/deliveries-background.json, push/test.json.
+   - push/deliveries.json, push/test.json.
 5. Tests in shared/test/ (vitest, node environment; add vitest and a test script to shared): every fixture parses with its schema; result-ok quotes appear in Petr's lines of the Jamie fixture; matching/cases.json passes; marker() gives the same marker for the same language and item key and a different one for another language; failing cases are refused: a bad pattern key, a category that differs from the key's first part, two findings with one key, two words with one word key, a prefix term shorter than 4 characters, a word term with a space, 4 examples in one finding, activeTo before activeFrom, an apnsToken with a null apnsEnvironment, an unknown key in a request body.
 
 Checks

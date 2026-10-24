@@ -93,7 +93,7 @@ Prerequisites from people
 
 Early risk checks
 
-- APNs from Cloudflare: the local runtime cannot reach APNs, and deployed Workers reach it only through Cloudflare's proxy, which Cloudflare does not document. After B05, deploy once (B11, deploy part only). Sign up a test account with curl, register a device with Vitalii's development token (apnsEnvironment sandbox, his bundle id) through PUT /api/devices, and call test-push. If the push does not arrive, stop and decide the push path before B09.
+- APNs from Cloudflare: the local runtime cannot reach APNs, and deployed Workers reach it only through Cloudflare's proxy, which Cloudflare does not document. After B05, deploy once (B11, deploy part only). Sign up a test account with curl, register a device with Vitalii's development token (apnsEnvironment sandbox, his bundle id) through PUT /api/devices, and call test-push with the app open in the foreground. If the app does not log the silent push, stop and decide the push path before B09.
 - Prompt quality: after B07, run scripts/try-analysis.sh on the English and the German Jamie fixtures once (it costs money) and read the results before B08.
 
 Machines

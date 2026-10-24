@@ -34,7 +34,6 @@ devices (dev)
 - apns_token (hex, or null), apns_environment (sandbox or production, or null)
 - app_version, os_version, timezone
 - reminders_access (full, write_only, denied, restricted, not_determined), notifications_access (authorized, provisional, ephemeral, denied, not_determined)
-- push_types (JSON array of alert and background; both by default)
 - push_disabled_at, push_disabled_reason (set when APNs rejects the token)
 - last_seen_at, created_at, updated_at
 
@@ -120,7 +119,7 @@ deliveries (dlv): a recommendation sent to the phone
 - created_at, updated_at
 
 push_log (psh): every APNs request
-- id, user_id, device_id (references devices, cascade), push_type (alert or background), apns_id, status (HTTP status, null in log mode), reason (APNs reason), created_at
+- id, user_id, device_id (references devices, cascade), push_type (deliveries or test; every push is a silent background push), apns_id, status (HTTP status, null in log mode), reason (APNs reason), created_at
 
 Worker
 

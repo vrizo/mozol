@@ -47,7 +47,7 @@ Health check: `curl -fsS http://localhost:8790/api/health` must print `{"ok":tru
       -sdk iphonesimulator -destination "platform=iOS Simulator,id=$UDID" \
       -derivedDataPath ios/.build-dd 2>&1 | grep -E "error:|BUILD"
     xcrun simctl install "$UDID" ios/.build-dd/Build/Products/Debug-iphonesimulator/Mozol.app
-    xcrun simctl launch "$UDID" net.vrizo.mozol -mozol.apiBaseURL http://localhost:8790
+    xcrun simctl launch "$UDID" net.vrizo.mozol -mozol.apiBaseURL http://localhost:5190   # 8790 with the stub or without the web dev server (docs/ios/testing.md)
     scripts/sim-logs.sh   # background; appends to logs/current/app.log
 
 Never pass CODE_SIGNING_ALLOWED=NO. When the app behaves unlike the source, rm -rf ios/.build-dd and build clean.

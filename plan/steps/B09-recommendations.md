@@ -30,10 +30,10 @@ Do
    - add a pending delivery to every new recommendation that may go to the phone; a new pending delivery supersedes a pending (not claimed) delivery with the same marker;
    - set the transcript to analyzed (remove that from storeResult, B08).
    Returns the number of new deliveries and the user's number of pending deliveries.
-5. Workflow: add step "recommend" (recommend(); retries { limit: 3, delay: "5 seconds" }) and step "notify" (notifyUser from B05 with the transcript id, title, pending count and the transcript id as collapse id; retries { limit: 3, delay: "1 minute" }; when it still fails, log it and finish without failing the transcript) after "store", both only for a result with status ok and notify only when new deliveries exist.
+5. Workflow: add step "recommend" (recommend(); retries { limit: 3, delay: "5 seconds" }) and step "notify" (notifyUser from B05 with the pending count; retries { limit: 3, delay: "1 minute" }; when it still fails, log it and finish without failing the transcript) after "store", both only for a result with status ok and notify only when new deliveries exist.
 6. Routes (shared schemas validate bodies and, in tests, responses):
    - GET /api/recommendations (paged, newest first, filter delivered=true|false), GET /api/recommendations/:id (with its newest delivery).
-   - POST /api/recommendations/:id/deliver: a new pending delivery (same supersede rule), notifyUser with the recommendation id as collapse id and transcriptId null; 202 { recommendation }.
+   - POST /api/recommendations/:id/deliver: a new pending delivery (same supersede rule), notifyUser; 202 { recommendation }.
    - POST /api/deliveries/claim: one UPDATE ... RETURNING statement as docs/backend/pipeline.md says; each claimed delivery gets its schedule (stored on the delivery) and is returned as a DeliveryItem; the response carries the user's embedInMyReminders. installationId must be a device of the current user (404 not_found).
    - POST /api/deliveries/results: the result rules of docs/backend/pipeline.md.
    - GET /api/transcripts/:id: recommendations of the transcript in rank order, each with its newest delivery.
@@ -46,7 +46,7 @@ Checks
 - schedule tests: inside and outside active hours, a positive and a negative UTC offset, each intensity.
 - recommend tests: the fixture result gives 14 recommendations (6 + 4 + 2 + 2) and 14 pending deliveries; a dismissed pattern and a known word get recommendations without deliveries; a second transcript with the same result gives recommendations with the same markers, and its new delivery supersedes a still-pending one with the same marker; a re-run keeps delivered recommendations, replaces undelivered ones and gives deliveries only to new ones.
 - Delivery tests: claim gives a delivery to one installation only; a second installation gets nothing while the lease is live and gets it after the lease ends; at most one delivery per marker in one claim; an unknown installation gets 404; outcomes set applied; a late result after the lease is accepted when nobody claimed since and ignored when another installation did; three failed results end in failed; deliver adds a delivery and records pushes in push_log.
-- Workflow test in fixture and log modes: a transcript ends analyzed with recommendations, a pending delivery for each, and two push_log rows per device.
+- Workflow test in fixture and log modes: a transcript ends analyzed with recommendations, a pending delivery for each, and one push_log row per device.
 - `pnpm --filter worker test`, `pnpm -r typecheck`, `pnpm lint`
 - Local flow with curl: sign up, get an app token (app-code and app-token), PUT a device, post the Jamie fixture, claim (the deliveries with schedules and the embedInMyReminders flag), post outcomes (created, embedded), post the fixture again with a new metadata.id, claim again (the same markers for the same items), deliver one more recommendation from the first transcript, claim it. Show `SELECT kind, marker, rank FROM recommendations LIMIT 20` and `SELECT status, outcome, failures FROM deliveries`.
 

@@ -28,7 +28,7 @@ Sessions
 
 Signing in from the iOS app
 
-The app opens https://mozol.vrizo.net/app/signin?return=mozol://auth. The user signs up or signs in on that page, and the page hands a one-time code to the app through the mozol:// address. The app exchanges the code for an app session token and registers its device and push token. A code works once and expires after 2 minutes. Any return address that does not start with mozol:// is refused. Steps: shared/CONTRACT.md, "Sign-in handoff".
+The app opens https://mozol.vrizo.net/app/signin?return=mozol://auth in a web view inside the app, not in the system browser. The user signs up or signs in on that page, and the page hands a one-time code to the app through the mozol:// address. The app exchanges the code for an app session token and registers its device and push token. A code works once and expires after 2 minutes. Any return address that does not start with mozol:// is refused. Steps: shared/CONTRACT.md, "Sign-in handoff".
 
 Deleting an account
 
@@ -36,4 +36,4 @@ The user deletes the account from the profile page by typing the password again.
 
 The iOS app today (2026-10-24)
 
-The app still has its own native sign-in screen, built before the sign-in handoff above was specified. It starts with the email of the last sign-in, marks the fields for Password AutoFill (associated domain webcredentials:mozol.vrizo.net), and its "Create Account" button opens /signup in an in-app web view. The server has no sign-in yet, and the website has no sign-up page. The iOS app uses a local placeholder: it accepts any email that has the shape name@domain and any non-empty password, and stores the token "placeholder" in the Keychain. The sign-in screen says that sign-in is not connected to the server. Server sign-in replaces the placeholder behind the same AuthService protocol.
+The app still has its own native sign-in screen, built before the sign-in handoff above was specified. It starts with the email of the last sign-in, marks the fields for Password AutoFill (associated domain webcredentials:mozol.vrizo.net), and its "Create Account" button opens /signup in an in-app web view. The server has no sign-in yet, and the website has no sign-up page. The iOS app uses a local placeholder: it accepts any email that has the shape name@domain and any non-empty password, and stores the token "placeholder" in the Keychain. The sign-in screen says that sign-in is not connected to the server. The web view sign-in replaces this screen and the placeholder; the separate "Create Account" sheet goes too, because /app/signin offers sign-up.

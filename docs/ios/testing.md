@@ -17,6 +17,12 @@ After a change to UI copy: build for the simulator, then `scripts/ios-strings.py
 
 Local checks by agents
 
+Base URL of the simulator app (launch argument `-mozol.apiBaseURL`, app-rules.md):
+
+- With the worker and the web dev server: http://localhost:5190. Vite serves the pages (the app opens /app/signin) and passes /api to the worker on 8790, as on production, where one origin serves both.
+- With the stub (`--stub`) or without the web dev server (`--no-web`): http://localhost:8790. The stub serves the pages the app opens itself; the worker serves the last web build.
+- scripts/start-all.sh picks the URL by these rules.
+
 The worker does not exist yet. scripts/stub-api.mjs stands in for it on port 8790: it implements the placeholder routes of shared/CONTRACT.md and a /signup page, and logs one JSON line per request with `rid`.
 
 - `scripts/start-all.sh --stub --no-web` starts the stub instead of the worker, then builds and launches the app on the simulator pointed at it. stub-api.log goes into the run folder.

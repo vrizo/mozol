@@ -1,28 +1,23 @@
-Messages from the server
+Sync with the server
 
-The server sends data to the app in two ways: silent pushes and the messages route. The data format is not decided yet (product/pending.md), so the app stores and shows every payload as raw text in the Inbox tab.
+The server reaches the app in two ways: a silent push and the deliveries claim (shared/CONTRACT.md, "Recommendations and deliveries" and "Push notifications"). The app shows no notifications for either.
 
 Silent push
 
+- Every push from MOZOL is silent: `"aps": {"content-available": 1}`, no alert, no sound, no badge. There is no alert push and no notification service extension.
 - The app registers for remote notifications at every launch, signed in or not. A silent push needs no notification permission.
-- A silent push has `"aps": {"content-available": 1}` and no alert. The rest of the payload is the server's data.
-- On a silent push the app stores the whole payload as one Inbox entry (source "push"), then fetches messages.
+- `mozol.type` "deliveries": the app claims and applies deliveries (below). "test": the app logs it, and Settings shows the time of the last test push.
+- The device goes to the server with PUT /api/devices/:installationId after sign-in, on every launch, and whenever the APNs token or a permission changes. Settings shows the token and whether the server accepted it.
 - Device testing with a TestFlight build: push-testing.md.
-- The device token goes to the server with `POST /api/devices` after sign-in and whenever iOS reports a different token. Settings shows the token and whether the server accepted it.
 
-Fetching messages
+Claiming deliveries
 
-- `GET /api/messages?after=<cursor>` (shared/CONTRACT.md). Each message in the answer becomes one Inbox entry (source "server"). A message id that is already stored is skipped. The cursor from the answer is stored and sent with the next request.
-- The app fetches while it is open: once when it becomes active, then every 60 seconds, and when the user taps Refresh.
+- Triggers: a silent push, becoming active, every 60 seconds while open, Refresh, the background task, a shortcut. Every trigger goes through one event handler, AppEventHandler.
+- One run claims (POST /api/deliveries/claim), applies the deliveries in Reminders (reminders.md) and reports the outcomes (POST /api/deliveries/results). Only one run at a time: a trigger during a run is dropped and logged.
+- The app claims only while signed in and with full access to Reminders.
+- A failed request is not retried. The next trigger tries again.
 - In the background the app schedules a BGAppRefreshTask (`net.vrizo.mozol.refresh`) no earlier than 15 minutes ahead. iOS decides when it runs. Each run schedules the next one.
-- Only one fetch runs at a time. A trigger that comes during a fetch is dropped and logged.
-- A failed fetch is not retried. The next trigger tries again. The Inbox shows the last result: the time of the last success, or the failure with its HTTP status.
-- The app fetches only while signed in.
 
-Every trigger (push, timer, becoming active, Refresh, background task, shortcut) goes through one event handler, AppEventHandler.
+The app today (2026-10-24)
 
-Inbox
-
-- One row per entry: source, receive time, the first line of the body. Newest first.
-- The entry screen shows the full body, pretty-printed when it is JSON, with a Copy button.
-- Entries are stored in SwiftData (model InboxEntry) and stay until sign-out. Sign-out deletes them and the cursor.
+The app still fetches the old placeholder route GET /api/messages, sends the token with POST /api/devices, and shows raw payloads in the Inbox tab (entries in SwiftData, model InboxEntry, deleted at sign-out). It moves to the routes above (../product/pending.md).
