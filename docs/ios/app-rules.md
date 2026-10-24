@@ -32,6 +32,7 @@ UI and accessibility
 - Sans text is Helvetica Neue through Font.sans (custom font relative to a text style, so it scales with Dynamic Type). Mono text is the system monospaced font.
 - System navigation bars, the tab bar and toolbar buttons stay native; they are tinted ink and use Helvetica Neue titles. Everything inside a screen uses the design-system components: square corners, 2 px ink borders, hard shadows.
 - Copy rules: ../rules/ui-copy.md.
+- Launch splash (ios/Mozol/UI/LaunchSplash.swift): the final frame of the landing intro, the word MOZOL drawn with characters, floats for 1.4 s; then the characters scatter to the screen edges in about 1.1 s while the app fades in. With Reduce Motion on, the word stands still and only fades. The splash is decorative: hidden from VoiceOver, it never takes touches.
 
 Features: messages.md (silent push, fetching, Inbox), reminders.md (writing to Apple Reminders), permissions.md, shortcuts.md. Sign-in: ../product/accounts.md. TestFlight: ../deployment/testflight.md.
 

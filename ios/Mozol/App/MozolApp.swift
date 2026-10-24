@@ -11,7 +11,9 @@ struct MozolApp: App {
 
     var body: some Scene {
         WindowGroup {
-            RootView()
+            LaunchSplash {
+                RootView()
+            }
                 .environment(environment.session)
                 .environment(environment.sync)
                 .environment(environment.push)
