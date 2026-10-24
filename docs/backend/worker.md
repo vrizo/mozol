@@ -6,7 +6,9 @@ Worker
 - Every route validates its input with a schema from shared/ and answers errors as JSON `{ "error": "<code>" }` with a matching HTTP status. Error codes are listed in shared/CONTRACT.md.
 - `GET /api/health` answers `{"ok":true}`. Scripts and agents use it to check that a worker is up.
 - Logging: one JSON object per line through worker/src/log.ts, `rid` first. Logs never contain the user's learning content — only ids, counts, timings and error codes.
-- Tests: `cd worker && pnpm test` (vitest with the Cloudflare workers pool). Tests never call a real AI model or a remote service.
+- Tests: `cd worker && pnpm test` (vitest with @cloudflare/vitest-plugin). Tests never call a real AI model or a remote service: the model client and the push sender are passed in, and tests pass fakes.
+- Code layout: worker/src/index.ts mounts the routes and exports the AnalyzeTranscript workflow. One folder per area: routes/, auth/, sources/, analysis/, pipeline/, recommendations/, push/, db/.
+- Pipeline, analysis and push: pipeline.md, ai-analysis.md, push.md. Tables: data-model.md.
 
 Database
 
