@@ -15,9 +15,6 @@ export const NormalizedMatchTerm = MatchTerm.refine((term) => term.text === norm
   message: "match term is not normalized",
 });
 
-// EventKit scale: 1 high, 5 medium.
-export const Priority = z.union([z.literal(1), z.literal(5)]);
-
 export const DeliveryStatus = z.enum(["pending", "claimed", "applied", "failed", "superseded"]);
 export type DeliveryStatus = z.infer<typeof DeliveryStatus>;
 
@@ -46,7 +43,6 @@ export const RecommendationObject = z.strictObject({
   embedLine: z.string().min(1).max(200),
   matchTerms: z.array(NormalizedMatchTerm),
   url: z.url(),
-  priority: Priority,
   delivery: Delivery.nullable(),
   createdAt: Time,
 });
@@ -91,7 +87,6 @@ export const DeliveryItem = z.strictObject({
     embedLine: true,
     matchTerms: true,
     url: true,
-    priority: true,
   }).superRefine(checkItemKey),
 });
 export type DeliveryItem = z.infer<typeof DeliveryItem>;

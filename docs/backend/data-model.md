@@ -106,7 +106,7 @@ recommendations (rec): one per analysis item
 - id, user_id, transcript_id (references transcripts, set null), language
 - kind (mistake, word), item_key, marker
 - rank (the item's place in the delivery order of its transcript, from 1)
-- title, notes, embed_line, match_terms (JSON, normalized), priority (1 or 5)
+- title, notes, embed_line, match_terms (JSON, normalized)
 - content (JSON: the analysis item as the model returned it)
 - created_at
 - unique (transcript_id, item_key)

@@ -12,8 +12,7 @@
         "notes": "Say: I saw it yesterday\nNot: I have seen it yesterday\n\nСо словами yesterday, last week, two days ago нужен Past Simple. Present Perfect не сочетается с точным временем в прошлом.\n\nЕсли в предложении есть «когда именно», ставьте Past Simple.",
         "embedLine": "MOZOL: I saw it yesterday (not \"I have seen it yesterday\")",
         "matchTerms": [],
-        "url": "https://mozol.vrizo.net/r/rec_01K86PZQ2W4E6R8T0Y2V4N6M8P",
-        "priority": 1
+        "url": "https://mozol.vrizo.net/r/rec_01K86PZQ2W4E6R8T0Y2V4N6M8P"
       }
     },
     {
@@ -44,8 +43,7 @@
             "mode": "prefix"
           }
         ],
-        "url": "https://mozol.vrizo.net/r/rec_01K86PZQ2W4E6R8T0Y2V4N6M9Q",
-        "priority": 5
+        "url": "https://mozol.vrizo.net/r/rec_01K86PZQ2W4E6R8T0Y2V4N6M9Q"
       }
     }
   ],

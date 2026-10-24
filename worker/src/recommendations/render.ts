@@ -1,12 +1,12 @@
 // The texts a recommendation carries to the phone: title and notes of a new MOZOL reminder, the line for a
-// reminder of the user, and the priority (docs/product/reminders.md). Fixed wording comes from copy.ts.
+// reminder of the user (docs/product/reminders.md). Fixed wording comes from copy.ts.
 import { copy } from "../copy";
 import type { RankedItem } from "./rank";
 
 export const MAX_EMBED_LINE = 200;
 const ELLIPSIS = "…";
 
-export type Rendered = { title: string; notes: string; embedLine: string; priority: 1 | 5 };
+export type Rendered = { title: string; notes: string; embedLine: string };
 
 const t = copy.reminders;
 
@@ -32,7 +32,6 @@ function renderMistake(ranked: Extract<RankedItem, { kind: "mistake" }>): Render
       `${oneLine(first.correction)} ${t.embedWrong(oneLine(first.quote))}`,
       oneLine(first.correction),
     ]),
-    priority: item.severity === "high" || ranked.recurring ? 1 : 5,
   };
 }
 
@@ -45,7 +44,7 @@ function renderWord(ranked: Extract<RankedItem, { kind: "word" }>): Rendered {
     `${item.example}\n${item.exampleTranslation}`,
     item.learnerSaid === null ? null : `${t.youSaidLabel} ${item.learnerSaid}`,
   ];
-  return { title, notes: paragraphs(notes), embedLine: embedLine([title, term]), priority: 5 };
+  return { title, notes: paragraphs(notes), embedLine: embedLine([title, term]) };
 }
 
 // "<prefix> <text>" with the first text that fits in MAX_EMBED_LINE. The texts go from full to short, each one

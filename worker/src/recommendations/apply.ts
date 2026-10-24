@@ -62,8 +62,8 @@ export async function recommend(env: Env, transcriptId: string, run: number): Pr
       db
         .prepare(
           `INSERT INTO recommendations (id, user_id, transcript_id, language, kind, item_key, marker, rank, title,
-             notes, embed_line, match_terms, priority, content, created_at)
-           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+             notes, embed_line, match_terms, content, created_at)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
         )
         .bind(
           id,
@@ -78,7 +78,6 @@ export async function recommend(env: Env, transcriptId: string, run: number): Pr
           texts.notes,
           texts.embedLine,
           writeJson(uniqueTerms(item.item.matchTerms.map(normalizeTerm))),
-          texts.priority,
           writeJson(item.item),
           now,
         ),

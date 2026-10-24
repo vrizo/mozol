@@ -147,8 +147,6 @@ public struct DeliveryRecommendation: Codable, Equatable, Sendable {
     public let embedLine: String
     public let matchTerms: [MatchTerm]
     public let url: String
-    /// EventKit scale: 1 high, 5 medium.
-    public let priority: Int
 }
 
 public struct DeliveryItem: Codable, Equatable, Sendable {

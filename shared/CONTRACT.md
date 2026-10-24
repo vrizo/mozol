@@ -257,7 +257,6 @@ type Recommendation = {
   embedLine: string;                   // one line for the user's own reminder, at most 200 characters
   matchTerms: MatchTerm[];             // normalized
   url: string;                         // <base>/r/<id>
-  priority: 1 | 5;                     // EventKit scale: 1 high, 5 medium
   delivery: Delivery | null;           // the newest delivery to the phone
   createdAt: Time;
 };
@@ -382,7 +381,7 @@ Endpoints: recommendations and deliveries
 type DeliveryItem = {
   deliveryId: Id;
   recommendation: Pick<Recommendation,
-    "id" | "language" | "kind" | "itemKey" | "marker" | "title" | "notes" | "embedLine" | "matchTerms" | "url" | "priority">;
+    "id" | "language" | "kind" | "itemKey" | "marker" | "title" | "notes" | "embedLine" | "matchTerms" | "url">;
 };
 
 type DeliveryResult = {
@@ -397,11 +396,11 @@ How the app applies a delivery
 The app needs full access to Reminders. It reads the reminders of all lists and applies each delivery in claim order. There is no list of MOZOL's own: the app works with all of the user's reminders. It tells the reminders it created and the lines it added from everything else by hidden tags that carry the marker (docs/ios/reminders.md). The first step that fits decides the outcome.
 
 1. embed_updated (only when embedInMyReminders is true): incomplete reminders the app did not create that hold a line the app added with this marker. In each, replace that line with embedLine.
-2. reminder_updated: a reminder the app created with this marker, in any list, completed or not; when there are several, the most recently modified one. Set its title, notes, URL and priority, and mark it not completed.
+2. reminder_updated: a reminder the app created with this marker, in any list, completed or not; when there are several, the most recently modified one. Set its title, notes and URL, and mark it not completed.
 3. embedded (only when embedInMyReminders is true): the best incomplete reminder the app did not create. Its score is the number of matchTerms that match its title and notes, without the lines the app added. The best one has the highest score of at least 1; ties go to the most recently modified reminder, then to the smaller calendarItemIdentifier. Append embedLine as the last line of its notes: remove trailing line breaks, then add "\n" and embedLine (empty notes become embedLine alone). Nothing else changes.
-4. created: create a reminder in the user's default list for new reminders (the one set in the Reminders app) with title, notes, URL (the recommendation url) and priority. It has no due date, no alarm and no repeat rule.
+4. created: create a reminder in the user's default list for new reminders (the one set in the Reminders app) with title, notes and URL (the recommendation url). It has no due date, no alarm, no priority and no repeat rule.
 
-- MOZOL sets no due date, alarm or repeat rule on any reminder; a reminder that already has them keeps them.
+- MOZOL sets no due date, alarm, priority or repeat rule on any reminder; a reminder that already has them keeps them.
 - The app reports each outcome with POST /api/deliveries/results. failed covers anything that stopped the delivery; the worker hands it out again, up to 3 failed results in total.
 - The worker never receives the user's reminders, their titles, notes or identifiers.
 - The app applies deliveries in its own process: in the foreground, or when a silent push or the background task wakes it. There is no notification service extension.

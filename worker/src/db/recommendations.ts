@@ -16,14 +16,13 @@ export type RecommendationRow = {
   notes: string;
   embed_line: string;
   match_terms: string;
-  priority: number;
   created_at: string;
   delivery: string | null;
 };
 
 // r.* with the newest delivery as JSON (null when it has none).
 export const RECOMMENDATION_COLUMNS = `r.id, r.transcript_id, r.language, r.kind, r.item_key, r.marker, r.rank, r.title,
-  r.notes, r.embed_line, r.match_terms, r.priority, r.created_at,
+  r.notes, r.embed_line, r.match_terms, r.created_at,
   (SELECT json_object('id', d.id, 'status', d.status, 'outcome', d.outcome, 'errorCode', d.error_code,
      'updatedAt', d.updated_at)
    FROM deliveries d WHERE d.recommendation_id = r.id ORDER BY d.created_at DESC, d.id DESC LIMIT 1) AS delivery`;
@@ -54,7 +53,6 @@ export function recommendationFromRow(row: RecommendationRow, origin: string): R
     embedLine: row.embed_line,
     matchTerms: readJson(row.match_terms, MatchTermsColumn, "recommendations.match_terms"),
     url: recommendationUrl(origin, row.id),
-    priority: row.priority,
     delivery: row.delivery === null ? null : readJson(row.delivery, DeliveryColumn, "deliveries (newest)"),
     createdAt: row.created_at,
   });
@@ -74,7 +72,6 @@ export function deliveryItem(deliveryId: string, rec: Recommendation): DeliveryI
       embedLine: rec.embedLine,
       matchTerms: rec.matchTerms,
       url: rec.url,
-      priority: rec.priority,
     },
   };
 }

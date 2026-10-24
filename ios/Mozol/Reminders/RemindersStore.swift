@@ -91,12 +91,11 @@ final class RemindersStore {
         return reminder
     }
 
-    /// Title, notes, URL and priority. MOZOL sets no due date, alarm or repeat rule; a reminder keeps its own.
+    /// Title, notes and URL. MOZOL sets no due date, alarm, priority or repeat rule; a reminder keeps its own.
     private func fill(_ reminder: EKReminder, with content: ReminderContent) {
         reminder.title = content.title
         reminder.notes = content.notes
         reminder.url = content.url
-        reminder.priority = content.priority
     }
 
     private func save(_ reminder: EKReminder) throws(RemindersError) {

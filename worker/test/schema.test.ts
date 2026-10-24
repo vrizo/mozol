@@ -146,7 +146,6 @@ const rows = {
     notes: "n",
     embed_line: "l",
     match_terms: "[]",
-    priority: 5,
     content: "{}",
     created_at: T0,
   }),
@@ -401,7 +400,7 @@ describe("checks", () => {
     ["deliveries", "status", "sent", "delivery"],
     ["devices", "reminders_access", "allowed", "device"],
     ["push_log", "push_type", "alert", "push"],
-    ["recommendations", "priority", 3, "recommendation"],
+    ["recommendations", "kind", "lesson", "recommendation"],
   ] as const)("%s.%s refuses %s", async (table, column, wrong, row) => {
     const ids = await seedUser();
     await expect(

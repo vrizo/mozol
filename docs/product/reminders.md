@@ -36,8 +36,7 @@ Steps 1 and 3 run only when the profile setting embedInMyReminders is on (defaul
 
 A new or updated MOZOL reminder
 
-- It has no due date, no alarm and no repeat rule. MOZOL keeps no schedule and no time zone.
-- Priority: high for a high-severity mistake or a mistake of a recurring pattern, otherwise medium.
+- It has no due date, no alarm, no priority and no repeat rule. MOZOL keeps no schedule and no time zone.
 - A line added to a reminder of the user changes nothing else in that reminder.
 
 Delivery

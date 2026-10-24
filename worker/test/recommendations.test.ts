@@ -79,10 +79,10 @@ async function analyze(transcriptId: string, userId: string, run: number, result
   expect((await storeResult(env, transcriptId, run)).outcome).toBe("stored");
 }
 
-type RecRow = { id: string; item_key: string; marker: string; rank: number; priority: number };
+type RecRow = { id: string; item_key: string; marker: string; rank: number };
 const recsOf = (transcriptId: string) =>
   rows<RecRow>(
-    "SELECT id, item_key, marker, rank, priority FROM recommendations WHERE transcript_id = ? ORDER BY rank, id",
+    "SELECT id, item_key, marker, rank FROM recommendations WHERE transcript_id = ? ORDER BY rank, id",
     transcriptId,
   );
 
@@ -114,13 +114,13 @@ describe("recommend", () => {
       pending: 6,
     });
     const recs = await recsOf(id);
-    expect(recs.map((r) => [r.item_key, r.rank, r.priority])).toEqual([
-      [ORDER[0], 1, 1],
-      [ORDER[1], 2, 1],
-      [ORDER[2], 3, 5],
-      [ORDER[3], 4, 5],
-      [ORDER[4], 5, 5],
-      [ORDER[5], 6, 5],
+    expect(recs.map((r) => [r.item_key, r.rank])).toEqual([
+      [ORDER[0], 1],
+      [ORDER[1], 2],
+      [ORDER[2], 3],
+      [ORDER[3], 4],
+      [ORDER[4], 5],
+      [ORDER[5], 6],
     ]);
     for (const r of recs) expect(r.marker).toBe(await marker("en", r.item_key));
     const deliveries = await deliveriesOf(user.id);
@@ -168,14 +168,14 @@ describe("recommend", () => {
     const secondRecs = await recsOf(second);
     const markers = (recs: RecRow[]) => recs.map((r) => [r.item_key, r.marker]).sort();
     expect(markers(secondRecs)).toEqual(markers(firstRecs));
-    // The articles pattern is now recurring and still high: rank 1. Everything recurring gets priority 1.
-    expect(secondRecs.map((r) => [r.item_key, r.priority])).toEqual([
-      [ORDER[0], 1],
-      [ORDER[1], 1],
-      ["vocabulary.false_friend.actual", 1],
-      [ORDER[2], 5],
-      [ORDER[3], 5],
-      [ORDER[4], 5],
+    // The articles pattern is now recurring and still high: rank 1.
+    expect(secondRecs.map((r) => r.item_key)).toEqual([
+      ORDER[0],
+      ORDER[1],
+      "vocabulary.false_friend.actual",
+      ORDER[2],
+      ORDER[3],
+      ORDER[4],
     ]);
 
     const byRec = new Map((await deliveriesOf(user.id)).map((d) => [d.recommendation_id, d.status]));
@@ -279,7 +279,6 @@ describe("POST /api/deliveries/claim and /results", () => {
     expect(first.deliveries[0]?.recommendation).toMatchObject({
       kind: "mistake",
       title: "It is a good idea",
-      priority: 1,
       url: expect.stringMatching(/\/r\/rec_/),
     });
     expect(first.deliveries[0]).not.toHaveProperty("schedule");

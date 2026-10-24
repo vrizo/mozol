@@ -360,8 +360,6 @@ export const copy = {
     matchTerms: "Match terms",
     matchTermsHint: "If one of your reminders mentions one of these words, MOZOL adds the line to it.",
     noMatchTerms: "No match terms.",
-    priority: "Priority",
-    priorities: { 1: "High", 5: "Medium" },
     delivery: "Delivery",
     created: (date: string) => `Created ${date}`,
     modes: {

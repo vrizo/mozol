@@ -23,7 +23,6 @@ public struct ReminderContent: Equatable, Sendable {
     /// The recommendation notes with the hidden tag as the last line.
     public let notes: String
     public let url: URL?
-    public let priority: Int
 }
 
 public struct NotesChange: Equatable, Sendable {
@@ -93,8 +92,7 @@ public enum DeliveryPlanner {
         let content = ReminderContent(
             title: rec.title,
             notes: rec.notes.isEmpty ? tag : rec.notes + "\n" + tag,
-            url: URL(string: rec.url),
-            priority: rec.priority
+            url: URL(string: rec.url)
         )
 
         let own = parsed.filter { $0.lines.contains { $0.isOwnTag && $0.marker == rec.marker } }.map(\.reminder)

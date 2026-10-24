@@ -25,8 +25,8 @@
 //                            existing user (email default learner@example.com). Without items: the two
 //                            recommendations of shared/fixtures/deliveries/claim-response.json.
 //                            items: [{ recommendation }]. recommendation needs language, kind,
-//                            itemKey, title, notes, embedLine; id, url, marker, priority (5) and
-//                            matchTerms ([]) are filled in when missing.
+//                            itemKey, title, notes, embedLine; id, url, marker and matchTerms ([])
+//                            are filled in when missing.
 //   POST   /stub/settings     { email?, embedInMyReminders } → { user }
 //   GET    /stub/state        users, devices and deliveries with their status
 //
@@ -230,7 +230,6 @@ function checkRecommendation(issues, rec, path) {
   if (rec.id !== undefined) checkText(issues, `${path}.id`, rec.id, 1, 100);
   if (rec.url !== undefined) checkText(issues, `${path}.url`, rec.url, 1, 2000);
   if (rec.marker !== undefined && !/^[0-9a-f]{8}$/.test(rec.marker)) issues.push({ path: `${path}.marker`, code: "invalid_format" });
-  if (rec.priority !== undefined) checkEnum(issues, `${path}.priority`, rec.priority, [1, 5]);
   if (rec.matchTerms !== undefined && !Array.isArray(rec.matchTerms)) issues.push({ path: `${path}.matchTerms`, code: "invalid_type" });
 }
 
@@ -463,7 +462,6 @@ const handlers = {
           embedLine: rec.embedLine,
           matchTerms: rec.matchTerms ?? [],
           url: rec.url ?? `${ctx.origin}/r/${id}`,
-          priority: rec.priority ?? 5,
         },
         status: "pending",
         outcome: null,

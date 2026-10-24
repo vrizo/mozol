@@ -455,7 +455,6 @@ async function addRecommendations(stored: StoredTranscript, language: string, re
     notes: string;
     embed: string;
     terms: Finding["matchTerms"];
-    priority: 1 | 5;
   }[] = [];
   for (const f of result.findings) {
     const example = f.examples[0];
@@ -468,7 +467,6 @@ async function addRecommendations(stored: StoredTranscript, language: string, re
         .join("\n"),
       embed: example ? `${example.correction} (not "${example.quote}")` : f.title,
       terms: f.matchTerms,
-      priority: f.severity === "high" ? 1 : 5,
     });
   }
   for (const w of result.words) {
@@ -479,7 +477,6 @@ async function addRecommendations(stored: StoredTranscript, language: string, re
       notes: `${w.translation}\n${w.meaning}\n\n${w.example}\n${w.exampleTranslation}`,
       embed: `${w.term}: ${w.translation}`,
       terms: w.matchTerms,
-      priority: 5,
     });
   }
   for (const item of items) {
@@ -499,7 +496,6 @@ async function addRecommendations(stored: StoredTranscript, language: string, re
         embedLine: clip(item.embed, 200),
         matchTerms: item.terms.map(normalizeTerm),
         url: `${SEED_BASE}/r/${id}`,
-        priority: item.priority,
         delivery: blocked ? null : newDelivery("pending"),
         createdAt: now(),
       },

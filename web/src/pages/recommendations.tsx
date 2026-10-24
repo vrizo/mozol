@@ -261,10 +261,6 @@ function RecommendationDetail({ recommendation: r }: { recommendation: Recommend
       <section className="section">
         <dl className="meta">
           <div>
-            <dt>{t.priority}</dt>
-            <dd>{t.priorities[r.priority]}</dd>
-          </div>
-          <div>
             <dt>{t.delivery}</dt>
             <dd>{deliveryText(r.delivery)}</dd>
           </div>

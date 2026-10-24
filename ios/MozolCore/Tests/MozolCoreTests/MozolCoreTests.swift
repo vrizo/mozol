@@ -191,7 +191,6 @@ struct DeliveryPlannerTests {
         #expect(content.title == word.recommendation.title)
         #expect(content.notes == word.recommendation.notes + "\n" + tag("fd2dd8e3"))
         #expect(content.url?.absoluteString == word.recommendation.url)
-        #expect(content.priority == 5)
         #expect(plan.outcome == .created)
     }
 

@@ -45,7 +45,7 @@ Recommendations
 
 The recommend step follows ../product/reminders.md.
 
-- Every finding and word of the result becomes a recommendation: item key, marker, normalized match terms, priority, the rendered title, notes and embed line (worker/src/recommendations/render.ts with fixed strings from worker/src/copy.ts), and the item itself as content.
+- Every finding and word of the result becomes a recommendation: item key, marker, normalized match terms, the rendered title, notes and embed line (worker/src/recommendations/render.ts with fixed strings from worker/src/copy.ts), and the item itself as content.
 - rank is the item's place in the delivery order. Every recommendation gets a pending delivery, except those of dismissed patterns and of words marked known or dismissed.
 - A new pending delivery supersedes a pending (not claimed) delivery with the same marker.
 - Analyzing again deletes the transcript's recommendations that never got a delivery, keeps the ones that did, and makes recommendations for items whose item key has none in this transcript. New deliveries go only to new recommendations.

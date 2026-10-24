@@ -142,15 +142,12 @@ describe("render", () => {
         TENSES.tip,
       ].join("\n"),
       embedLine: 'MOZOL: I saw it yesterday (not "I have seen it yesterday")',
-      priority: 1,
     });
   });
 
   it("adds the conversation count of a recurring mistake and leaves out a missing tip", () => {
     const rendered = render(mistake(ACTUAL, 3));
     expect(rendered.notes.split("\n\n").slice(-2)).toEqual([ACTUAL.explanation, "Seen in 3 conversations."]);
-    expect(rendered.priority).toBe(1);
-    expect(render(mistake(ACTUAL)).priority).toBe(5);
     expect(render(mistake(ACTUAL)).notes).not.toContain("Seen in");
   });
 
@@ -166,7 +163,6 @@ describe("render", () => {
         "You said: do a decision",
       ].join("\n"),
       embedLine: "MOZOL: make a decision — принять решение",
-      priority: 5,
     });
     expect(render(word({ ...DECISION, learnerSaid: null })).notes).not.toContain("You said");
   });
