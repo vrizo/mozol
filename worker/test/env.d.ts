@@ -1,4 +1,5 @@
 // Types for `env` and `exports` from "cloudflare:workers" in tests.
+import type { D1Migration } from "cloudflare:test";
 import type { Env as WorkerEnv } from "../src/env";
 
 declare global {
@@ -6,6 +7,8 @@ declare global {
     interface GlobalProps {
       mainModule: typeof import("../src/index");
     }
-    interface Env extends WorkerEnv {}
+    interface Env extends WorkerEnv {
+      TEST_MIGRATIONS: D1Migration[];
+    }
   }
 }
