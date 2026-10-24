@@ -5,7 +5,16 @@ One environment: production. There is no staging.
 - Domain: `mozol.vrizo.net`, a hostname in the existing Cloudflare zone `vrizo.net` (Free plan). No separate zone: a zone for a subdomain needs the Enterprise plan.
 - Worker: Cloudflare Workers, name `mozol-api`, custom domain `mozol.vrizo.net`. One worker serves both the web app (the web/ build as static assets) and the API under `/api/`.
 - Database: Cloudflare D1, name `mozol`.
+- Workflow: `analyze-transcript` (class AnalyzeTranscript, binding ANALYZE), deployed with the worker. Pipeline: ../backend/pipeline.md.
+- Plan: Workers Paid. The worker uses up to 30 seconds of CPU per request and per workflow step.
+- Outside services the worker calls: the Anthropic API (api.anthropic.com) and APNs (api.push.apple.com, api.sandbox.push.apple.com).
 - Token: one Cloudflare token and the account id in .env. Details: ../security/cloudflare-tokens.md.
+
+Worker configuration
+
+- Variables in worker/wrangler.jsonc: APP_ORIGIN (https://mozol.vrizo.net), ANALYSIS_MODE (claude), ANALYSIS_MODEL (claude-opus-5-5), ANALYSIS_EFFORT (high), PUSH_MODE (apns).
+- Secrets: ANTHROPIC_API_KEY, APNS_KEY_ID, APNS_TEAM_ID, APNS_PRIVATE_KEY. Their values live in .env (keys listed in .env.example).
+- Local development: scripts/dev-worker.sh writes worker/.dev.vars (mode 600, gitignored) from .env before it starts wrangler: APP_ORIGIN http://localhost:5190, ANALYSIS_MODE fixture (claude when MOZOL_ANALYSIS=claude is set), PUSH_MODE log, and ANTHROPIC_API_KEY when .env has it.
 
 Deploy by agents
 
