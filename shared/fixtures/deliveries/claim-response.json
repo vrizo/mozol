@@ -1,0 +1,52 @@
+{
+  "deliveries": [
+    {
+      "deliveryId": "dlv_01K86Q3M5R7T9V1X3Z5B7D9F1H",
+      "recommendation": {
+        "id": "rec_01K86PZQ2W4E6R8T0Y2V4N6M8P",
+        "language": "en",
+        "kind": "mistake",
+        "itemKey": "grammar.tenses.present_perfect_with_past_time",
+        "marker": "01bf5320",
+        "title": "I saw it yesterday",
+        "notes": "Say: I saw it yesterday\nNot: I have seen it yesterday\n\nСо словами yesterday, last week, two days ago нужен Past Simple. Present Perfect не сочетается с точным временем в прошлом.\n\nЕсли в предложении есть «когда именно», ставьте Past Simple.",
+        "embedLine": "MOZOL: I saw it yesterday (not \"I have seen it yesterday\")",
+        "matchTerms": [],
+        "url": "https://mozol.vrizo.net/r/rec_01K86PZQ2W4E6R8T0Y2V4N6M8P",
+        "priority": 1
+      },
+      "schedule": {
+        "dueAt": "2026-10-22T14:00:00.000+02:00",
+        "timezone": "Europe/Berlin",
+        "repeat": { "frequency": "daily", "interval": 1, "count": 5 }
+      }
+    },
+    {
+      "deliveryId": "dlv_01K86Q3M5R7T9V1X3Z5B7D9F2J",
+      "recommendation": {
+        "id": "rec_01K86PZQ2W4E6R8T0Y2V4N6M9Q",
+        "language": "en",
+        "kind": "word",
+        "itemKey": "word:make a decision",
+        "marker": "fd2dd8e3",
+        "title": "make a decision — принять решение",
+        "notes": "С decision в английском используют глагол make, а не do.\n\nWe need to make a decision by Friday.\nНам нужно принять решение до пятницы.",
+        "embedLine": "MOZOL: make a decision — принять решение",
+        "matchTerms": [
+          { "text": "make a decision", "lang": "en", "mode": "phrase" },
+          { "text": "decision", "lang": "en", "mode": "word" },
+          { "text": "решени", "lang": "ru", "mode": "prefix" }
+        ],
+        "url": "https://mozol.vrizo.net/r/rec_01K86PZQ2W4E6R8T0Y2V4N6M9Q",
+        "priority": 5
+      },
+      "schedule": {
+        "dueAt": "2026-10-22T14:00:00.000+02:00",
+        "timezone": "Europe/Berlin",
+        "repeat": { "frequency": "daily", "interval": 1, "count": 5 }
+      }
+    }
+  ],
+  "leaseSeconds": 120,
+  "embedInMyReminders": true
+}

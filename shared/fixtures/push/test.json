@@ -1,0 +1,9 @@
+{
+  "aps": {
+    "alert": { "title": "MOZOL", "body": "Test notification. Pushes reach this device." },
+    "sound": "default",
+    "mutable-content": 1,
+    "thread-id": "mozol"
+  },
+  "mozol": { "v": 1, "type": "test" }
+}

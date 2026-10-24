@@ -1,0 +1,262 @@
+[
+  {
+    "text": "Buy milk",
+    "terms": [{ "text": "milk", "lang": "en", "mode": "word" }],
+    "expectedScore": 1,
+    "note": "word: one token equals the term"
+  },
+  {
+    "text": "Buy a milkshake",
+    "terms": [{ "text": "milk", "lang": "en", "mode": "word" }],
+    "expectedScore": 0,
+    "note": "word: a longer token does not match"
+  },
+  {
+    "text": "MILK and bread",
+    "terms": [{ "text": "Milk", "lang": "en", "mode": "word" }],
+    "expectedScore": 1,
+    "note": "case is ignored on both sides"
+  },
+  {
+    "text": "milk, milk and more milk",
+    "terms": [{ "text": "milk", "lang": "en", "mode": "word" }],
+    "expectedScore": 1,
+    "note": "the score counts matching terms, not occurrences"
+  },
+  {
+    "text": "Prepare the decision memo",
+    "terms": [{ "text": "decis", "lang": "en", "mode": "prefix" }],
+    "expectedScore": 1,
+    "note": "prefix: a token starts with the term"
+  },
+  {
+    "text": "An indecisive client",
+    "terms": [{ "text": "decis", "lang": "en", "mode": "prefix" }],
+    "expectedScore": 0,
+    "note": "prefix: the term inside a token does not match"
+  },
+  {
+    "text": "Need to make a decision about pricing",
+    "terms": [{ "text": "make a decision", "lang": "en", "mode": "phrase" }],
+    "expectedScore": 1,
+    "note": "phrase: consecutive tokens"
+  },
+  {
+    "text": "Make the final decision",
+    "terms": [{ "text": "make a decision", "lang": "en", "mode": "phrase" }],
+    "expectedScore": 0,
+    "note": "phrase: other tokens in between do not match"
+  },
+  {
+    "text": "Call Anna and make a\ndecision on the budget",
+    "terms": [{ "text": "make a decision", "lang": "en", "mode": "phrase" }],
+    "expectedScore": 1,
+    "note": "phrase across a line break"
+  },
+  {
+    "text": "Make, a... decision!",
+    "terms": [{ "text": "make a decision", "lang": "en", "mode": "phrase" }],
+    "expectedScore": 1,
+    "note": "punctuation between the words of a phrase is ignored"
+  },
+  {
+    "text": "Don’t forget the slides",
+    "terms": [{ "text": "don't forget", "lang": "en", "mode": "phrase" }],
+    "expectedScore": 1,
+    "note": "typographic and straight apostrophes both split tokens: \"don t forget\""
+  },
+  {
+    "text": "Send the e-mail to Laura",
+    "terms": [
+      { "text": "e-mail", "lang": "en", "mode": "phrase" },
+      { "text": "mail", "lang": "en", "mode": "word" }
+    ],
+    "expectedScore": 2,
+    "note": "a hyphen splits a word into two tokens"
+  },
+  {
+    "text": "Send the email to Laura",
+    "terms": [{ "text": "e-mail", "lang": "en", "mode": "phrase" }],
+    "expectedScore": 0,
+    "note": "\"e mail\" does not match the token \"email\""
+  },
+  {
+    "text": "Q4 roadmap review",
+    "terms": [{ "text": "q4", "lang": "en", "mode": "word" }],
+    "expectedScore": 1,
+    "note": "digits are kept in tokens"
+  },
+  {
+    "text": "Buy 🥛milk",
+    "terms": [{ "text": "buy milk", "lang": "en", "mode": "phrase" }],
+    "expectedScore": 1,
+    "note": "an emoji is not a letter and separates tokens"
+  },
+  {
+    "text": "ＭＩＬＫ ｆｏｒ ｔｅａ",
+    "terms": [{ "text": "milk", "lang": "en", "mode": "word" }],
+    "expectedScore": 1,
+    "note": "NFKD maps full-width letters to ASCII"
+  },
+  {
+    "text": "Update the ﬁle",
+    "terms": [{ "text": "file", "lang": "en", "mode": "word" }],
+    "expectedScore": 1,
+    "note": "NFKD splits the ligature ﬁ into f and i"
+  },
+  {
+    "text": "",
+    "terms": [{ "text": "milk", "lang": "en", "mode": "word" }],
+    "expectedScore": 0,
+    "note": "empty text"
+  },
+  {
+    "text": "!!! ??? ...",
+    "terms": [{ "text": "milk", "lang": "en", "mode": "word" }],
+    "expectedScore": 0,
+    "note": "text without letters or numbers normalizes to an empty string"
+  },
+  {
+    "text": "Make a decision on the current release",
+    "terms": [
+      { "text": "make a decision", "lang": "en", "mode": "phrase" },
+      { "text": "current", "lang": "en", "mode": "word" },
+      { "text": "postpon", "lang": "en", "mode": "prefix" },
+      { "text": "решени", "lang": "ru", "mode": "prefix" }
+    ],
+    "expectedScore": 2,
+    "note": "the score is the number of matching terms"
+  },
+  {
+    "text": "Принять решения по бюджету",
+    "terms": [{ "text": "решени", "lang": "ru", "mode": "prefix" }],
+    "expectedScore": 1,
+    "note": "Russian: a prefix term matches an inflected form"
+  },
+  {
+    "text": "Обсудить решение с Лаурой",
+    "terms": [{ "text": "решения", "lang": "ru", "mode": "word" }],
+    "expectedScore": 0,
+    "note": "Russian: a word term needs the exact form"
+  },
+  {
+    "text": "Перенести релиз на ноябрь",
+    "terms": [
+      { "text": "перенес", "lang": "ru", "mode": "prefix" },
+      { "text": "релиз", "lang": "ru", "mode": "prefix" }
+    ],
+    "expectedScore": 2,
+    "note": "Russian: two prefix terms"
+  },
+  {
+    "text": "ТЕКУЩАЯ версия приложения",
+    "terms": [{ "text": "текущ", "lang": "ru", "mode": "prefix" }],
+    "expectedScore": 1,
+    "note": "Cyrillic capitals are lowercased"
+  },
+  {
+    "text": "Проверить, что приложение доступно и недоступные кнопки подписаны",
+    "terms": [{ "text": "доступн", "lang": "ru", "mode": "substring" }],
+    "expectedScore": 1,
+    "note": "substring: the term inside a token matches"
+  },
+  {
+    "text": "Купить ёлку",
+    "terms": [{ "text": "елку", "lang": "ru", "mode": "word" }],
+    "expectedScore": 1,
+    "note": "ё becomes е: NFKD splits off the diaeresis (Mn)"
+  },
+  {
+    "text": "Ёлочные игрушки",
+    "terms": [{ "text": "ёлоч", "lang": "ru", "mode": "prefix" }],
+    "expectedScore": 1,
+    "note": "ё in the term and a capital Ё in the text"
+  },
+  {
+    "text": "Подготовить onboarding для новых пользователей",
+    "terms": [
+      { "text": "onboarding", "lang": "en", "mode": "word" },
+      { "text": "онбординг", "lang": "ru", "mode": "prefix" }
+    ],
+    "expectedScore": 1,
+    "note": "mixed languages in one text"
+  },
+  {
+    "text": "Größe der Buttons prüfen",
+    "terms": [{ "text": "große", "lang": "de", "mode": "word" }],
+    "expectedScore": 1,
+    "note": "German: ö becomes o, so größe and große both become große"
+  },
+  {
+    "text": "Müller anrufen",
+    "terms": [
+      { "text": "muller", "lang": "de", "mode": "word" },
+      { "text": "mueller", "lang": "de", "mode": "word" }
+    ],
+    "expectedScore": 1,
+    "note": "German: ü matches u, not ue"
+  },
+  {
+    "text": "Strasse sperren",
+    "terms": [{ "text": "straße", "lang": "de", "mode": "word" }],
+    "expectedScore": 0,
+    "note": "German: ß is kept, it does not match ss"
+  },
+  {
+    "text": "STRAẞE SPERREN",
+    "terms": [{ "text": "Straße", "lang": "de", "mode": "word" }],
+    "expectedScore": 1,
+    "note": "German: the capital ẞ lowercases to ß"
+  },
+  {
+    "text": "Réunion au café",
+    "terms": [{ "text": "cafe", "lang": "fr", "mode": "word" }],
+    "expectedScore": 1,
+    "note": "accents are removed"
+  },
+  {
+    "text": "Mañana: revisar el resumen",
+    "terms": [
+      { "text": "manana", "lang": "es", "mode": "word" },
+      { "text": "résum", "lang": "es", "mode": "prefix" }
+    ],
+    "expectedScore": 2,
+    "note": "ñ becomes n; an accent in the term is removed too"
+  },
+  {
+    "text": "İstanbul trip",
+    "terms": [{ "text": "istanbul", "lang": "tr", "mode": "word" }],
+    "expectedScore": 1,
+    "note": "lowercasing uses no locale: İ becomes i plus a dot (Mn), and the dot is removed"
+  },
+  {
+    "text": "明天要做决定",
+    "terms": [{ "text": "决定", "lang": "zh", "mode": "substring" }],
+    "expectedScore": 1,
+    "note": "Chinese: the whole sentence is one token, a substring term matches inside it"
+  },
+  {
+    "text": "明天开会",
+    "terms": [{ "text": "决定", "lang": "zh", "mode": "substring" }],
+    "expectedScore": 0,
+    "note": "Chinese: no match"
+  },
+  {
+    "text": "开会，然后做决定。",
+    "terms": [{ "text": "做决定", "lang": "zh", "mode": "substring" }],
+    "expectedScore": 1,
+    "note": "Chinese punctuation becomes a space"
+  },
+  {
+    "text": "我们做，决定吧",
+    "terms": [{ "text": "做决定", "lang": "zh", "mode": "substring" }],
+    "expectedScore": 0,
+    "note": "Chinese: a comma inside the term's place breaks the substring"
+  },
+  {
+    "text": "明天要做决定",
+    "terms": [{ "text": "决定", "lang": "zh", "mode": "word" }],
+    "expectedScore": 0,
+    "note": "Chinese: a word term must equal a whole token, so it rarely matches"
+  }
+]

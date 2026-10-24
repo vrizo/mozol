@@ -1,0 +1,212 @@
+{
+  "metadata": {
+    "id": "7c1e4b2a-93d5-4f08-b6a1-2e9f0d4c8a31",
+    "event": "meeting.completed",
+    "createdAt": "2026-10-22T09:44:10.000Z"
+  },
+  "data": {
+    "id": "mtg-5d2f8e1c-0a47-4b9e-9c33-6f1a2b7d4e90",
+    "title": "Product sync: onboarding and the November release",
+    "startTime": "2026-10-22T09:00:00.000Z",
+    "endTime": "2026-10-22T09:41:23.000Z",
+    "user": { "email": "petr.ivanov@example.com", "name": "Petr Ivanov" },
+    "participants": [
+      { "id": "s1", "name": "Laura Bennett", "email": "laura.bennett@example.com" },
+      { "id": "s2", "name": "Daniel Reed", "email": "daniel.reed@example.com" },
+      { "id": "s3", "name": "Petr Ivanov", "email": "Petr.Ivanov@example.com" }
+    ],
+    "transcript": [
+      {
+        "speakerId": "s1",
+        "speakerName": "Laura Bennett",
+        "text": "Okay, I think everyone is here. Thanks for joining. Today I'd like to go through the onboarding redesign and then talk about the November release."
+      },
+      {
+        "speakerId": "s2",
+        "speakerName": "Daniel Reed",
+        "text": "Sounds good. I've got a hard stop at eleven, just so you know."
+      },
+      {
+        "speakerId": "s3",
+        "speakerName": "Petr Ivanov",
+        "text": "Hi all. Yes, I have prepared the new flow, I can show it after. It is good idea to start with the research results first."
+      },
+      { "speakerId": "s1", "speakerName": "Laura Bennett", "text": "Sure, go ahead, Petr." },
+      {
+        "speakerId": "s3",
+        "speakerName": "Petr Ivanov",
+        "text": "So the thing is that we did the research and the users which we asked they said that the onboarding is too long and also they don't understand why we need their phone number on the first screen."
+      },
+      {
+        "speakerId": "s2",
+        "speakerName": "Daniel Reed",
+        "text": "That matches what we see in the funnel. We lose about a third of people on the phone number step."
+      },
+      {
+        "speakerId": "s3",
+        "speakerName": "Petr Ivanov",
+        "text": "Yes, it is very very important. I have seen it yesterday in the dashboard, the drop is very big."
+      },
+      { "speakerId": "s1", "speakerName": "Laura Bennett", "text": "So what are you proposing?" },
+      {
+        "speakerId": "s3",
+        "speakerName": "Petr Ivanov",
+        "text": "We move the phone number to the profile settings and we ask it only when user wants to turn on reminders. Then the first screen is only name and language."
+      },
+      {
+        "speakerId": "s2",
+        "speakerName": "Daniel Reed",
+        "text": "I like that. It also takes the SMS verification off the critical path, and that step has been flaky for weeks."
+      },
+      {
+        "speakerId": "s1",
+        "speakerName": "Laura Bennett",
+        "text": "Petr, can you send the mockups to everyone after the call?"
+      },
+      {
+        "speakerId": "s3",
+        "speakerName": "Petr Ivanov",
+        "text": "Of course. I sent you link yesterday, but I will send it again with the actual version of the design."
+      },
+      {
+        "speakerId": "s1",
+        "speakerName": "Laura Bennett",
+        "text": "Great. Daniel, what does that mean for engineering?"
+      },
+      {
+        "speakerId": "s2",
+        "speakerName": "Daniel Reed",
+        "text": "Honestly, not much. The profile screen already has a phone field. We'd need to change the validation and the order of the steps. Three or four days, maybe."
+      },
+      {
+        "speakerId": "s3",
+        "speakerName": "Petr Ivanov",
+        "text": "Can you explain me how the validation works now? I thought it is on the server side."
+      },
+      {
+        "speakerId": "s2",
+        "speakerName": "Daniel Reed",
+        "text": "Sure. Right now the app checks the format, and the server sends the code. If we move the step, the server part doesn't change at all."
+      },
+      {
+        "speakerId": "s3",
+        "speakerName": "Petr Ivanov",
+        "text": "Okay, it is clear. Then it is very fast to change."
+      },
+      {
+        "speakerId": "s1",
+        "speakerName": "Laura Bennett",
+        "text": "Let's talk about the release, then. We planned it for November fourth."
+      },
+      {
+        "speakerId": "s2",
+        "speakerName": "Daniel Reed",
+        "text": "Yeah, about that. The payment integration still isn't stable. We had two failed test runs this week."
+      },
+      {
+        "speakerId": "s3",
+        "speakerName": "Petr Ivanov",
+        "text": "This is shit, we promised it to the client two times already."
+      },
+      {
+        "speakerId": "s1",
+        "speakerName": "Laura Bennett",
+        "text": "I know it's frustrating. Let's stay calm and look at the options."
+      },
+      {
+        "speakerId": "s2",
+        "speakerName": "Daniel Reed",
+        "text": "Option one, we ship on the fourth without the new payment provider. Option two, we wait two weeks and ship everything together."
+      },
+      {
+        "speakerId": "s3",
+        "speakerName": "Petr Ivanov",
+        "text": "If we will move the release to next month then marketing will need to change all the plan because they already booked the campaign for the first week and it will cost money for us."
+      },
+      {
+        "speakerId": "s1",
+        "speakerName": "Laura Bennett",
+        "text": "That's a fair point. The campaign is booked, and moving it isn't free."
+      },
+      {
+        "speakerId": "s2",
+        "speakerName": "Daniel Reed",
+        "text": "Sure, but shipping a broken checkout is worse than moving a campaign."
+      },
+      {
+        "speakerId": "s3",
+        "speakerName": "Petr Ivanov",
+        "text": "I am agree with Daniel. Broken payment is very bad for the trust."
+      },
+      {
+        "speakerId": "s1",
+        "speakerName": "Laura Bennett",
+        "text": "Okay. We need to make a call on this today, though. Marketing needs to know by Friday."
+      },
+      {
+        "speakerId": "s3",
+        "speakerName": "Petr Ivanov",
+        "text": "Yes, we need to do a decision today. And we need the clear plan for the marketing team."
+      },
+      {
+        "speakerId": "s2",
+        "speakerName": "Daniel Reed",
+        "text": "What if we ship onboarding on the fourth and release payments separately, two weeks later?"
+      },
+      { "speakerId": "s1", "speakerName": "Laura Bennett", "text": "Could that work for marketing?" },
+      {
+        "speakerId": "s3",
+        "speakerName": "Petr Ivanov",
+        "text": "I think yes. The campaign is about the new onboarding, not about payments. We have released the beta of onboarding last week and the feedback was very good."
+      },
+      {
+        "speakerId": "s1",
+        "speakerName": "Laura Bennett",
+        "text": "Then let's go with that. Onboarding on the fourth, payments on the eighteenth."
+      },
+      {
+        "speakerId": "s2",
+        "speakerName": "Daniel Reed",
+        "text": "I'll update the roadmap and give the QA team a heads-up."
+      },
+      {
+        "speakerId": "s3",
+        "speakerName": "Petr Ivanov",
+        "text": "One more thing. In the actual design we forgot about handicapped people. The screen reader does not read the buttons on the first screen."
+      },
+      {
+        "speakerId": "s1",
+        "speakerName": "Laura Bennett",
+        "text": "Good catch. Accessibility has to be part of the release, not an afterthought."
+      },
+      {
+        "speakerId": "s2",
+        "speakerName": "Daniel Reed",
+        "text": "We can add the labels this week. It's a small change."
+      },
+      {
+        "speakerId": "s3",
+        "speakerName": "Petr Ivanov",
+        "text": "I am not agree that it is small, we have many custom buttons. But okay, I will make a list."
+      },
+      {
+        "speakerId": "s1",
+        "speakerName": "Laura Bennett",
+        "text": "Thanks, Petr. Please share the list in the channel so Daniel can estimate it."
+      },
+      { "speakerId": "s2", "speakerName": "Daniel Reed", "text": "Perfect. Anything else from anyone?" },
+      {
+        "speakerId": "s1",
+        "speakerName": "Laura Bennett",
+        "text": "No, I think we're done. Thanks, everyone."
+      }
+    ],
+    "summary": "The team agreed to move the phone number step out of onboarding and to split the November release: onboarding ships on November 4, payments on November 18. Accessibility labels for the first screen are part of the release.",
+    "tasks": [
+      { "text": "Send the updated onboarding mockups", "assignee": "Petr Ivanov" },
+      { "text": "Update the roadmap and inform QA", "assignee": "Daniel Reed" },
+      { "text": "List the custom buttons that need accessibility labels", "assignee": "Petr Ivanov" }
+    ],
+    "tags": ["product", "onboarding", "release"]
+  }
+}

@@ -1,0 +1,31 @@
+{
+  "id": "slack-design-review-1761231900.000200",
+  "title": "#design-review: empty states",
+  "occurredAt": "2026-10-23T14:05:00.000Z",
+  "kind": "chat",
+  "learnerSpeaker": "Petr Ivanov",
+  "segments": [
+    {
+      "speaker": "Laura Bennett",
+      "text": "Petr, did you get a chance to look at the empty states for the words list?"
+    },
+    {
+      "speaker": "Petr Ivanov",
+      "text": "Yes, I have looked on them in the morning. I think they are good, but the illustration is to big on small phones."
+    },
+    { "speaker": "Laura Bennett", "text": "Good point. Could you suggest a size?" },
+    {
+      "speaker": "Petr Ivanov",
+      "text": "Maybe 120 points instead of 200. Also the text says \"You have no words\", it sounds little bit sad."
+    },
+    {
+      "speaker": "Laura Bennett",
+      "text": "Ha, fair. What about \"Your words will show up here after your first call\"?"
+    },
+    {
+      "speaker": "Petr Ivanov",
+      "text": "Definately better. I will recieve the new copy from you and update the mockups untill tomorrow."
+    },
+    { "speaker": "Laura Bennett", "text": "Perfect, thanks!" }
+  ]
+}

@@ -9,8 +9,9 @@
     "noUnusedLocals": true,
     "noUnusedParameters": true,
     "isolatedModules": true,
+    "resolveJsonModule": true,
     "skipLibCheck": true,
     "types": []
   },
-  "include": ["src"]
+  "include": ["src", "test", "vitest.config.ts"]
 }

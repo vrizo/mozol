@@ -1,0 +1,9 @@
+{
+  "aps": {
+    "alert": { "title": "MOZOL", "body": "2 new things to learn from your last call." },
+    "sound": "default",
+    "mutable-content": 1,
+    "thread-id": "mozol"
+  },
+  "mozol": { "v": 1, "type": "deliveries", "pending": 2, "transcriptId": "trn_01K86PXW8D2F4H6J8K0M2N4P6R" }
+}

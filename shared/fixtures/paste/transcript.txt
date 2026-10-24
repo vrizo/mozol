@@ -1,0 +1,8 @@
+Maria Lopez: Good morning, Petr. Do you have the numbers for the quarterly review?
+Petr: Good morning. Yes, I have prepared the report for the actual quarter yesterday evening.
+Maria Lopez: Great. What are the main points?
+Petr: The revenue is very very good, it grew on twelve percent compared with last quarter.
+And the costs stayed almost the same, only the servers became more expensive.
+Maria Lopez: That's good news. Did you include the churn numbers too?
+Petr: Not yet, I am waiting the data from the analytics team. I will add it until Friday.
+Maria Lopez: Sounds good. Send it to me as soon as it's ready.
