@@ -20,7 +20,6 @@ import {
   itemKey,
   JsonSourceBody,
   marker,
-  normalizeTerm,
   PasteTranscriptBody,
   TestPush,
 } from "../src";
@@ -144,21 +143,16 @@ describe("analysis fixtures", () => {
   test("result-ok has the planned shape", () => {
     expect(result.status).toBe("ok");
     expect(result.language).toBe("en");
-    expect(result.findings).toHaveLength(6);
-    expect(result.findings.filter((f) => f.category === "register")).toHaveLength(2);
-    expect(result.words).toHaveLength(4);
-    expect(result.phrases).toHaveLength(2);
-    expect(result.rewrites).toHaveLength(2);
+    expect(result.findings.map((f) => f.severity)).toEqual(["high", "high", "medium"]);
+    expect(result.words).toHaveLength(3);
   });
 
-  test("quotes, originals and the learner's own versions are exact fragments of Petr's lines", () => {
+  test("quotes and the learner's own versions are exact fragments of Petr's lines", () => {
     const fragments = [
       ...result.findings.flatMap((f) => f.examples.map((e) => e.quote)),
-      ...result.rewrites.map((r) => r.original),
       ...result.words.flatMap((w) => (w.learnerSaid === null ? [] : [w.learnerSaid])),
-      ...result.phrases.flatMap((p) => (p.insteadOf === null ? [] : [p.insteadOf])),
     ];
-    expect(fragments.length).toBeGreaterThan(15);
+    expect(fragments).toHaveLength(10);
     for (const fragment of fragments) {
       expect(
         petrLines.some((line) => line.includes(fragment)),
@@ -167,21 +161,19 @@ describe("analysis fixtures", () => {
     }
   });
 
-  test("match terms use all four modes and both languages", () => {
+  test("match terms use the word, prefix and phrase modes and both languages", () => {
     const terms = [
       ...result.findings.flatMap((f) => f.matchTerms),
       ...result.words.flatMap((w) => w.matchTerms),
-      ...result.phrases.flatMap((p) => p.matchTerms),
-      ...result.rewrites.flatMap((r) => r.matchTerms),
     ];
-    expect(new Set(terms.map((t) => t.mode))).toEqual(new Set(["word", "prefix", "phrase", "substring"]));
+    expect(new Set(terms.map((t) => t.mode))).toEqual(new Set(["word", "prefix", "phrase"]));
     expect(new Set(terms.map((t) => t.lang))).toEqual(new Set(["en", "ru"]));
   });
 
   test("result-native-language parses with empty lists", () => {
     const native = AnalysisResult.parse(resultNative);
     expect(native.status).toBe("native_language");
-    expect([...native.findings, ...native.words, ...native.phrases, ...native.rewrites]).toEqual([]);
+    expect([...native.findings, ...native.words]).toEqual([]);
   });
 });
 
@@ -202,7 +194,8 @@ describe("source fixtures", () => {
 });
 
 describe("delivery and push fixtures", () => {
-  test("the claim response parses; item keys, markers and match terms are computed from the analysis", async () => {
+  // Its match terms predate the match term rules of analysis-v2 and stay as they are: the iOS tests use them.
+  test("the claim response parses; item keys and markers are computed from the analysis", async () => {
     const claim = ClaimResponse.parse(claimResponse);
     const result = AnalysisResult.parse(resultOk);
     expect(claim.deliveries.map((d) => d.recommendation.kind)).toEqual(["mistake", "word"]);
@@ -214,7 +207,6 @@ describe("delivery and push fixtures", () => {
 
     expect(await itemKey("mistake", finding)).toBe(mistake.itemKey);
     expect(await itemKey("word", suggestion)).toBe(word.itemKey);
-    expect(word.matchTerms).toEqual(suggestion.matchTerms.map(normalizeTerm));
     for (const rec of [mistake, word]) {
       expect(await marker(rec.language, rec.itemKey)).toBe(rec.marker);
     }

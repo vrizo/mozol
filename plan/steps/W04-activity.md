@@ -4,7 +4,7 @@ Track: web. Depends on: W02, B08 (B09 for the recommendations block). Next: W05.
 
 Goal
 
-The user sees the new recommendations that MOZOL puts into Reminders, reads an analysis (summary, findings, words, phrases, rewrites) and sends recommendations to the phone. The user never chooses a speaker.
+The user sees the new recommendations that MOZOL puts into Reminders, reads an analysis (findings and words) and sends recommendations to the phone. The user never chooses a speaker.
 
 Read first
 
@@ -18,11 +18,9 @@ Do
 1. Activity (/activity): only recommendations sent to the phone (GET /api/recommendations?delivered=true), newest first, paged with a "load more" button. Each row: title linking to /r/<id>, kind, language, delivery state, date.
 2. Transcript (/activity/:id):
    - header: title, source, date, duration, conversation language, status, the learner speaker;
-   - summary: overview, estimated level, strengths, focus (native-language texts; set lang attributes from the user's native language and the conversation language so screen readers read them right);
+   - set lang attributes from the user's native language (explanations, titles, tips, translations) and the conversation language (quotes, corrections, words, examples) so screen readers read them right;
    - findings grouped by category, high severity first: title, severity, occurrences, examples (quote and correction, visually distinct and readable by screen readers as "you said" and "better"), explanation, tip;
    - words: term, type, translation, meaning, example and its translation, what the user said instead;
-   - phrases: phrase, when to use it, translation, the user's version;
-   - rewrites: the user's sentence and the better version side by side, with the note;
    - recommendations block: every recommendation of this transcript in rank order with its delivery state (waiting, on the phone with its outcome, failed, not sent), a link to /r/<id>, and "send to phone" for one without a waiting delivery (empty until B09);
    - the transcript itself, collapsed by default, with the learner's lines marked;
    - actions: analyze again (POST analyze; disabled while busy; 409 transcript_busy shown as a notice), delete (confirm dialog, then back to /activity).

@@ -35,7 +35,7 @@ export const Transcript = z.strictObject({
   skipReason: SkipReason.nullable(),
   errorCode: TranscriptErrorCode.nullable(),
   learnerSpeakerName: z.string().nullable(),
-  counts: z.strictObject({ findings: Count, words: Count, phrases: Count, rewrites: Count }).nullable(),
+  counts: z.strictObject({ findings: Count, words: Count }).nullable(),
   createdAt: Time,
 });
 export type Transcript = z.infer<typeof Transcript>;

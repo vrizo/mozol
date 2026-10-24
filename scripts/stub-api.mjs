@@ -51,7 +51,7 @@ const CLOCK_TIME = /^([01][0-9]|2[0-3]):[0-5][0-9]$/;
 const SCHEDULE_DELAY_MS = 2 * 60 * 60 * 1000;
 const REMINDERS_ACCESS = ["full", "write_only", "denied", "restricted", "not_determined"];
 const APPLIED_OUTCOMES = ["embed_updated", "reminder_updated", "embedded", "created"];
-const KINDS = ["mistake", "word", "phrase", "rewrite"];
+const KINDS = ["mistake", "word"];
 const DEVICE_KEYS = [
   "platform", "bundleId", "appVersion", "osVersion",
   "apnsToken", "apnsEnvironment", "remindersAccess",

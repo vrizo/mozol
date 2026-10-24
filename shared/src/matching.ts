@@ -1,6 +1,6 @@
 // Text normalization, match terms, item keys and markers (shared/CONTRACT.md). The iOS app follows this file and
 // shared/fixtures/matching/cases.json.
-import type { Finding, MatchTerm, Phrase, Rewrite, WordSuggestion } from "./analysis";
+import type { Finding, MatchTerm, WordSuggestion } from "./analysis";
 import type { RecommendationKind } from "./recommendations";
 
 export function normalizeText(text: string): string {
@@ -68,15 +68,11 @@ function containsSequence(haystack: string[], needle: string[]): boolean {
 export type KeyedItem = {
   mistake: Pick<Finding, "patternKey">;
   word: Pick<WordSuggestion, "term">;
-  phrase: Pick<Phrase, "phrase">;
-  rewrite: Pick<Rewrite, "original">;
 };
 
 const itemKeyOf: { [K in RecommendationKind]: (item: KeyedItem[K]) => Promise<string> } = {
   mistake: async (item) => item.patternKey,
   word: async (item) => `word:${nonEmptyNormalized(item.term)}`,
-  phrase: async (item) => `phrase:${nonEmptyNormalized(item.phrase)}`,
-  rewrite: async (item) => `rewrite:${(await sha256Hex(nonEmptyNormalized(item.original))).slice(0, 16)}`,
 };
 
 export function itemKey<K extends RecommendationKind>(kind: K, item: KeyedItem[K]): Promise<string> {

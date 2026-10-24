@@ -26,7 +26,7 @@ import {
   runAnalysis,
   type StreamClient,
 } from "../src/analysis/model";
-import { PROMPT_VERSION, SYSTEM_PROMPT } from "../src/analysis/prompt";
+import { PROMPT_VERSION, systemPrompt } from "../src/analysis/prompt";
 import { jamieAdapter } from "../src/sources/jamie";
 import { countWords, findLearner } from "../src/sources/learner";
 import type { NormalizedTranscript, Segment } from "../src/sources/types";
@@ -59,7 +59,6 @@ function params(segments: Segment[], overrides: Partial<ModelInputParams> = {}):
     transcript: { kind: "call", segments, learnerSpeakerId: "petr" },
     user: RU,
     knownPatterns: [],
-    levels: [],
     ...overrides,
   };
 }
@@ -77,9 +76,9 @@ function thrown(fn: () => unknown): unknown {
 }
 
 describe("buildModelInput", () => {
-  it("writes the user message in the documented order", () => {
+  it("writes the user message in the documented order, with only the learner's lines", () => {
     const input = buildModelInput(
-      params([anna("Good morning, everyone."), petr("Good morning. I am agree with Anna.")], {
+      params([anna("Good morning, everyone."), petr("Good morning. I am agree with Anna."), anna("Great.")], {
         knownPatterns: [
           pattern({
             key: "vocabulary.false_friend.actual",
@@ -91,35 +90,28 @@ describe("buildModelInput", () => {
             ],
           }),
         ],
-        levels: [
-          { language: "en", estimatedLevel: "B1", createdAt: "2026-10-20T10:00:00.000Z" },
-          { language: "de", estimatedLevel: "A2", createdAt: "2026-10-19T10:00:00.000Z" },
-        ],
       }),
     );
     expect(input.userMessage).toBe(
       [
         "Learner",
         "- Native language: Russian (ru)",
-        "- Latest estimated level: German (de) A2; English (en) B1",
         "",
         "Source kind: call",
-        "Learner speaker: Petr Ivanov",
         "",
         "Known patterns (language | key | title | match terms)",
         "en | vocabulary.false_friend.actual | «actual» вместо «current» | actual, current, актуальн",
         "",
-        "Transcript",
-        "[1] Anna Smith: Good morning, everyone.",
-        "[2*] Petr Ivanov: Good morning. I am agree with Anna.",
+        "The learner's lines",
+        "[1] Good morning. I am agree with Anna.",
       ].join("\n"),
     );
+    expect(input.kind).toBe("call");
     expect(input.learnerWordCount).toBe(7);
     expect(input.learnerLines).toEqual(["Good morning. I am agree with Anna."]);
-    expect(input.compressed).toBe(false);
   });
 
-  it("numbers and marks every line of the Jamie fixture", () => {
+  it("sends the learner's lines of the Jamie fixture and nothing of the other speakers", () => {
     const transcript = jamieTranscript();
     const learner = findLearner(
       transcript,
@@ -135,29 +127,23 @@ describe("buildModelInput", () => {
       },
       user: RU,
       knownPatterns: [],
-      levels: [],
     });
 
+    const petrSegments = meeting.data.transcript.filter((s) => s.speakerName === "Petr Ivanov");
+    const others = meeting.data.transcript.filter((s) => s.speakerName !== "Petr Ivanov");
+    expect(petrSegments).toHaveLength(14);
     const lines = input.userMessage.split("\n");
-    const body = lines.slice(lines.indexOf("Transcript") + 1);
-    expect(body).toHaveLength(transcript.segments.length);
-    expect(body[0]).toBe(`[1] Laura Bennett: ${meeting.data.transcript[0]?.text}`);
-    expect(body[2]).toBe(`[3*] Petr Ivanov: ${meeting.data.transcript[2]?.text}`);
-    expect(body.filter((line) => /^\[\d+\*\] Petr Ivanov: /.test(line))).toHaveLength(
-      input.learnerLines.length,
-    );
-    expect(body.filter((line) => line.includes("*]")).every((line) => line.includes("] Petr Ivanov: "))).toBe(
-      true,
-    );
-
-    const petrSegments = meeting.data.transcript.filter((s) => s.speakerId === "s3");
+    const body = lines.slice(lines.indexOf("The learner's lines") + 1);
+    expect(body).toEqual(petrSegments.map((s, i) => `[${i + 1}] ${s.text}`));
     expect(input.learnerLines).toEqual(petrSegments.map((s) => s.text));
     expect(input.learnerWordCount).toBe(petrSegments.reduce((sum, s) => sum + countWords(s.text), 0));
-    expect(lines).toContain("Learner speaker: Petr Ivanov");
+    for (const name of ["Laura Bennett", "Daniel Reed", "Petr Ivanov"]) {
+      expect(input.userMessage).not.toContain(name);
+    }
+    for (const segment of others) expect(input.userMessage).not.toContain(segment.text);
     expect(lines.slice(lines.indexOf("Known patterns (language | key | title | match terms)") + 1)[0]).toBe(
       "none",
     );
-    expect(lines).toContain("- Latest estimated level: none");
   });
 
   it("lists up to 50 active patterns in any language, the most recently seen first", () => {
@@ -184,7 +170,7 @@ describe("buildModelInput", () => {
       params([petr("Hello there.")], { knownPatterns: patterns }),
     ).userMessage.split("\n");
     const start = lines.indexOf("Known patterns (language | key | title | match terms)") + 1;
-    expect(lines.slice(start, lines.indexOf("Transcript") - 1)).toEqual([
+    expect(lines.slice(start, lines.indexOf("The learner's lines") - 1)).toEqual([
       "en | grammar.articles.missing_the | Пропущенный артикль the | deadline",
       "de | grammar.cases.dative_after_mit | Dativ nach mit | (none)",
     ]);
@@ -199,41 +185,16 @@ describe("buildModelInput", () => {
     expect(message.split("\n").filter((line) => line.startsWith("en | grammar.topic."))).toHaveLength(50);
   });
 
-  it("takes the newest known level per language", () => {
-    const message = buildModelInput(
-      params([petr("Hello there.")], {
-        levels: [
-          { language: "en", estimatedLevel: "A2", createdAt: "2026-09-01T10:00:00.000Z" },
-          { language: "en", estimatedLevel: "B2", createdAt: "2026-10-01T10:00:00.000Z" },
-          { language: "en", estimatedLevel: null, createdAt: "2026-10-10T10:00:00.000Z" },
-          { language: null, estimatedLevel: null, createdAt: "2026-10-11T10:00:00.000Z" },
-        ],
-      }),
-    ).userMessage;
-    expect(message).toContain("- Latest estimated level: English (en) B2\n");
-  });
-
-  it("sends only the learner's lines and the line before each when the transcript is too long", () => {
+  it("sends a long transcript whole when the learner's lines fit", () => {
     const long = "word ".repeat(200);
     const segments = Array.from({ length: 600 }, (_, i) => (i % 3 === 2 ? petr("I am agree.") : anna(long)));
     expect(segments.map((s) => s.text).join("\n").length).toBeGreaterThan(MAX_TRANSCRIPT_CHARS);
-
     const input = buildModelInput(params(segments));
-    expect(input.compressed).toBe(true);
-    const lines = input.userMessage.split("\n");
-    const body = lines.slice(lines.indexOf("Transcript") + 1);
-    expect(body[0]).toMatch(/^Note: the transcript is too long to show in full\./);
-    expect(body.slice(1, 5)).toEqual([
-      `[2] Anna Smith: ${long}`,
-      "[3*] Petr Ivanov: I am agree.",
-      `[5] Anna Smith: ${long}`,
-      "[6*] Petr Ivanov: I am agree.",
-    ]);
-    expect(body).toHaveLength(1 + 400);
     expect(input.learnerLines).toHaveLength(200);
+    expect(input.userMessage).not.toContain(long);
   });
 
-  it("fails with transcript_too_long when the learner's lines alone are too long", () => {
+  it("fails with transcript_too_long when the learner's lines are too long", () => {
     const segments = Array.from({ length: 900 }, (_, i) =>
       i % 2 === 0 ? anna("Yes.") : petr("word ".repeat(200)),
     );
@@ -294,6 +255,8 @@ describe("interpretFinalMessage", () => {
     ["invalid JSON", okJson.slice(0, -10)],
     ["a bad pattern key", withFirstFinding((f) => [{ ...f, patternKey: "register.Swearing" }])],
     ["a repeated pattern key", withFirstFinding((f) => [f, f])],
+    ["a finding without match terms", withFirstFinding((f) => [{ ...f, matchTerms: [] }])],
+    ["a fourth finding", withFirstFinding((f) => [f, { ...f, patternKey: "grammar.articles.another_one" }])],
     [
       "a prefix term shorter than 4 characters",
       withFirstFinding((f) => [{ ...f, matchTerms: [{ text: "shi", lang: "en", mode: "prefix" }] }]),
@@ -389,10 +352,10 @@ function fakeClient(answer: BetaMessage | Error): { client: StreamClient; calls:
 }
 
 const INPUT: ModelInput = {
+  kind: "call",
   userMessage: "Learner\n...",
   learnerWordCount: 40,
-  learnerLines: meeting.data.transcript.filter((s) => s.speakerId === "s3").map((s) => s.text),
-  compressed: false,
+  learnerLines: meeting.data.transcript.filter((s) => s.speakerName === "Petr Ivanov").map((s) => s.text),
 };
 
 describe("ClaudeModel", () => {
@@ -406,7 +369,7 @@ describe("ClaudeModel", () => {
     expect(request).toMatchObject({
       model: "claude-opus-5-5",
       max_tokens: 64000,
-      system: [{ type: "text", text: SYSTEM_PROMPT, cache_control: { type: "ephemeral" } }],
+      system: [{ type: "text", text: systemPrompt("call"), cache_control: { type: "ephemeral" } }],
       messages: [{ role: "user", content: INPUT.userMessage }],
       output_config: { effort: "high", format: { type: "json_schema" } },
       fallbacks: "default",
@@ -425,6 +388,16 @@ describe("ClaudeModel", () => {
       unmatchedQuotes: 0,
     });
     expect(output.result.status).toBe("ok");
+  });
+
+  it("sends the written-language system prompt for chat and text", async () => {
+    const { client, calls } = fakeClient(message([text(okJson)]));
+    const model = new ClaudeModel({ client, model: "claude-opus-5-5", effort: "medium" });
+    await model.analyze({ ...INPUT, kind: "chat" });
+    await model.analyze({ ...INPUT, kind: "text" });
+    const texts = calls.map((c) => (Array.isArray(c.system) ? c.system[0]?.text : c.system));
+    expect(texts).toEqual([systemPrompt("chat"), systemPrompt("chat")]);
+    expect(systemPrompt("text")).toBe(systemPrompt("chat"));
   });
 
   it("turns SDK errors into analysis errors", async () => {
@@ -473,7 +446,7 @@ describe("createModel", () => {
 
 describe("the quote check", () => {
   const result = AnalysisResult.parse(resultOk);
-  const quotes = result.findings.flatMap((f) => f.examples).length + result.rewrites.length;
+  const quotes = result.findings.flatMap((f) => f.examples).length;
 
   it("finds quotes ignoring case, punctuation and extra spaces", () => {
     expect(countUnmatchedQuotes(result, INPUT.learnerLines)).toBe(0);
@@ -481,18 +454,18 @@ describe("the quote check", () => {
     expect(countUnmatchedQuotes(result, shouted)).toBe(0);
   });
 
-  it("counts example quotes and rewrite originals that are not in the learner's lines", () => {
+  it("counts example quotes that are not in the learner's lines", () => {
     expect(countUnmatchedQuotes(result, [])).toBe(quotes);
-    const withoutRewrites = INPUT.learnerLines.filter(
-      (line) => !result.rewrites.some((r) => r.original === line),
-    );
-    expect(countUnmatchedQuotes(result, withoutRewrites)).toBe(result.rewrites.length);
+    const withoutDashboard = INPUT.learnerLines.filter((line) => !line.includes("dashboard"));
+    expect(countUnmatchedQuotes(result, withoutDashboard)).toBe(1);
   });
 
   it("matches whole words only", () => {
-    const one = { ...result, findings: [], rewrites: [{ ...result.rewrites[0], original: "is good" }] };
-    expect(countUnmatchedQuotes(one as AnalysisResult, ["this good"])).toBe(1);
-    expect(countUnmatchedQuotes(one as AnalysisResult, ["it is good, yes"])).toBe(0);
+    const [finding] = result.findings;
+    if (finding === undefined) throw new Error("result-ok has no findings");
+    const one = { ...result, findings: [{ ...finding, examples: [{ quote: "is good", correction: "x" }] }] };
+    expect(countUnmatchedQuotes(one, ["this good"])).toBe(1);
+    expect(countUnmatchedQuotes(one, ["it is good, yes"])).toBe(0);
   });
 });
 
@@ -532,5 +505,22 @@ describe("runAnalysis", () => {
       code: "analysis_truncated",
       retryable: false,
     });
+  });
+});
+
+describe("system prompts", () => {
+  it("give calls the spoken-language rules and chat and text the written ones", () => {
+    const call = systemPrompt("call");
+    const written = systemPrompt("text");
+    expect(call).not.toBe(written);
+    expect(call).toContain("This is a call");
+    expect(call).toContain("Never spelling or punctuation.");
+    expect(call).not.toContain("This is written text");
+    expect(written).toContain("This is written text");
+    expect(written).not.toContain("This is a call");
+    for (const prompt of [call, written]) {
+      expect(prompt).toContain("Return at most 3 findings and at most 3 words");
+      expect(prompt).not.toMatch(/summary|rewrite|estimatedLevel/i);
+    }
   });
 });

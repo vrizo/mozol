@@ -12,9 +12,6 @@ export type Time = z.infer<typeof Time>;
 export const LanguageCode = z.string().regex(/^[a-z]{2,3}$/);
 export type LanguageCode = z.infer<typeof LanguageCode>;
 
-export const Level = z.enum(["A1", "A2", "B1", "B2", "C1", "C2"]);
-export type Level = z.infer<typeof Level>;
-
 export const SourceId = z.enum(["jamie", "paste", "json"]);
 export type SourceId = z.infer<typeof SourceId>;
 

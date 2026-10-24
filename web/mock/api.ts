@@ -330,8 +330,6 @@ async function finishAnalysis(stored: StoredTranscript, result: AnalysisResult) 
   t.counts = {
     findings: result.findings.length,
     words: result.words.length,
-    phrases: result.phrases.length,
-    rewrites: result.rewrites.length,
   };
   const language = result.language as string;
   for (const f of result.findings) notePattern(stored, language, f);
@@ -481,28 +479,6 @@ async function addRecommendations(stored: StoredTranscript, language: string, re
       notes: `${w.translation}\n${w.meaning}\n\n${w.example}\n${w.exampleTranslation}`,
       embed: `${w.term}: ${w.translation}`,
       terms: w.matchTerms,
-      priority: 5,
-    });
-  }
-  for (const p of result.phrases) {
-    items.push({
-      kind: "phrase",
-      key: await itemKey("phrase", p),
-      title: p.phrase,
-      notes: `${p.useWhen}\n${p.translation}${p.insteadOf ? `\n\nNot: ${p.insteadOf}` : ""}`,
-      embed: `${p.phrase}: ${p.translation}`,
-      terms: p.matchTerms,
-      priority: 5,
-    });
-  }
-  for (const r of result.rewrites) {
-    items.push({
-      kind: "rewrite",
-      key: await itemKey("rewrite", r),
-      title: r.rewrite,
-      notes: `${r.original}\n-> ${r.rewrite}\n\n${r.note}`,
-      embed: r.rewrite,
-      terms: r.matchTerms,
       priority: 5,
     });
   }
@@ -1121,24 +1097,16 @@ const routes: [string, RegExp, Handler][] = [
 const resultOk = AnalysisResultSchema.parse(JSON.parse(resultOkText));
 const resultNative = AnalysisResultSchema.parse(JSON.parse(resultNativeText));
 
-// The second English call repeats three mistakes and two words, so they become recurring.
+// The second English call repeats two mistakes and two words, so they become recurring.
 const resultOkRepeat = AnalysisResultSchema.parse({
   ...resultOk,
-  findings: resultOk.findings.slice(1, 4).map((f) => ({ ...f, occurrences: 1 })),
+  findings: resultOk.findings.slice(1, 3).map((f) => ({ ...f, occurrences: 1 })),
   words: resultOk.words.slice(0, 2),
-  phrases: [],
-  rewrites: [],
 });
 
 const resultGerman = AnalysisResultSchema.parse({
   status: "ok",
   language: "de",
-  summary: {
-    overview: "Вы понятно объясняете план на неделю. Чаще всего путается порядок слов после «weil».",
-    estimatedLevel: "A2",
-    strengths: ["Уверенно договариваетесь о времени"],
-    focus: "После «weil» ставить глагол в конец.",
-  },
   findings: [
     {
       patternKey: "grammar.word_order.verb_final_after_weil",
@@ -1149,7 +1117,10 @@ const resultGerman = AnalysisResultSchema.parse({
       examples: [{ quote: "weil ich habe keine Zeit", correction: "weil ich keine Zeit habe" }],
       explanation: "В придаточном предложении с weil спрягаемый глагол стоит в конце.",
       tip: "Скажите про себя: weil ... habe.",
-      matchTerms: [{ text: "weil", lang: "de", mode: "word" }],
+      matchTerms: [
+        { text: "arzttermin", lang: "de", mode: "word" },
+        { text: "врач", lang: "ru", mode: "prefix" },
+      ],
     },
     {
       patternKey: "grammar.articles.missing_or_wrong",
@@ -1160,7 +1131,10 @@ const resultGerman = AnalysisResultSchema.parse({
       examples: [{ quote: "der Problem", correction: "das Problem" }],
       explanation: "Problem — среднего рода.",
       tip: null,
-      matchTerms: [{ text: "problem", lang: "de", mode: "word" }],
+      matchTerms: [
+        { text: "checkout", lang: "de", mode: "word" },
+        { text: "оплат", lang: "ru", mode: "prefix" },
+      ],
     },
   ],
   words: [
@@ -1174,23 +1148,6 @@ const resultGerman = AnalysisResultSchema.parse({
       example: "Ich habe morgen um zehn einen Termin.",
       exampleTranslation: "У меня завтра в десять встреча.",
       matchTerms: [{ text: "termin", lang: "de", mode: "word" }],
-    },
-  ],
-  phrases: [
-    {
-      phrase: "Das passt mir gut",
-      useWhen: "Когда соглашаетесь на предложенное время",
-      translation: "Мне это подходит",
-      insteadOf: "Das ist gut für mich",
-      matchTerms: [{ text: "passt mir", lang: "de", mode: "phrase" }],
-    },
-  ],
-  rewrites: [
-    {
-      original: "Ich kann nicht kommen am Montag weil ich habe einen Arzttermin",
-      rewrite: "Ich kann am Montag nicht kommen, weil ich einen Arzttermin habe.",
-      note: "Время ставится перед nicht, а глагол после weil уходит в конец.",
-      matchTerms: [],
     },
   ],
 });

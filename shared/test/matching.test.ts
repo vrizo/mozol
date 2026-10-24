@@ -74,12 +74,6 @@ describe("itemKey and marker", () => {
       "grammar.articles.missing_or_wrong",
     );
     expect(await itemKey("word", { term: "Make a Decision" })).toBe("word:make a decision");
-    expect(await itemKey("phrase", { phrase: "Could you walk me through it?" })).toBe(
-      "phrase:could you walk me through it",
-    );
-    const rewrite = await itemKey("rewrite", { original: "If we will move the release to next month." });
-    expect(rewrite).toMatch(/^rewrite:[0-9a-f]{16}$/);
-    expect(await itemKey("rewrite", { original: "if we WILL move the release to next month" })).toBe(rewrite);
   });
 
   test("an item without text after normalization has no key", async () => {

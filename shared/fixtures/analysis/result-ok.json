@@ -1,42 +1,26 @@
 {
   "status": "ok",
   "language": "en",
-  "summary": {
-    "overview": "Вы уверенно ведёте рабочее обсуждение и ясно предлагаете решения. Чаще всего мешают артикли и Present Perfect со словами о прошлом.",
-    "estimatedLevel": "B1",
-    "strengths": [
-      "Чётко предлагаете решения по продукту",
-      "Аргументируете свою позицию",
-      "Хороший рабочий словарь"
-    ],
-    "focus": "Ставить a или the перед существительным в единственном числе."
-  },
   "findings": [
-    {
-      "patternKey": "register.swearing.shit",
-      "category": "register",
-      "title": "Ругательство на рабочей встрече",
-      "severity": "high",
-      "occurrences": 1,
-      "examples": [{ "quote": "This is shit", "correction": "This is really frustrating" }],
-      "explanation": "На встрече с коллегами это слово звучит грубо, даже когда вы не обращаетесь к кому-то лично.",
-      "tip": "Когда вы раздражены, скажите «This is really frustrating»: эмоция понятна, но звучит профессионально.",
-      "matchTerms": []
-    },
     {
       "patternKey": "grammar.articles.missing_or_wrong",
       "category": "grammar",
       "title": "Пропущенные и лишние артикли",
       "severity": "high",
-      "occurrences": 5,
+      "occurrences": 4,
       "examples": [
         { "quote": "It is good idea", "correction": "It is a good idea" },
         { "quote": "I sent you link yesterday", "correction": "I sent you the link yesterday" },
         { "quote": "we need the clear plan", "correction": "we need a clear plan" }
       ],
-      "explanation": "Исчисляемое существительное в единственном числе почти всегда стоит с артиклем: a, когда предмет упоминают впервые, the, когда понятно, о каком речь.",
-      "tip": "Перед существительным спросите себя: «какой-то» — значит a, «тот самый» — значит the.",
-      "matchTerms": []
+      "explanation": "Перед исчисляемым существительным в единственном числе нужен артикль: a, когда предмет упоминают впервые, the, когда ясно, о каком речь.",
+      "tip": "Скажите вслух «a good idea, the link, a clear plan» пять раз подряд, пока не зазвучит естественно.",
+      "matchTerms": [
+        { "text": "research results", "lang": "en", "mode": "phrase" },
+        { "text": "исследован", "lang": "ru", "mode": "prefix" },
+        { "text": "marketing team", "lang": "en", "mode": "phrase" },
+        { "text": "маркетинг", "lang": "ru", "mode": "prefix" }
+      ]
     },
     {
       "patternKey": "grammar.tenses.present_perfect_with_past_time",
@@ -52,22 +36,14 @@
         }
       ],
       "explanation": "Со словами yesterday, last week, two days ago нужен Past Simple. Present Perfect не сочетается с точным временем в прошлом.",
-      "tip": "Если в предложении есть «когда именно», ставьте Past Simple.",
-      "matchTerms": []
-    },
-    {
-      "patternKey": "grammar.verb_patterns.be_agree",
-      "category": "grammar",
-      "title": "«I am agree» вместо «I agree»",
-      "severity": "medium",
-      "occurrences": 2,
-      "examples": [
-        { "quote": "I am agree with Daniel", "correction": "I agree with Daniel" },
-        { "quote": "I am not agree that it is small", "correction": "I don't agree that it is small" }
-      ],
-      "explanation": "Agree — это глагол, а не прилагательное, поэтому am перед ним не нужен.",
-      "tip": "Отрицание строится через don't: I don't agree.",
-      "matchTerms": []
+      "tip": "Услышали в своей фразе «когда именно» — говорите saw, released, sent.",
+      "matchTerms": [
+        { "text": "dashboard", "lang": "en", "mode": "word" },
+        { "text": "дашборд", "lang": "ru", "mode": "prefix" },
+        { "text": "onboarding", "lang": "en", "mode": "word" },
+        { "text": "онбординг", "lang": "ru", "mode": "prefix" },
+        { "text": "beta", "lang": "en", "mode": "word" }
+      ]
     },
     {
       "patternKey": "vocabulary.false_friend.actual",
@@ -86,29 +62,9 @@
       "tip": null,
       "matchTerms": [
         { "text": "actual", "lang": "en", "mode": "word" },
-        { "text": "current", "lang": "en", "mode": "word" },
-        { "text": "текущ", "lang": "ru", "mode": "prefix" },
-        { "text": "актуальн", "lang": "ru", "mode": "prefix" }
-      ]
-    },
-    {
-      "patternKey": "register.outdated_term.handicapped",
-      "category": "register",
-      "title": "Устаревшее слово handicapped",
-      "severity": "medium",
-      "occurrences": 1,
-      "examples": [
-        {
-          "quote": "we forgot about handicapped people",
-          "correction": "we forgot about people with disabilities"
-        }
-      ],
-      "explanation": "Слово handicapped сейчас звучит устаревшим и может задеть собеседника. В рабочей речи говорят people with disabilities или disabled people.",
-      "tip": "В разговоре о продукте подойдёт и слово accessibility.",
-      "matchTerms": [
-        { "text": "handicapped", "lang": "en", "mode": "word" },
-        { "text": "people with disabilities", "lang": "en", "mode": "phrase" },
-        { "text": "инвалид", "lang": "ru", "mode": "prefix" }
+        { "text": "current version", "lang": "en", "mode": "phrase" },
+        { "text": "актуальн", "lang": "ru", "mode": "prefix" },
+        { "text": "текущ", "lang": "ru", "mode": "prefix" }
       ]
     }
   ],
@@ -119,13 +75,14 @@
       "reason": "misused",
       "learnerSaid": "do a decision",
       "translation": "принять решение",
-      "meaning": "С decision в английском используют глагол make, а не do.",
-      "example": "We need to make a decision by Friday.",
-      "exampleTranslation": "Нам нужно принять решение до пятницы.",
+      "meaning": "С decision говорят make, а не do. Так звучит в любом разговоре о выборе.",
+      "example": "We need to make a decision about the release date today.",
+      "exampleTranslation": "Нам нужно сегодня принять решение о дате релиза.",
       "matchTerms": [
         { "text": "make a decision", "lang": "en", "mode": "phrase" },
-        { "text": "decision", "lang": "en", "mode": "word" },
-        { "text": "решени", "lang": "ru", "mode": "prefix" }
+        { "text": "принять решение", "lang": "ru", "mode": "phrase" },
+        { "text": "release date", "lang": "en", "mode": "phrase" },
+        { "text": "перенос", "lang": "ru", "mode": "prefix" }
       ]
     },
     {
@@ -134,84 +91,30 @@
       "reason": "overused_alternative",
       "learnerSaid": "very very important",
       "translation": "критически важный",
-      "meaning": "Сильнее, чем important. Подходит вместо «very very important» в деловой речи.",
+      "meaning": "Сильнее, чем important. Говорите вместо «very very important», когда хотите подчеркнуть важность.",
       "example": "Fixing the phone number step is crucial for the release.",
       "exampleTranslation": "Исправить шаг с номером телефона критически важно для релиза.",
       "matchTerms": [
         { "text": "crucial", "lang": "en", "mode": "word" },
-        { "text": "критичн", "lang": "ru", "mode": "prefix" }
+        { "text": "критичн", "lang": "ru", "mode": "prefix" },
+        { "text": "phone number", "lang": "en", "mode": "phrase" },
+        { "text": "номер телефона", "lang": "ru", "mode": "phrase" }
       ]
     },
     {
-      "term": "push back",
-      "type": "phrasal_verb",
+      "term": "people with disabilities",
+      "type": "phrase",
       "reason": "better_choice",
-      "learnerSaid": "move the release to next month",
-      "translation": "перенести на более поздний срок",
-      "meaning": "Обычный способ сказать, что срок или встреча сдвигаются позже.",
-      "example": "Let's push back the payments release by two weeks.",
-      "exampleTranslation": "Давайте перенесём релиз платежей на две недели.",
+      "learnerSaid": "handicapped people",
+      "translation": "люди с инвалидностью",
+      "meaning": "Handicapped сейчас звучит устаревшим и может задеть. В разговоре о продукте говорят people with disabilities или accessibility.",
+      "example": "The first screen should work for people with disabilities.",
+      "exampleTranslation": "Первый экран должен быть удобен для людей с инвалидностью.",
       "matchTerms": [
-        { "text": "push back", "lang": "en", "mode": "phrase" },
-        { "text": "postpon", "lang": "en", "mode": "prefix" },
-        { "text": "перенес", "lang": "ru", "mode": "prefix" },
-        { "text": "перенос", "lang": "ru", "mode": "prefix" }
-      ]
-    },
-    {
-      "term": "accessibility",
-      "type": "word",
-      "reason": "missing_word",
-      "learnerSaid": null,
-      "translation": "доступность для людей с инвалидностью",
-      "meaning": "Так называют удобство продукта для людей с нарушениями зрения, слуха или движения.",
-      "example": "We need to test the accessibility of the first screen.",
-      "exampleTranslation": "Нужно проверить доступность первого экрана.",
-      "matchTerms": [
+        { "text": "people with disabilities", "lang": "en", "mode": "phrase" },
+        { "text": "screen reader", "lang": "en", "mode": "phrase" },
         { "text": "accessibility", "lang": "en", "mode": "word" },
-        { "text": "a11y", "lang": "en", "mode": "word" },
-        { "text": "доступн", "lang": "ru", "mode": "substring" }
-      ]
-    }
-  ],
-  "phrases": [
-    {
-      "phrase": "Could you walk me through it?",
-      "useWhen": "Когда просите коллегу объяснить что-то по шагам.",
-      "translation": "Можешь объяснить мне по шагам?",
-      "insteadOf": "Can you explain me how the validation works now?",
-      "matchTerms": [
-        { "text": "walk me through", "lang": "en", "mode": "phrase" },
-        { "text": "объясн", "lang": "ru", "mode": "prefix" }
-      ]
-    },
-    {
-      "phrase": "I see your point, but I'm not sure it's that simple.",
-      "useWhen": "Когда вежливо не соглашаетесь с коллегой.",
-      "translation": "Понимаю твою мысль, но не уверен, что всё так просто.",
-      "insteadOf": "I am not agree that it is small",
-      "matchTerms": []
-    }
-  ],
-  "rewrites": [
-    {
-      "original": "So the thing is that we did the research and the users which we asked they said that the onboarding is too long and also they don't understand why we need their phone number on the first screen.",
-      "rewrite": "In our research, users said onboarding is too long. They also don't see why we ask for their phone number on the first screen.",
-      "note": "Одно длинное предложение разбито на два, лишние «the thing is» и «they» убраны.",
-      "matchTerms": [
-        { "text": "onboarding", "lang": "en", "mode": "word" },
-        { "text": "онбординг", "lang": "ru", "mode": "prefix" }
-      ]
-    },
-    {
-      "original": "If we will move the release to next month then marketing will need to change all the plan because they already booked the campaign for the first week and it will cost money for us.",
-      "rewrite": "If we push the release back a month, marketing has to redo the whole plan. The campaign is already booked for the first week, so it will cost us money.",
-      "note": "После if не ставят will; «all the plan» заменено на «the whole plan», «cost money for us» — на «cost us money».",
-      "matchTerms": [
-        { "text": "campaign", "lang": "en", "mode": "word" },
-        { "text": "release", "lang": "en", "mode": "word" },
-        { "text": "кампани", "lang": "ru", "mode": "prefix" },
-        { "text": "релиз", "lang": "ru", "mode": "prefix" }
+        { "text": "доступност", "lang": "ru", "mode": "prefix" }
       ]
     }
   ]

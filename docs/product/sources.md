@@ -21,7 +21,7 @@ A source is one adapter module in worker/src/sources/ plus one entry in the sour
 
 Finding the user's turns
 
-MOZOL analyzes only the user's own turns. The other speakers' turns are context. The worker picks the user's speaker in this order:
+MOZOL analyzes only the user's own turns, and only they go to the model. The other speakers' turns are left out. The worker picks the user's speaker in this order:
 
 1. The speaker that the source names as the user: for Jamie, the participant whose email is the recorder's email; for the json source, the speaker in learnerSpeaker.
 2. A speaker whose email is the user's account email.

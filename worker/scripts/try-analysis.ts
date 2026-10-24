@@ -11,7 +11,7 @@ import { jamieAdapter } from "../src/sources/jamie";
 import { jsonAdapter } from "../src/sources/json";
 import { findLearner } from "../src/sources/learner";
 
-// A sample user: Russian native speaker, no known patterns and no earlier levels.
+// A sample user: Russian native speaker, no known patterns.
 const USER = { email: "petr.ivanov@example.com", speakerNames: ["Petr Ivanov"], nativeLanguage: "ru" };
 
 const [fixturePath, runDir] = process.argv.slice(2);
@@ -39,20 +39,19 @@ const input = buildModelInput({
   transcript: { kind: transcript.kind, segments: transcript.segments, learnerSpeakerId: learner.speakerId },
   user: USER,
   knownPatterns: [],
-  levels: [],
 });
 const model = createModel({
   ANALYSIS_MODE: process.env.ANALYSIS_MODE ?? "claude",
   ANALYSIS_MODEL: process.env.ANALYSIS_MODEL ?? "claude-opus-5-5",
-  ANALYSIS_EFFORT: process.env.ANALYSIS_EFFORT ?? "high",
+  ANALYSIS_EFFORT: process.env.ANALYSIS_EFFORT ?? "medium",
   ANTHROPIC_API_KEY: process.env.ANTHROPIC_API_KEY,
 });
 const run = {
   fixture: fixturePath,
   promptVersion: PROMPT_VERSION,
   requestedModel: model.name,
+  kind: input.kind,
   learnerWordCount: input.learnerWordCount,
-  compressed: input.compressed,
 };
 const rid = crypto.randomUUID().replaceAll("-", "").slice(0, 12);
 
@@ -62,7 +61,7 @@ try {
   const { result } = output;
   console.log(
     `status ${result.status}, language ${result.language}, findings ${result.findings.length}, ` +
-      `words ${result.words.length}, phrases ${result.phrases.length}, rewrites ${result.rewrites.length}`,
+      `words ${result.words.length}`,
   );
   console.log(
     `model ${output.model}, input ${output.inputTokens}, output ${output.outputTokens}, ` +

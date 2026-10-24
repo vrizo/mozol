@@ -7,16 +7,14 @@ Languages
 - Any pair of languages works. The user's native language comes from the profile.
 - The conversation language is found by the model for every transcript: the language the user mostly speaks there. A user can learn several languages; each transcript is analyzed in its own language.
 - When the user mostly speaks the native language, the transcript is skipped with reason native_language.
-- Explanations, titles, tips, translations and the summary are in the native language. Quotes, corrections, words, examples, phrases and rewrites are in the conversation language.
+- Explanations, titles, tips and translations are in the native language. Quotes, corrections, words and examples are in the conversation language.
 
 Input
 
-- The transcript with speaker names.
-- Which speaker is the user (sources.md).
+- Only the user's own lines (sources.md, "Finding the user's turns"). The other speakers' lines are left out.
 - The user's native language.
 - The kind of source: call (speech recognition output), chat or text.
 - The user's known patterns, with their language: up to 50 active patterns, most recently seen first, each with its key, title and match terms.
-- The user's latest estimated level for each language, when there is one.
 
 Categories
 
@@ -27,11 +25,23 @@ Categories
 - fluency: frequent filler words and restarts, only when the transcript clearly shows them.
 - spelling and punctuation: only for chat and text sources.
 
+Calls
+
+A call is spoken language. For a call the model looks for the mistakes of speech and gives advice for speaking:
+
+- Mistakes a listener hears: tenses and verb forms, "will" after "if", question word order, articles and prepositions that repeat, wrong words and collocations, false friends, word-for-word phrases, bookish words where people say a simple one, wording too blunt or too formal for the people on the call, frequent fillers.
+- Not reported: anything that belongs to writing (spelling, punctuation, capital letters) and anything speech recognition may have made.
+- Corrections are what a native speaker would say aloud in such a conversation: short and natural, not written style.
+- Words to learn are words and short expressions people use when they speak: conversational collocations, phrasal verbs, ready phrases for meetings and calls.
+- Tips are things the user can practise aloud.
+
+For chat and text the model looks at written language, spelling and punctuation included, and corrections fit that kind of writing.
+
 Rules
 
-- Only the user's turns are analyzed. Other speakers' turns explain the situation.
+- Only the user's turns are analyzed, and only they are sent to the model.
 - A call transcript is speech recognition output. Punctuation, capital letters, homophones and small dropped words are recognition noise, not the user's mistakes. An item the model is not sure the user really said wrong is left out.
-- Every real mistake, and nothing the model is unsure about. Repeated instances of one mistake make one finding. The number of items follows what the user said; there is no fixed maximum. High-impact and recurring mistakes come first.
+- At most 3 findings and 3 words per transcript: the most useful ones. Every item becomes a reminder that the user sees for days, so a short list works better than a full one. Nothing the model is unsure about. Repeated instances of one mistake make one finding. Mistakes that repeat, change the meaning, sound rude or unprofessional, or are typical for the native language come first.
 - Every example quotes the user's words exactly and gives the smallest correction.
 - Explanations are one or two short sentences.
 - Typical mistakes of speakers of the user's native language get special attention: false friends, word-for-word phrases, grammar the native language does not have.
@@ -42,17 +52,21 @@ Result
 
 - Status: ok, too_little_speech or native_language. Any status except ok has empty lists.
 - Language: the conversation language.
-- Summary: an overview in one or two sentences, an estimated CEFR level, up to 3 strengths, and the one thing to work on next.
-- Findings, one per kind of mistake: pattern key, category, title, severity (low, medium or high), number of occurrences, 1 to 3 examples (quote and correction), explanation, an optional tip, and match terms.
-- Words to learn: the word or phrase, its type, why it is suggested (misused, better choice, alternative to an overused word, missing word), what the user said instead, a translation, how and when to use it, an example with its translation, and match terms.
-- Phrases: ready expressions for situations in this conversation where the user struggled to say something, with the situation, a translation, the user's own version and match terms.
-- Rewrites: the user's longer sentences (8 words or more) that sounded unnatural, each with the way a native speaker would say it in this situation, short enough to repeat aloud, a note on what changed, and match terms.
+- Findings, 0 to 3, one per kind of mistake: pattern key, category, title, severity (low, medium or high), number of occurrences, 1 to 3 examples (quote and correction), explanation, an optional tip, and match terms.
+- Words to learn, 0 to 3: the word or phrase, its type, why it is suggested (misused, better choice, alternative to an overused word, missing word), what the user said instead, a translation, how and when to use it, an example with its translation, and match terms.
+
+There is no summary, no level estimate, no ready phrases and no rewritten sentences.
 
 The exact schema is AnalysisResult in shared/CONTRACT.md.
 
 Match terms
 
-Match terms are what the iOS app looks for in the user's own reminders (reminders.md). They are words, word stems and phrases that a person might write in a reminder or a to-do about the same thing: the word and its common forms, its translation into the native language, stems of inflected words. Each term has its language and a mode: word, prefix (a stem of at least 4 letters), phrase, or substring (for languages written without spaces). Generic words that appear in almost any reminder are left out. An abstract grammar mistake has terms only for the content words around it, or none.
+Match terms are what the iOS app looks for in the user's own reminders (reminders.md). An item whose terms match a reminder becomes a line in that reminder; an item without a match becomes a separate reminder, which is easier to ignore. So every finding and every word has 1 to 8 terms (the model aims at 3 to 6), and each term points to this item and this conversation.
+
+- Where terms come from: the topic of the sentences where the mistake happened (the feature, product, document, event or place the user talked about); the distinctive word or phrase itself (a false friend, a corrected collocation as a phrase, a word to learn); and their translations into the native language.
+- A grammar, fluency or register finding always has terms: the topic words of its examples. A finding about articles in "I sent you link yesterday" gets the link and the design it was about, not "the".
+- Left out: words that appear in almost any reminder of this user, judged from the conversation. For a software developer these are words such as "request", "task", "fix", "bug", "update", "review" and their translations ("запрос", "задача"); for anyone "meeting", "call", "email", "send", "check", "today". Such a word is allowed only inside a longer specific phrase ("make a request" as a phrase, never "request" alone). Also left out: articles, pronouns, auxiliary verbs, the grammar words the mistake is about, and names of people.
+- Each term has its language and a mode: word, prefix (a stem of at least 4 letters), phrase, or substring (for languages written without spaces).
 
 MOZOL stores the match terms of every transcript as its keywords.
 

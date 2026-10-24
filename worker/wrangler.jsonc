@@ -33,7 +33,7 @@
     "APP_ORIGIN": "https://mozol.vrizo.net",
     "ANALYSIS_MODE": "claude",
     "ANALYSIS_MODEL": "claude-opus-5-5",
-    "ANALYSIS_EFFORT": "high",
+    "ANALYSIS_EFFORT": "medium",
     "PUSH_MODE": "apns"
   }
 }

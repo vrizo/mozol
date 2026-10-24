@@ -237,37 +237,6 @@ function TranscriptView({
 
       {result?.status === "ok" && (
         <>
-          <section className="section" aria-labelledby="summary-heading" lang={native}>
-            <h2 id="summary-heading">{t.summaryLabel}</h2>
-            <p className="reading">{result.summary.overview}</p>
-            <dl className="meta">
-              {result.summary.estimatedLevel && (
-                <div>
-                  <dt>{t.level}</dt>
-                  <dd>
-                    <span className="tag">{result.summary.estimatedLevel}</span>
-                  </dd>
-                </div>
-              )}
-            </dl>
-            {result.summary.strengths.length > 0 && (
-              <>
-                <h3 className="label label-section summary-sub">{t.strengths}</h3>
-                <ul>
-                  {result.summary.strengths.map((s) => (
-                    <li key={s}>{s}</li>
-                  ))}
-                </ul>
-              </>
-            )}
-            {result.summary.focus && (
-              <>
-                <h3 className="label label-section summary-sub">{t.focus}</h3>
-                <p>{result.summary.focus}</p>
-              </>
-            )}
-          </section>
-
           <section className="section" aria-labelledby="findings-heading">
             <h2 id="findings-heading">{t.findingsLabel}</h2>
             {result.findings.length === 0 && <p>{t.noFindings}</p>}
@@ -334,45 +303,6 @@ function TranscriptView({
               ))}
             </ul>
           </section>
-
-          <section className="section" aria-labelledby="phrases-heading">
-            <h2 id="phrases-heading">{t.phrasesLabel}</h2>
-            {result.phrases.length === 0 && <p>{t.noPhrases}</p>}
-            <ul className="list">
-              {result.phrases.map((phrase) => (
-                <li key={phrase.phrase} className="card">
-                  <h3 lang={spoken}>{phrase.phrase}</h3>
-                  <p lang={native}>
-                    <strong>{phrase.translation}</strong>
-                  </p>
-                  <p>
-                    <span className="label">{t.useWhen}</span> <span lang={native}>{phrase.useWhen}</span>
-                  </p>
-                  {phrase.insteadOf && (
-                    <p>
-                      <span className="label">{t.yourVersion}</span>{" "}
-                      <span lang={spoken}>{phrase.insteadOf}</span>
-                    </p>
-                  )}
-                </li>
-              ))}
-            </ul>
-          </section>
-
-          <section className="section" aria-labelledby="rewrites-heading">
-            <h2 id="rewrites-heading">{t.rewritesLabel}</h2>
-            {result.rewrites.length === 0 && <p>{t.noRewrites}</p>}
-            <ul className="list">
-              {result.rewrites.map((rewrite) => (
-                <li key={rewrite.original} className="card">
-                  <Pair said={rewrite.original} better={rewrite.rewrite} lang={spoken} wide />
-                  <p lang={native} className="secondary-text">
-                    {rewrite.note}
-                  </p>
-                </li>
-              ))}
-            </ul>
-          </section>
         </>
       )}
 
@@ -408,9 +338,9 @@ function TranscriptView({
 }
 
 // The learner's words and the better version, labeled so screen readers say which is which.
-function Pair({ said, better, lang, wide }: { said: string; better: string; lang?: string; wide?: boolean }) {
+function Pair({ said, better, lang }: { said: string; better: string; lang?: string }) {
   return (
-    <div className={wide ? "pair pair-wide" : "pair"}>
+    <div className="pair">
       <p className="pair-said">
         <span className="label">{t.youSaid}</span>
         <span lang={lang}>{said}</span>

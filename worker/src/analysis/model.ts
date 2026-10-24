@@ -13,7 +13,7 @@ import type { Env } from "../env";
 import { log, logError } from "../log";
 import { AnalysisError, fromSdkError } from "./errors";
 import type { ModelInput } from "./input";
-import { PROMPT_VERSION, SYSTEM_PROMPT } from "./prompt";
+import { PROMPT_VERSION, systemPrompt } from "./prompt";
 
 export type ModelOutput = {
   result: AnalysisResult;
@@ -64,7 +64,7 @@ export class ClaudeModel implements AnalysisModel {
     return {
       model: this.name,
       max_tokens: MAX_TOKENS,
-      system: [{ type: "text", text: SYSTEM_PROMPT, cache_control: { type: "ephemeral" } }],
+      system: [{ type: "text", text: systemPrompt(input.kind), cache_control: { type: "ephemeral" } }],
       messages: [{ role: "user", content: input.userMessage }],
       output_config: { effort: this.effort, format: OUTPUT_FORMAT },
       fallbacks: "default",
@@ -172,14 +172,11 @@ export function createModel(env: ModelEnv): AnalysisModel {
   }
 }
 
-// The example quotes and rewrite originals that are not in any of the learner's lines, comparing normalized
-// text on whole words. The result itself stays unchanged.
+// The example quotes that are not in any of the learner's lines, comparing normalized text on whole words. The
+// result itself stays unchanged.
 export function countUnmatchedQuotes(result: AnalysisResult, learnerLines: string[]): number {
   const lines = learnerLines.map((line) => ` ${normalizeText(line)} `);
-  const quotes = [
-    ...result.findings.flatMap((f) => f.examples.map((e) => e.quote)),
-    ...result.rewrites.map((r) => r.original),
-  ];
+  const quotes = result.findings.flatMap((f) => f.examples.map((e) => e.quote));
   return quotes.filter((quote) => {
     const normalized = normalizeText(quote);
     return normalized === "" || !lines.some((line) => line.includes(` ${normalized} `));
@@ -198,8 +195,8 @@ export async function runAnalysis(
     transcript: transcriptId,
     model: model.name,
     promptVersion: PROMPT_VERSION,
+    kind: input.kind,
     learnerWords: input.learnerWordCount,
-    compressed: input.compressed,
   });
   try {
     const output = await model.analyze(input);
@@ -212,8 +209,6 @@ export async function runAnalysis(
       language: result.language,
       findings: result.findings.length,
       words: result.words.length,
-      phrases: result.phrases.length,
-      rewrites: result.rewrites.length,
       inputTokens: output.inputTokens,
       outputTokens: output.outputTokens,
       cacheReadTokens: output.cacheReadTokens,

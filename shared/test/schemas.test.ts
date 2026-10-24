@@ -79,101 +79,87 @@ describe("analysis result rules", () => {
 
   test("refuses two findings with one pattern key", () => {
     const bad = analysis((r) => {
-      r.findings.push(clone(r.findings[0]) as never);
+      r.findings[2] = clone(r.findings[0]) as never;
     });
-    expect(issuesOf(AnalysisResult, bad)).toEqual(["findings.6.patternKey: custom"]);
+    expect(issuesOf(AnalysisResult, bad)).toEqual(["findings.2.patternKey: custom"]);
   });
 
   test("refuses two words with one word key", () => {
     const bad = analysis((r) => {
-      r.words.push({ ...clone(r.words[0]), term: "Make a  decision!" } as never);
+      r.words[2] = { ...clone(r.words[0]), term: "Make a  decision!" } as never;
     });
-    expect(issuesOf(AnalysisResult, bad)).toEqual(["words.4.term: custom"]);
+    expect(issuesOf(AnalysisResult, bad)).toEqual(["words.2.term: custom"]);
   });
 
   test("refuses a prefix term shorter than 4 characters", () => {
     const bad = analysis((r) => {
       r.words[0]?.matchTerms.push({ text: "реш", lang: "ru", mode: "prefix" });
     });
-    expect(issuesOf(AnalysisResult, bad)).toEqual(["words.0.matchTerms.3.text: custom"]);
+    expect(issuesOf(AnalysisResult, bad)).toEqual(["words.0.matchTerms.4.text: custom"]);
   });
 
   test("refuses a word term with a space", () => {
     const bad = analysis((r) => {
       r.words[0]?.matchTerms.push({ text: "make decision", lang: "en", mode: "word" });
     });
-    expect(issuesOf(AnalysisResult, bad)).toEqual(["words.0.matchTerms.3.text: custom"]);
+    expect(issuesOf(AnalysisResult, bad)).toEqual(["words.0.matchTerms.4.text: custom"]);
   });
 
   test("refuses a phrase term with one word", () => {
     const bad = analysis((r) => {
       r.words[0]?.matchTerms.push({ text: "decision", lang: "en", mode: "phrase" });
     });
-    expect(issuesOf(AnalysisResult, bad)).toEqual(["words.0.matchTerms.3.text: custom"]);
+    expect(issuesOf(AnalysisResult, bad)).toEqual(["words.0.matchTerms.4.text: custom"]);
   });
 
   test("refuses 4 examples in one finding, and none", () => {
     const four = analysis((r) => {
-      const f = r.findings[1];
+      const f = r.findings[0];
       if (f) f.examples = [...f.examples, { quote: "when user wants", correction: "when the user wants" }];
     });
-    expect(issuesOf(AnalysisResult, four)).toEqual(["findings.1.examples: too_big"]);
+    expect(issuesOf(AnalysisResult, four)).toEqual(["findings.0.examples: too_big"]);
     const none = analysis((r) => {
-      const f = r.findings[1];
+      const f = r.findings[0];
       if (f) f.examples = [];
     });
-    expect(issuesOf(AnalysisResult, none)).toEqual(["findings.1.examples: too_small"]);
+    expect(issuesOf(AnalysisResult, none)).toEqual(["findings.0.examples: too_small"]);
   });
 
-  test("refuses a title over 60 characters, 9 match terms, and a word without match terms", () => {
+  test("refuses a title over 60 characters, 9 match terms, and a finding or a word without match terms", () => {
     const bad = analysis((r) => {
-      const f = r.findings[4];
+      const f = r.findings[2];
       if (f) {
         f.title = "x".repeat(61);
         f.matchTerms = Array.from({ length: 9 }, (_, i) => ({ text: `term${i}`, lang: "en", mode: "word" }));
       }
+      const g = r.findings[1];
+      if (g) g.matchTerms = [];
       const w = r.words[1];
       if (w) w.matchTerms = [];
     });
     expect(issuesOf(AnalysisResult, bad)).toEqual([
-      "findings.4.title: too_big",
-      "findings.4.matchTerms: too_big",
+      "findings.1.matchTerms: too_small",
+      "findings.2.title: too_big",
+      "findings.2.matchTerms: too_big",
       "words.1.matchTerms: too_small",
     ]);
   });
 
-  test("lists have no maximum length", () => {
+  test("refuses more than 3 findings and more than 3 words", () => {
     const many = analysis((r) => {
-      r.findings = Array.from({ length: 40 }, (_, i) => ({
-        ...clone(resultOk.findings[1]),
-        patternKey: `grammar.articles.case_${i}`,
-      })) as never;
+      r.findings.push({ ...clone(r.findings[0]), patternKey: "grammar.articles.extra" } as never);
+      r.words.push({ ...clone(r.words[0]), term: "decide" } as never);
     });
-    expect(issuesOf(AnalysisResult, many)).toEqual([]);
+    expect(issuesOf(AnalysisResult, many)).toEqual(["findings: too_big", "words: too_big"]);
   });
 
-  test("a status other than ok has empty lists and an empty focus; language is null only with too_little_speech", () => {
+  test("a status other than ok has empty lists; language is null only with too_little_speech", () => {
     const bad = analysis((r) => {
       r.status = "native_language";
       r.language = null;
     });
-    expect(issuesOf(AnalysisResult, bad)).toEqual([
-      "language: custom",
-      "findings: custom",
-      "words: custom",
-      "phrases: custom",
-      "rewrites: custom",
-      "summary.focus: custom",
-    ]);
-    const tooLittle = {
-      status: "too_little_speech",
-      language: null,
-      summary: { overview: "Слишком мало реплик.", estimatedLevel: null, strengths: [], focus: "" },
-      findings: [],
-      words: [],
-      phrases: [],
-      rewrites: [],
-    };
+    expect(issuesOf(AnalysisResult, bad)).toEqual(["language: custom", "findings: custom", "words: custom"]);
+    const tooLittle = { status: "too_little_speech", language: null, findings: [], words: [] };
     expect(issuesOf(AnalysisResult, tooLittle)).toEqual([]);
   });
 

@@ -41,10 +41,10 @@ Do
 
 Checks
 
-- rankItems tests: the order of docs/product/reminders.md with a mix of severities, a recurring pattern, words, rewrites and phrases; dismissed patterns and known or dismissed words are ranked but not sent.
+- rankItems tests: the order of docs/product/reminders.md with a mix of severities, a recurring pattern and words; dismissed patterns and known or dismissed words are ranked but not sent.
 - render tests: title, notes and embed line for each kind; no trailing spaces; an embed line that would pass 200 characters drops parts in the documented order; Russian explanations and English examples stay as given; priority rules.
 - schedule tests: inside and outside active hours, a positive and a negative UTC offset, each intensity.
-- recommend tests: the fixture result gives 14 recommendations (6 + 4 + 2 + 2) and 14 pending deliveries; a dismissed pattern and a known word get recommendations without deliveries; a second transcript with the same result gives recommendations with the same markers, and its new delivery supersedes a still-pending one with the same marker; a re-run keeps delivered recommendations, replaces undelivered ones and gives deliveries only to new ones.
+- recommend tests: the fixture result gives 6 recommendations (3 findings + 3 words) and 6 pending deliveries; a dismissed pattern and a known word get recommendations without deliveries; a second transcript with the same result gives recommendations with the same markers, and its new delivery supersedes a still-pending one with the same marker; a re-run keeps delivered recommendations, replaces undelivered ones and gives deliveries only to new ones.
 - Delivery tests: claim gives a delivery to one installation only; a second installation gets nothing while the lease is live and gets it after the lease ends; at most one delivery per marker in one claim; an unknown installation gets 404; outcomes set applied; a late result after the lease is accepted when nobody claimed since and ignored when another installation did; three failed results end in failed; deliver adds a delivery and records pushes in push_log.
 - Workflow test in fixture and log modes: a transcript ends analyzed with recommendations, a pending delivery for each, and one push_log row per device.
 - `pnpm --filter worker test`, `pnpm -r typecheck`, `pnpm lint`

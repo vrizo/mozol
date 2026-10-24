@@ -60,7 +60,6 @@ Types
 type Id = string;
 type Time = string;
 type LanguageCode = string;            // BCP 47 primary tag, 2 or 3 lowercase letters
-type Level = "A1" | "A2" | "B1" | "B2" | "C1" | "C2";
 type SourceId = "jamie" | "paste" | "json";
 type SourceKind = "call" | "chat" | "text";
 
@@ -129,7 +128,7 @@ type Transcript = {
   skipReason: string | null;
   errorCode: string | null;
   learnerSpeakerName: string | null;   // null until the learner is chosen (docs/product/sources.md)
-  counts: { findings: number; words: number; phrases: number; rewrites: number } | null;   // null until analyzed
+  counts: { findings: number; words: number } | null;   // null until analyzed
   createdAt: Time;
 };
 
@@ -194,7 +193,7 @@ type Device = {
 
 Analysis result
 
-The model returns this object (structured output). Limits and rules that JSON Schema cannot express are checked by zod after the call; a result that breaks them fails with analysis_invalid. Texts marked "native" are in the user's native language; texts marked "conversation" are in the language the learner speaks in this transcript.
+The model returns this object (structured output). Limits and rules that JSON Schema cannot express are checked by zod after the call; a result that breaks them fails with analysis_invalid. Texts marked "native" are in the user's native language; texts marked "conversation" are in the language the learner speaks in this transcript. One result holds at most 3 findings and 3 words (docs/product/analysis.md).
 
 ```ts
 type Category = "grammar" | "vocabulary" | "phrasing" | "register" | "fluency" | "spelling" | "punctuation";
@@ -208,16 +207,8 @@ type MatchTerm = {
 type AnalysisResult = {
   status: "ok" | "too_little_speech" | "native_language";
   language: LanguageCode | null;       // the language the learner mostly speaks here; null only with too_little_speech
-  summary: {
-    overview: string;                  // native, 1-2 sentences
-    estimatedLevel: Level | null;
-    strengths: string[];               // native, 0..3
-    focus: string;                     // native; "" when status is not ok
-  };
-  findings: Finding[];                 // most important first, no fixed maximum; all lists are [] when status is not ok
-  words: WordSuggestion[];
-  phrases: Phrase[];
-  rewrites: Rewrite[];
+  findings: Finding[];                 // 0..3, most important first; [] when status is not ok
+  words: WordSuggestion[];             // 0..3, most important first; [] when status is not ok
 };
 
 type Finding = {
@@ -229,7 +220,7 @@ type Finding = {
   examples: { quote: string; correction: string }[];   // conversation, 1..3; quote is the learner's exact words
   explanation: string;                 // native, 1-2 short sentences
   tip: string | null;                  // native
-  matchTerms: MatchTerm[];             // 0..8
+  matchTerms: MatchTerm[];             // 1..8
 };
 
 type WordSuggestion = {
@@ -244,20 +235,6 @@ type WordSuggestion = {
   matchTerms: MatchTerm[];             // 1..8
 };
 
-type Phrase = {
-  phrase: string;                      // conversation
-  useWhen: string;                     // native
-  translation: string;                 // native
-  insteadOf: string | null;            // conversation: the learner's own version
-  matchTerms: MatchTerm[];             // 0..8
-};
-
-type Rewrite = {
-  original: string;                    // conversation: the learner's exact words, 8 or more words
-  rewrite: string;                     // conversation: how a native speaker would say it, easy to repeat aloud
-  note: string;                        // native: what changed, one sentence
-  matchTerms: MatchTerm[];             // 0..8
-};
 ```
 
 Rules:
@@ -266,17 +243,17 @@ Rules:
 
 Recommendations
 
-Every item of an analysis (finding, word, phrase, rewrite) becomes one recommendation, and every recommendation goes to the phone, except those of dismissed patterns and of words marked known or dismissed. On the phone one recommendation becomes one reminder: the app adds it to a reminder of the user that mentions it, or creates a new reminder in the user's default list. Rules: docs/product/reminders.md.
+Every item of an analysis (finding or word) becomes one recommendation, and every recommendation goes to the phone, except those of dismissed patterns and of words marked known or dismissed. On the phone one recommendation becomes one reminder: the app adds it to a reminder of the user that mentions it, or creates a new reminder in the user's default list. Rules: docs/product/reminders.md.
 
 ```ts
-type RecommendationKind = "mistake" | "word" | "phrase" | "rewrite";
+type RecommendationKind = "mistake" | "word";
 
 type Recommendation = {
   id: Id;
   transcriptId: Id | null;             // null after that transcript was deleted
   language: LanguageCode;              // the conversation language
   kind: RecommendationKind;
-  itemKey: string;                     // the same mistake, word or phrase has the same key in every transcript
+  itemKey: string;                     // the same mistake or word has the same key in every transcript
   marker: string;                      // 8 lowercase hex characters; the app keeps it hidden in what it writes (docs/ios/reminders.md)
   title: string;                       // title of a new MOZOL reminder
   notes: string;                       // notes of a new MOZOL reminder
@@ -301,7 +278,7 @@ type DeliveryOutcome = "embed_updated" | "reminder_updated" | "embedded" | "crea
 type Repeat = { frequency: "daily"; interval: number; count: number };   // every <interval> days, <count> times
 ```
 
-- itemKey: the pattern key for a mistake; "word:" + the normalized term for a word; "phrase:" + the normalized phrase for a phrase; "rewrite:" + the first 16 hex characters of SHA-256 of the normalized original for a rewrite.
+- itemKey: the pattern key for a mistake; "word:" + the normalized term for a word.
 - marker: the first 8 hex characters of SHA-256 of "<language>:<itemKey>". The same item in the same language always has the same marker. The app attaches it, hidden from the user, to every reminder it creates and every line it adds, and finds earlier placements by it. The hidden marker travels with the reminder through iCloud, so every device of the user finds it. How the app hides it: docs/ios/reminders.md.
 
 Text normalization

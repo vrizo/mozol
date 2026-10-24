@@ -10,7 +10,7 @@
 #   scripts/try-analysis.sh shared/fixtures/json/transcript.json
 #
 # ANALYSIS_MODEL and ANALYSIS_EFFORT override the defaults (claude-opus-5-5,
-# high). ANALYSIS_MODE=fixture checks the script without a model call.
+# medium). ANALYSIS_MODE=fixture checks the script without a model call.
 # Reads ANTHROPIC_API_KEY from .env, never echoing it.
 
 set -euo pipefail

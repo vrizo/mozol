@@ -4,7 +4,7 @@ import { MatchTerm, PATTERN_KEY } from "./analysis";
 import { ClockTime, Id, InstallationId, LanguageCode, PageQuery, paged, Time } from "./common";
 import { normalizeText } from "./matching";
 
-export const RecommendationKind = z.enum(["mistake", "word", "phrase", "rewrite"]);
+export const RecommendationKind = z.enum(["mistake", "word"]);
 export type RecommendationKind = z.infer<typeof RecommendationKind>;
 
 export const Marker = z.string().regex(/^[0-9a-f]{8}$/);
@@ -54,8 +54,6 @@ export const RecommendationObject = z.strictObject({
 const ITEM_KEY: Record<RecommendationKind, RegExp> = {
   mistake: PATTERN_KEY,
   word: /^word:\S/,
-  phrase: /^phrase:\S/,
-  rewrite: /^rewrite:[0-9a-f]{16}$/,
 };
 
 function checkItemKey(rec: { kind: RecommendationKind; itemKey: string }, ctx: z.RefinementCtx): void {

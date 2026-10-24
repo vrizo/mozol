@@ -6,11 +6,11 @@ The worker never reads, receives or stores the user's reminders. Everything the 
 
 Recommendations
 
-- Every analysis item becomes one recommendation: a mistake (finding), a word, a phrase or a rewrite.
+- Every analysis item becomes one recommendation: a mistake (finding) or a word. One transcript gives at most 6 (analysis.md).
 - One recommendation becomes one reminder, or one line in a reminder of the user.
-- Explanations are in the user's native language. Examples, corrections, words and phrases are in the conversation language.
+- Explanations are in the user's native language. Examples, corrections and words are in the conversation language.
 - A recommendation carries:
-  - an item key: the same mistake, word or phrase has the same key in every transcript;
+  - an item key: the same mistake or word has the same key in every transcript;
   - a marker made from the item key. The app keeps it hidden in the reminder or line it writes, as a tag of invisible characters (../ios/reminders.md), and finds earlier placements of the same item by it;
   - match terms: words, word stems and phrases in the conversation language and in the native language that a person might write in a reminder about the same thing;
   - the title and notes of a new MOZOL reminder, and one short line to add to a reminder of the user;
@@ -19,8 +19,8 @@ Recommendations
 
 What goes to the phone
 
-- Every recommendation of an analysis goes to the phone, so the number of reminders follows the number of the user's mistakes. Dismissed patterns, and words marked known or dismissed, are left out. The user can send any recommendation to the phone again from the web app.
-- Delivery order: high-severity mistakes, mistakes of recurring patterns, words, rewrites, medium-severity mistakes, phrases, low-severity mistakes. Inside each group, the model's order.
+- Every recommendation of an analysis goes to the phone. Dismissed patterns, and words marked known or dismissed, are left out. The user can send any recommendation to the phone again from the web app.
+- Delivery order: high-severity mistakes, mistakes of recurring patterns, words, medium-severity mistakes, low-severity mistakes. Inside each group, the model's order.
 - A recurring mistake goes again each time it appears. On the phone it updates its earlier placement instead of adding a second one.
 
 Where the app puts a recommendation
