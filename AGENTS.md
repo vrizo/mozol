@@ -43,6 +43,8 @@ Applies to replies, reports, docs, code comments.
 - docs/logs/ — log layout and reading rules
 - docs/rules/ — writing docs, UI copy, assets, dependencies
 
+Implementation steps for the backend and the web app, one agent task per file: plan/README.md.
+
 ## Skills
 
 Project skills live in skills/ (one folder per skill, SKILL.md inside). .claude/skills and .agents/skills are symlinks to it.
