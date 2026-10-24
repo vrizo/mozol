@@ -1,11 +1,13 @@
-// Profile: your names in transcripts, sign out and account deletion.
+// Profile: native language, your names in transcripts, sign out and account deletion.
 
 import { type FormEvent, useState } from "react";
 import { ApiError, deleteMe, patchMe } from "../api";
 import { copy } from "../copy/en";
+import { languageOptions } from "../languages";
 import { fieldErrors } from "../lib/auth";
 import { navigate } from "../router";
 import { useSession, useUser } from "../session";
+import { ComboBox } from "../ui/ComboBox";
 import { Button, ConfirmDialog, TextField } from "../ui/controls";
 import { errorCode, Notice, PageHeader } from "../ui/states";
 import "./auth.css";
@@ -22,6 +24,7 @@ export function ProfilePage() {
   const user = useUser();
   const session = useSession();
   const [form, setForm] = useState({
+    nativeLanguage: user.nativeLanguage,
     speakerNames: user.speakerNames,
   });
   const [newSpeaker, setNewSpeaker] = useState("");
@@ -62,6 +65,17 @@ export function ProfilePage() {
     <main id="main-content" className="page" tabIndex={-1}>
       <PageHeader title={copy.pages.profile} />
       <form className="profile-form" onSubmit={save} noValidate>
+        <section className="stack">
+          <ComboBox
+            label={copy.auth.nativeLanguage}
+            hint={copy.auth.nativeLanguageHint}
+            options={languageOptions(form.nativeLanguage)}
+            value={form.nativeLanguage}
+            onChange={(nativeLanguage) => setForm({ ...form, nativeLanguage })}
+            error={fieldText(errors.nativeLanguage)}
+          />
+        </section>
+
         <section className="stack section">
           <h2 className="label label-section">{t.speakerNames}</h2>
           <p className="field-hint">{t.speakerNamesHint}</p>
