@@ -89,7 +89,7 @@ fi
 format() {
   if [ "$RAW" -eq 1 ]; then cat; return; fi
   sed -l -E \
-    -e 's/^([0-9]{4}-[0-9]{2}-[0-9]{2})T([0-9:.]+Z) (app|wrk) [A-Za-z]+ +[A-Za-z]+\[[0-9:a-fx]+\] \[app\.mozol:([a-z]+)\] /\2  \3  \4\t/' \
+    -e 's/^([0-9]{4}-[0-9]{2}-[0-9]{2})T([0-9:.]+Z) (app|wrk) [A-Za-z]+ +[A-Za-z]+\[[0-9:a-fx]+\] \[net\.vrizo\.mozol:([a-z]+)\] /\2  \3  \4\t/' \
     -e 's/^([0-9]{4}-[0-9]{2}-[0-9]{2})T([0-9:.]+Z) (app|wrk) /\2  \3  \t/' \
   | awk -F'\t' 'NF > 1 { printf "%-30s %s\n", $1, $2; fflush(); next } { print; fflush() }'
 }

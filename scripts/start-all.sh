@@ -4,6 +4,8 @@
 #
 #   1. local D1 migrations, then scripts/dev-worker.sh in the background; waits
 #      for GET /api/health. The worker opens a fresh run folder (logs/current).
+#      --stub starts scripts/dev-stub-api.sh instead (stub-api.log), while the
+#      worker does not exist yet.
 #   2. the web app (Vite dev server) — web.log in the same run folder (--no-web skips)
 #   3. the iOS app: xcodegen, build, install and launch on the simulator pointed
 #      at the local worker, plus scripts/sim-logs.sh into app.log (--no-app skips)
@@ -23,15 +25,17 @@ WORKER_PORT="${MOZOL_WORKER_PORT:-8790}"
 WEB_PORT="${MOZOL_WEB_PORT:-5190}"
 DB_NAME="${MOZOL_DB_NAME:-mozol}"
 UDID="${MOZOL_SIM_UDID:-898564DD-FAE8-4AB0-9BF5-CBF17DB72852}"
-BUNDLE_ID="app.mozol"
+BUNDLE_ID="net.vrizo.mozol"
 DERIVED_DATA="$REPO_ROOT/ios/.build-dd"
 
 SKIP_WEB=false
 SKIP_APP=false
+USE_STUB=false
 for arg in "$@"; do
   case "$arg" in
     --no-web) SKIP_WEB=true ;;
     --no-app) SKIP_APP=true ;;
+    --stub)   USE_STUB=true ;;
     *) echo "[start-all] ERROR: unknown argument: $arg" >&2; exit 1 ;;
   esac
 done
@@ -41,30 +45,39 @@ info() { echo "[start-all] $*"; }
 listening() { lsof -iTCP:"$1" -sTCP:LISTEN -t >/dev/null 2>&1; }
 
 # --- 1. worker ---------------------------------------------------------------
-info "=== 1/3 worker (port $WORKER_PORT) ==="
-[ -f "$REPO_ROOT/worker/wrangler.jsonc" ] || fail "no worker/wrangler.jsonc — the worker does not exist yet."
+if [ "$USE_STUB" = true ]; then
+  SERVER_LABEL="stub API"
+  SERVER_SCRIPT="$SCRIPT_DIR/dev-stub-api.sh"
+  SERVER_LOG="stub-api.log"
+else
+  SERVER_LABEL="worker"
+  SERVER_SCRIPT="$SCRIPT_DIR/dev-worker.sh"
+  SERVER_LOG="worker.log"
+  [ -f "$REPO_ROOT/worker/wrangler.jsonc" ] || fail "no worker/wrangler.jsonc — the worker does not exist yet. Use --stub."
+fi
+info "=== 1/3 $SERVER_LABEL (port $WORKER_PORT) ==="
 
 if listening "$WORKER_PORT"; then
-  info "port $WORKER_PORT already listening — reusing the running worker and its run folder."
+  info "port $WORKER_PORT already listening — reusing the running server and its run folder."
 else
-  if [ -d "$REPO_ROOT/worker/migrations" ]; then
+  if [ "$USE_STUB" = false ] && [ -d "$REPO_ROOT/worker/migrations" ]; then
     info "applying D1 migrations to the local database '$DB_NAME'"
     ( cd "$REPO_ROOT/worker" && pnpm exec wrangler d1 migrations apply "$DB_NAME" --local 2>&1 | tail -c 2000 ) \
       || fail "local migrations failed."
   fi
-  nohup "$SCRIPT_DIR/dev-worker.sh" > /dev/null 2>&1 &
+  nohup "$SERVER_SCRIPT" > /dev/null 2>&1 &
   WORKER_PID=$!
   disown "$WORKER_PID" 2>/dev/null || true
-  info "dev-worker.sh started (PID $WORKER_PID), waiting for /api/health (up to 30 s)"
+  info "${SERVER_SCRIPT##*/} started (PID $WORKER_PID), waiting for /api/health (up to 30 s)"
   up=false
   for _ in $(seq 1 30); do
-    kill -0 "$WORKER_PID" 2>/dev/null || fail "dev-worker.sh exited before it became healthy. Read logs/current/worker.log."
+    kill -0 "$WORKER_PID" 2>/dev/null || fail "${SERVER_SCRIPT##*/} exited before it became healthy. Read logs/current/$SERVER_LOG."
     if curl -fsS --max-time 2 "http://localhost:$WORKER_PORT/api/health" 2>/dev/null | grep -q '"ok":true'; then up=true; break; fi
     sleep 1
   done
-  [ "$up" = true ] || fail "no healthy /api/health within 30 s. Read logs/current/worker.log."
+  [ "$up" = true ] || fail "no healthy /api/health within 30 s. Read logs/current/$SERVER_LOG."
 fi
-info "worker healthy at http://localhost:$WORKER_PORT"
+info "$SERVER_LABEL healthy at http://localhost:$WORKER_PORT"
 [ -L "$CURRENT" ] || fail "no logs/current symlink after the worker start."
 RUN_DIR="$(cd "$CURRENT" && pwd -P)"
 
@@ -131,7 +144,7 @@ fi
 echo
 echo "======================================================================"
 echo "[start-all] stack is up"
-echo "  worker:    http://localhost:$WORKER_PORT"
+echo "  $SERVER_LABEL: http://localhost:$WORKER_PORT"
 echo "  web:       $WEB_STATUS"
 echo "  app:       $APP_STATUS"
 echo "  logs:      $RUN_DIR"

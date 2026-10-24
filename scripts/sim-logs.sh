@@ -33,7 +33,7 @@
 set -euo pipefail
 
 DEFAULT_UDID="${MOZOL_SIM_UDID:-898564DD-FAE8-4AB0-9BF5-CBF17DB72852}"
-SUBSYSTEM="app.mozol"
+SUBSYSTEM="net.vrizo.mozol"
 CATEGORIES=(api sync notify store ui)
 
 UDID="$DEFAULT_UDID"

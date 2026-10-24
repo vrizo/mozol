@@ -37,7 +37,7 @@ new_run_dir() {
   git_branch="$(git -C "$REPO_ROOT" rev-parse --abbrev-ref HEAD 2>/dev/null || echo none)"
   if [ -n "$(git -C "$REPO_ROOT" status --porcelain 2>/dev/null)" ]; then git_dirty=true; else git_dirty=false; fi
   node_version="$(node --version 2>/dev/null || echo none)"
-  version="$(sed -n 's/^[[:space:]]*"version":[[:space:]]*"\([^"]*\)".*/\1/p' "$REPO_ROOT/package.json" 2>/dev/null | head -1)"
+  version="$(sed -n 's/^[[:space:]]*"version":[[:space:]]*"\([^"]*\)".*/\1/p' "$REPO_ROOT/package.json" 2>/dev/null | head -1 || true)"
   cat > "$RUN_DIR/run.json" <<JSON
 {
   "startedAt": "$(date -u +%Y-%m-%dT%H:%M:%SZ)",

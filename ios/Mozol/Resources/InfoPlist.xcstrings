@@ -1,0 +1,12 @@
+{
+  "sourceLanguage" : "en",
+  "strings" : {
+    "CFBundleDisplayName" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "MOZOL" } } }
+    },
+    "NSRemindersFullAccessUsageDescription" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "MOZOL looks through your reminders for ones that match a language tip, then adds the tip to a reminder or creates a new one." } } }
+    }
+  },
+  "version" : "1.0"
+}

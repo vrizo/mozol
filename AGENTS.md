@@ -51,9 +51,14 @@ Project skills live in skills/ (one folder per skill, SKILL.md inside). .claude/
 - local-stack — start worker, web app and iOS app; tests; logs; databases
 - deploy-worker — deploy the worker and apply migrations, then check production
 
+TestFlight uploads: docs/deployment/testflight.md.
+
 ## Commands
 
-- scripts/start-all.sh — worker + web app + simulator app in one go; scripts/stop-all.sh reverses it. One run folder per start.
+- scripts/start-all.sh — worker + web app + simulator app in one go; `--stub` uses scripts/stub-api.mjs instead of the worker. scripts/stop-all.sh reverses it. One run folder per start.
+- scripts/sim-push.sh — feed a silent push payload to the app on the simulator.
+- scripts/testflight.sh — archive and upload the iOS app to TestFlight; writes a run folder.
+- scripts/apns-push.mjs — send a silent push to one device through APNs (docs/ios/push-testing.md).
 - scripts/logs.sh — app + worker in one timeline (`--last 10m`, `--rid <id>`, `-c <category>`).
 - scripts/deploy-worker.sh — tests, migrations, deploy, health check; writes a run folder with deploy.log.
 - scripts/prod-logs.sh — production worker logs (wrangler tail) into a run folder.

@@ -9,13 +9,14 @@ Do everything from the repo root.
 
     WORKER_PORT=8790   WEB_PORT=5190
     UDID=898564DD-FAE8-4AB0-9BF5-CBF17DB72852   # iPhone 17, or $MOZOL_SIM_UDID
-    BUNDLE_ID=app.mozol
+    BUNDLE_ID=net.vrizo.mozol
 
 ## 1. Start and stop
 
     scripts/start-all.sh            # worker + web + iOS app + sim-logs
     scripts/start-all.sh --no-app   # worker + web only
     scripts/start-all.sh --no-web --no-app
+    scripts/start-all.sh --stub --no-web   # stub API instead of the worker (while worker/ does not exist)
     scripts/stop-all.sh             # stops worker, web, sim-logs; leaves the simulator
 
 start-all applies local D1 migrations, starts scripts/dev-worker.sh, waits for `GET /api/health`, then starts the web app and the iOS app. A part whose port already listens is reused, and the script says so. Every step fails loudly. Read the error; do not retry blindly.
@@ -46,14 +47,22 @@ Health check: `curl -fsS http://localhost:8790/api/health` must print `{"ok":tru
       -sdk iphonesimulator -destination "platform=iOS Simulator,id=$UDID" \
       -derivedDataPath ios/.build-dd 2>&1 | grep -E "error:|BUILD"
     xcrun simctl install "$UDID" ios/.build-dd/Build/Products/Debug-iphonesimulator/Mozol.app
-    xcrun simctl launch "$UDID" app.mozol -mozol.apiBaseURL http://localhost:8790
+    xcrun simctl launch "$UDID" net.vrizo.mozol -mozol.apiBaseURL http://localhost:8790
     scripts/sim-logs.sh   # background; appends to logs/current/app.log
 
 Never pass CODE_SIGNING_ALLOWED=NO. When the app behaves unlike the source, rm -rf ios/.build-dd and build clean.
 
+## 3a. Messages and pushes without a worker
+
+    curl -fsS -X POST localhost:8790/stub/messages -d '{"text":"hi"}'   # queue a message
+    curl -fsS localhost:8790/stub/state                                # queued messages, devices
+    scripts/sim-push.sh '{"word":"hola"}'                              # silent push payload into the running app
+
+The app fetches within 60 s (or on Refresh). `xcrun simctl push` does not work for silent pushes on the simulator: the payload is lost. Rules: docs/ios/testing.md.
+
 ## 4. Logs
 
-Use the reading-logs skill. Short version: `cat logs/current/run.json` first, then `scripts/logs.sh --last 10m` or `--rid <id>`. Never cat a whole log.
+Use the reading-logs skill. Short version: `cat logs/current/run.json` first, then `scripts/logs.sh --last 10m` or `--rid <id>`. Never cat a whole log. The stub API writes stub-api.log (one JSON line per request, `rid` first): `grep <rid> logs/current/stub-api.log`.
 
 ## 5. Databases (read-only)
 
@@ -63,7 +72,7 @@ Local D1:
 
 App store on the simulator (SwiftData, Z-prefixed tables):
 
-    DATA=$(xcrun simctl get_app_container "$UDID" app.mozol data)
+    DATA=$(xcrun simctl get_app_container "$UDID" net.vrizo.mozol data)
     sqlite3 -readonly "$DATA/Library/Application Support/default.store" ".tables"
 
 ## Notes

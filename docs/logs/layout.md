@@ -23,7 +23,7 @@ Logs never contain the user's learning content: only ids, counts, timings and er
 
 App categories
 
-The iOS app writes through one channel: `os.Logger`, subsystem `app.mozol`, declared once in MozolCore/Log.swift. The categories are a closed set:
+The iOS app writes through one channel: `os.Logger`, subsystem `net.vrizo.mozol`, declared once in MozolCore/Log.swift. The categories are a closed set:
 
 - api — every HTTP call to the worker
 - sync — moving data between the phone and the worker

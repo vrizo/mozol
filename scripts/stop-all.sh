@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 #
 # stop-all.sh — stop what scripts/start-all.sh started: the worker (wrangler
-# dev), the web dev server (vite) and the sim-logs stream. The simulator and the
+# dev) or the stub API, the web dev server (vite) and the sim-logs stream. The simulator and the
 # installed app are left as they are. Prints what it stopped for each part.
 
 set -uo pipefail
@@ -31,6 +31,7 @@ stop_pattern() {
 }
 
 stop_pattern "worker" "wrangler dev --port $WORKER_PORT"
+stop_pattern "stub API" "node .*scripts/stub-api.mjs"
 stop_pattern "web" "vite --port $WEB_PORT"
-stop_pattern "sim-logs" "simctl spawn.*log stream.*app.mozol"
+stop_pattern "sim-logs" "simctl spawn.*log stream.*net.vrizo.mozol"
 info "done. The simulator and the installed app are left running."
