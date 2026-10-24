@@ -279,6 +279,8 @@ export function fixedIntroTime(): number | null {
 }
 
 // Starts the loop on the canvas; returns the cleanup. `onLayout` gets the bottom of the word MOZOL, in CSS pixels.
+// A canvas with no width or height (a hidden window or panel) has nothing to draw: the scene and the clock
+// start on the first non-zero size.
 export function startIntro(
   canvas: HTMLCanvasElement,
   labelTexts: readonly string[],
@@ -287,24 +289,31 @@ export function startIntro(
   const ctx = context2d(canvas);
   const fixed = fixedIntroTime();
   const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-  const t0 = performance.now() - (reduceMotion ? T_DONE * 1000 : 0);
-  let scene = buildScene(canvas, labelTexts);
-  onLayout(scene.wordBottom);
+  let t0: number | null = null;
+  let scene: Scene | null = null;
   let frameId = 0;
 
   const frame = (now: number) => {
-    draw(ctx, scene, fixed !== null ? fixed : (now - t0) / 1000);
+    if (scene) {
+      t0 ??= now - (reduceMotion ? T_DONE * 1000 : 0);
+      draw(ctx, scene, fixed !== null ? fixed : (now - t0) / 1000);
+    }
     frameId = requestAnimationFrame(frame);
   };
   const onResize = () => {
+    if (canvas.clientWidth === 0 || canvas.clientHeight === 0) {
+      scene = null;
+      return;
+    }
     scene = buildScene(canvas, labelTexts);
     onLayout(scene.wordBottom);
   };
 
-  window.addEventListener("resize", onResize);
+  const observer = new ResizeObserver(onResize);
+  observer.observe(canvas);
   frameId = requestAnimationFrame(frame);
   return () => {
     cancelAnimationFrame(frameId);
-    window.removeEventListener("resize", onResize);
+    observer.disconnect();
   };
 }
