@@ -1,0 +1,5 @@
+packages:
+  - web
+
+# docs/rules/dependencies.md: no package version younger than 72 hours.
+minimumReleaseAge: 4320

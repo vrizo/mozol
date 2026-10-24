@@ -1,0 +1,58 @@
+:root {
+  --bg: #f3f2ee;
+  --ink: #111111;
+  --muted: #8a8a86;
+}
+
+html,
+body,
+#root {
+  margin: 0;
+  height: 100%;
+  background: var(--bg);
+  color: var(--ink);
+}
+
+:focus-visible {
+  outline: 2px solid var(--ink);
+  outline-offset: 2px;
+}
+
+.skip-link {
+  position: absolute;
+  left: 16px;
+  top: -48px;
+  padding: 8px 12px;
+  background: var(--ink);
+  color: var(--bg);
+  font:
+    14px ui-monospace,
+    Menlo,
+    monospace;
+  z-index: 1;
+}
+
+.skip-link:focus {
+  top: 16px;
+}
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+.home {
+  position: fixed;
+  inset: 0;
+  overflow: hidden;
+}
+
+.home canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
